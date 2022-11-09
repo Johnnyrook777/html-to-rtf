@@ -37,39 +37,39 @@ module.exports = [
    },
    {
       opening: 'h1',
-      openingRtf: '{\\pard\\fs32\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs32\\b',
       closing: '/h1',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'h2',
-      openingRtf: '{\\pard\\fs28\\i\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs28\\i\\b',
       closing: '/h2',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'h3',
-      openingRtf: '{\\pard\\fs28\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs28\\b',
       closing: '/h3',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'h4',
-      openingRtf: '{\\pard\\fs23\\i\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs23\\i\\b',
       closing: '/h4',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'h5',
-      openingRtf: '{\\pard\\fs23\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs23\\b',
       closing: '/h5',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'h6',
-      openingRtf: '{\\pard\\fs21\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs21\\b',
       closing: '/h6',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'i',

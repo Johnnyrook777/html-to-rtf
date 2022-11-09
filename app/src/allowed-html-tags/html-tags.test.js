@@ -50,48 +50,48 @@ describe('HtmlTagsTest', () => {
     else if(element.opening == 'h1') {
       it(`<h1></h1>`, () => {
         should(element.closing).be.equal('/h1');
-        should(element.openingRtf).be.equal('{\\pard\\fs32\\b');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs32\\b');
+        should(element.closingRtf).be.equal('\\sb240\\sa120\\par}');
       });
     }
 
     else if(element.opening == 'h2') {
       it(`<h2></h2>`, () => {
         should(element.closing).be.equal('/h2');
-        should(element.openingRtf).be.equal('{\\pard\\fs28\\i\\b');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs28\\i\\b');
+        should(element.closingRtf).be.equal('\\sb240\\sa120\\par}');
       });
     }
 
     else if(element.opening == 'h3') {
       it(`<h3></h3>`, () => {
         should(element.closing).be.equal('/h3');
-        should(element.openingRtf).be.equal('{\\pard\\fs28\\b');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs28\\b');
+        should(element.closingRtf).be.equal('\\sb240\\sa120\\par}');
       });
     }
 
     else if(element.opening == 'h4') {
       it(`<h4></h4>`, () => {
         should(element.closing).be.equal('/h4');
-        should(element.openingRtf).be.equal('{\\pard\\fs23\\i\\b');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs23\\i\\b');
+        should(element.closingRtf).be.equal('\\sb240\\sa120\\par}');
       });
     }
 
     else if(element.opening == 'h5') {
       it(`<h5></h5>`, () => {
         should(element.closing).be.equal('/h5');
-        should(element.openingRtf).be.equal('{\\pard\\fs23\\b');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs23\\b');
+        should(element.closingRtf).be.equal('\\sb240\\sa120\\par}');
       });
     }
 
     else if(element.opening == 'h6') {
       it(`<h6></h6>`, () => {
         should(element.closing).be.equal('/h6');
-        should(element.openingRtf).be.equal('{\\pard\\fs21\\b');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs21\\b');
+        should(element.closingRtf).be.equal('\\sb240\\sa120\\par}');
       });
     }
 
