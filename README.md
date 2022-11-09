@@ -1,6 +1,9 @@
 # HTML To RTF (Browser and Server)
 >This project convert html to rtf format in the Browser (v2.0.0+) and the server with NodeJS.
 
+## References
+https://metacpan.org/dist/RTF-Writer/view/lib/RTF/Cookbook.pod
+
 ## Installation
 ```
 $ npm install html-to-rtf

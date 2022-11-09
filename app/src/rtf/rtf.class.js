@@ -66,7 +66,7 @@ class Rtf {
         if (child.type != 'text')
           this.readAllChildsInTag(child);
         else
-          this.addContentOfTagInRtfCode(child.data);
+          this.addContentOfTagInRtfCode(child.data, fatherTag.name);
       });
     }
     this.addClosingFatherTagInRtfCode(fatherTag.name);
@@ -107,16 +107,19 @@ class Rtf {
     this.addReferenceTagInRtfCode(AllowedHtmlTags.getRtfReferenceTag(`/${ closingFatherTag }`));
   }
 
-  addContentOfTagInRtfCode(contentOfTag) {
+  addContentOfTagInRtfCode(contentOfTag, parentType) {
     contentOfTag = MyString.removeCharacterOfEscapeInAllString(contentOfTag, '\n\t');
     contentOfTag = Character.asciiToRtfScape(contentOfTag);
 
     if(contentOfTag != undefined && !MyString.hasOnlyWhiteSpace(contentOfTag))
-      this.rtfContentReferences.push({ content: this.addSpaceAroundString(contentOfTag.trim()), tag: false });
+      this.rtfContentReferences.push({ content: this.addSpaceAroundString(contentOfTag.trim(), parentType), tag: false });
   }
 
-  addSpaceAroundString(contentOfTag) {
-    return ` ${ contentOfTag } `;
+  addSpaceAroundString(contentOfTag, parentType) {
+    // if (parentType === 'span') {
+    //   return `${ contentOfTag } `; // No leading spaces on text within a span
+    // }
+    return `{${ contentOfTag }}`;
   }
 
   setHighlightInRtf() {
