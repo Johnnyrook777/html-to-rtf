@@ -70,15 +70,54 @@ describe('RtfTest', () => {
     should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red51\\green51\\blue51;}{\\pard\\cf1\\qc texto de p {\\b negrito {\\i italico com  negrito } texto final b }{\\i italico } texto final de p \\sb70\\par}}');
   });
 
-  for (let index = 0; index <= 5; index++) {
-    const tagName = `h${ ++index }`;
-    it(`convertHtmlToRtf() by <${ tagName }></${ tagName }>`, () => {
-      let html = `<${ tagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ tagName }<${ tagName }>`;
-      let rtf = new Rtf();
-      Color.cleanColorTable();
-      should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard Title {\\cf1 with } tag ${ tagName } \\sb70\\par}{\\pard\\sb70\\par}}`);
-    });
-  }
+  const h1TagName = `h1`;
+  it(`convertHtmlToRtf() by <${ h1TagName }></${ h1TagName }>`, () => {
+    let html = `<${ h1TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h1TagName }<${ h1TagName }>`;
+    let rtf = new Rtf();
+    Color.cleanColorTable();
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\fs32\\b Title {\\cf1 with } tag ${ h1TagName } \\sb70\\par}{\\pard\\fs32\\b\\sb70\\par}}`);
+  });
+
+  const h2TagName = `h2`;
+  it(`convertHtmlToRtf() by <${ h2TagName }></${ h2TagName }>`, () => {
+    let html = `<${ h2TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h2TagName }<${ h2TagName }>`;
+    let rtf = new Rtf();
+    Color.cleanColorTable();
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\fs28\\i\\b Title {\\cf1 with } tag ${ h2TagName } \\sb70\\par}{\\pard\\fs28\\i\\b\\sb70\\par}}`);
+  });
+
+  const h3TagName = `h3`;
+  it(`convertHtmlToRtf() by <${ h3TagName }></${ h3TagName }>`, () => {
+    let html = `<${ h3TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h3TagName }<${ h3TagName }>`;
+    let rtf = new Rtf();
+    Color.cleanColorTable();
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\fs28\\b Title {\\cf1 with } tag ${ h3TagName } \\sb70\\par}{\\pard\\fs28\\b\\sb70\\par}}`);
+  });
+
+  const h4TagName = `h4`;
+  it(`convertHtmlToRtf() by <${ h4TagName }></${ h4TagName }>`, () => {
+    let html = `<${ h4TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h4TagName }<${ h4TagName }>`;
+    let rtf = new Rtf();
+    Color.cleanColorTable();
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\fs23\\i\\b Title {\\cf1 with } tag ${ h4TagName } \\sb70\\par}{\\pard\\fs23\\i\\b\\sb70\\par}}`);
+  });
+
+  const h5TagName = `h5`;
+  it(`convertHtmlToRtf() by <${ h5TagName }></${ h5TagName }>`, () => {
+    let html = `<${ h5TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h5TagName }<${ h5TagName }>`;
+    let rtf = new Rtf();
+    Color.cleanColorTable();
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\fs23\\b Title {\\cf1 with } tag ${ h5TagName } \\sb70\\par}{\\pard\\fs23\\b\\sb70\\par}}`);
+  });
+
+  const h6TagName = `h6`;
+  it(`convertHtmlToRtf() by <${ h6TagName }></${ h6TagName }>`, () => {
+    let html = `<${ h6TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h6TagName }<${ h6TagName }>`;
+    let rtf = new Rtf();
+    Color.cleanColorTable();
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\fs21\\b Title {\\cf1 with } tag ${ h6TagName } \\sb70\\par}{\\pard\\fs21\\b\\sb70\\par}}`);
+  });
+
 
   it('buildRtf()', () => {
     let rtf = new Rtf();

@@ -7,19 +7,27 @@
   },
   "description": "Convert html to rtf format in the browser and the server",
   "readmeFilename": "README.md",
-  "keywords": ["html", "rtf", "convert", "server", "node", "javascript", "browser"],
+  "keywords": [
+    "html",
+    "rtf",
+    "convert",
+    "server",
+    "node",
+    "javascript",
+    "browser"
+  ],
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
     "cheerio": "1.0.0-rc.1",
-    "juice": "4.1.0"
+    "juice": "^8.1.0"
   },
   "devDependencies": {
     "browserify": "17.0.0",
-    "gulp": "3.9.1",
-    "gulp-mocha": "4.3.1",
-    "mocha": "3.4.2",
-    "should": "11.2.1"
+    "gulp": "^4.0.2",
+    "gulp-mocha": "^8.0.0",
+    "mocha": "^10.1.0",
+    "should": "^13.2.3"
   },
   "scripts": {
     "test": "gulp tests",
