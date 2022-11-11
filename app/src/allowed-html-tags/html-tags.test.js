@@ -210,7 +210,7 @@ describe('HtmlTagsTest', () => {
     else if(element.opening == 'ul') {
       it(`<ul></ul>`, () => {
         should(element.closing).be.equal('/ul');
-        should(element.openingRtf).be.equal('{{\\*\\pn\\pnlvlblt\\pnf1\\pnindent0{\\pntxtb\\\'B7}}\\fi-360\\li720\\sa200\\sl276\\slmult1\\lang22\\f0\\fs22');
+        should(element.openingRtf).be.equal('{{\\*\\pn\\pnlvlblt\\pnf1\\pnindent0{\\pntxtb\\\'B7}}\\fi-360\\li720\\sl276\\slmult1\\lang22\\f0\\fs22');
         should(element.closingRtf).be.equal('}');
       });
     }
