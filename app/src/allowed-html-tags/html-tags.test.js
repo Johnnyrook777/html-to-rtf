@@ -106,7 +106,7 @@ describe('HtmlTagsTest', () => {
     else if(element.opening == 'li') {
       it(`<li></li>`, () => {
         should(element.closing).be.equal('/li');
-        should(element.openingRtf).be.equal('{\\pntext\\tab}');
+        should(element.openingRtf).be.equal('{\\pntext\\tab}\\bullet\\~');
         should(element.closingRtf).be.equal('\\par');
       });
     }

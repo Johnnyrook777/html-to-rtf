@@ -79,7 +79,7 @@ module.exports = [
    },
    {
       opening: 'li',
-      openingRtf: '{\\pntext\\tab}',
+      openingRtf: '{\\pntext\\tab}\\bullet\\~',
       closing: '/li',
       closingRtf: '\\par'
    },
