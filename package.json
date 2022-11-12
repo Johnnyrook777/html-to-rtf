@@ -20,6 +20,7 @@
   "main": "index.js",
   "dependencies": {
     "cheerio": "1.0.0-rc.1",
+    "html-to-rtf": "^2.0.1",
     "juice": "^8.1.0"
   },
   "devDependencies": {
