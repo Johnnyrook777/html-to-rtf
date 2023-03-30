@@ -37,7 +37,7 @@ module.exports = [
    },
    {
       opening: 'h1',
-      openingRtf: '{\\pard\\sb240\\sa120\\fs32\\b',
+      openingRtf: '{\\pard\\sb240\\sa120\\fs32\\b\\ul',
       closing: '/h1',
       closingRtf: '\\par}'
    },

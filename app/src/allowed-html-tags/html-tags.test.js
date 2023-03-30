@@ -50,7 +50,7 @@ describe('HtmlTagsTest', () => {
     else if(element.opening == 'h1') {
       it(`<h1></h1>`, () => {
         should(element.closing).be.equal('/h1');
-        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs32\\b');
+        should(element.openingRtf).be.equal('{\\pard\\sb240\\sa120\\fs32\\b\\ul');
         should(element.closingRtf).be.equal('\\par}');
       });
     }

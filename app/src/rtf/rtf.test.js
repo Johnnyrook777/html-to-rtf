@@ -75,7 +75,7 @@ describe('RtfTest', () => {
     let html = `<${ h1TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h1TagName }<${ h1TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs32\\b Title {\\cf1 with} tag ${ h1TagName }\\par}{\\pard\\sb240\\sa120\\fs32\\b \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs32\\b\\ul Title {\\cf1 with} tag ${ h1TagName }\\par}{\\pard\\sb240\\sa120\\fs32\\b\\ul \\par}}`);
   });
 
   const h2TagName = `h2`;
@@ -233,7 +233,7 @@ describe('RtfTest', () => {
   it('Should set correct space', () => {
     const html = '<h1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My test&nbsp;&nbsp;&nbsp;paragraph</h1>';
     const rtf = new Rtf();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;}{\\pard\\sb240\\sa120\\fs32\\b       My test   paragraph\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;}{\\pard\\sb240\\sa120\\fs32\\b\\ul       My test   paragraph\\par}}');
   });
 
   it('Should set correct space between open and close tags', () => {
