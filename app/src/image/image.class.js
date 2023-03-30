@@ -35,10 +35,6 @@ class Image {
     let ratiow = parseInt(width / dimensions.width * 100);
     let ratioh = parseInt(height / dimensions.height * 100);
 
-    console.log({ height, width} );
-    console.log(dimensions );
-    console.log({ ratioh, ratiow} );
-
     var bufString = this.getImageDataAsHex(imageBase64);
 
     let result = `\\*\\shppict{\\pict\\picscalex${ratiow}\\picscaley${ratioh}\\picw${dimensions.width}\\pich${dimensions.height}${imageType} ${bufString}}}`;

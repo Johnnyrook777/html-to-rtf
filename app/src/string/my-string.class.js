@@ -10,7 +10,17 @@ class MyString {
       if(!listOfEscape.includes(element))
         newstringValue += element;
     });
+
+    
+
     return newstringValue;
+  }
+
+  static removeEmptyWhiteSpaceChars(input) {
+    // Remove empty white space
+    input = decodeURIComponent(encodeURIComponent(input).replace('%E2%80%8B', ''));
+
+    return input;
   }
 
   static convertOneCharInHexToDec(value) {
@@ -45,10 +55,15 @@ class MyString {
       if(listOfCharacterOfEscape.includes(elem))
         newStringOfEscape.push(elem);
     });
+
+    
+
     return newStringOfEscape.length > 0 ? newStringOfEscape : undefined;
   }
 
   static hasOnlyWhiteSpace(content) {
+    // Remove empty white space strings
+    //content = decodeURIComponent(encodeURIComponent(content).replace('%E2%80%8B', ''));
     return (content.replace(/\s/g, '').length == 0) ? true : false;
   } 
 

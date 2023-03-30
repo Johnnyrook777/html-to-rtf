@@ -133,8 +133,9 @@ class Rtf {
 
   addContentOfTagInRtfCode(contentOfTag) {
     contentOfTag = MyString.removeCharacterOfEscapeInAllString(contentOfTag, '\n\t');
+    contentOfTag = MyString.removeEmptyWhiteSpaceChars(contentOfTag);
     contentOfTag = Character.asciiToRtfScape(contentOfTag);
-
+    
     if(contentOfTag != undefined && !MyString.hasOnlyWhiteSpace(contentOfTag)) {
       this.rtfContentReferences.push({ content: contentOfTag, tag: false });
     }
