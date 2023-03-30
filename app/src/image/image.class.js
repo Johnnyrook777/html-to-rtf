@@ -6,33 +6,43 @@ class Image {
     let attribs = tag.attribs;
 
     var imageType = this.getImageType(attribs.src);
-    var height = attribs.height;
-    var width = attribs.width;
+    var height = parseInt(attribs.height);
+    var width = parseInt(attribs.width);
 
     var imageBase64 = this.bufferFromBase64(attribs.src);
 
     var dimensions = this.getImageSize(imageBase64);
 
     // Need both width and height
-    if (!width) {
+    if (!width && height) {
       width = parseInt((height / dimensions.height * dimensions.width));
     }
 
-    if (!height) {
-      height = parseInt((width / dimensions.width * dimensions.width));
+    if (!height && width) {
+      height = parseInt((width / dimensions.width * dimensions.height));
     }
 
-    let ratio = 100;
+    
+
+
     if (width > 964) {
       // Resize so it doesn't exceed the max width of a page
-      ratio = parseInt((964 / width) * 100);
+      let ratio = 964 / width;
+      width = parseInt(width * ratio);
+      height = parseInt(height * ratio);
     }
+
+    let ratiow = parseInt(width / dimensions.width * 100);
+    let ratioh = parseInt(height / dimensions.height * 100);
+
+    console.log({ height, width} );
+    console.log(dimensions );
+    console.log({ ratioh, ratiow} );
 
     var bufString = this.getImageDataAsHex(imageBase64);
 
+    let result = `\\*\\shppict{\\pict\\picscalex${ratiow}\\picscaley${ratioh}\\picw${dimensions.width}\\pich${dimensions.height}${imageType} ${bufString}}}`;
 
-    // \picscalex80\picscaley80
-    let result = `\\*\\shppict{\\pict\\picscalex${ratio}\\picscaley${ratio}${width ? '\\picw' + width : ''}${height ? '\\pich' + height : ''}${imageType} ${bufString}}}`;
 
     return result;
   }
