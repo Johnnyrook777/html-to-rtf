@@ -3,11 +3,17 @@ const sizeOf = require('image-size')
 class Image {
 
   static  getImageCode(tag) {
+    const maxPageWidth = 964;
+
     let attribs = tag.attribs;
 
     var imageType = this.getImageType(attribs.src);
     var height = parseInt(attribs.height);
     var width = parseInt(attribs.width);
+
+    if (attribs.width?.endsWith('%')) {
+      width = maxPageWidth * width / 100; // Convert the width to a percentage of the max width
+    }
 
     var imageBase64 = this.bufferFromBase64(attribs.src);
 
@@ -15,21 +21,18 @@ class Image {
 
     // Need both width and height
     if (!width && height) {
-      width = parseInt((height / dimensions.height * dimensions.width));
+      width = height / dimensions.height * dimensions.width;
     }
 
     if (!height && width) {
-      height = parseInt((width / dimensions.width * dimensions.height));
+      height = width / dimensions.width * dimensions.height;
     }
 
-    
-
-
-    if (width > 964) {
+    if (width > maxPageWidth) {
       // Resize so it doesn't exceed the max width of a page
-      let ratio = 964 / width;
-      width = parseInt(width * ratio);
-      height = parseInt(height * ratio);
+      let ratio = maxPageWidth / width;
+      width = width * ratio;
+      height = height * ratio;
     }
 
     let ratiow = parseInt(width / dimensions.width * 100);
@@ -38,7 +41,6 @@ class Image {
     var bufString = this.getImageDataAsHex(imageBase64);
 
     let result = `\\*\\shppict{\\pict\\picscalex${ratiow}\\picscaley${ratioh}\\picw${dimensions.width}\\pich${dimensions.height}${imageType} ${bufString}}}`;
-
 
     return result;
   }
