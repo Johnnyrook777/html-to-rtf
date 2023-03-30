@@ -19,7 +19,7 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "cheerio": "1.0.0-rc.1",
+    "cheerio": "1.0.0-rc.12",
     "html-to-rtf": "^2.0.1",
     "juice": "^8.1.0"
   },
@@ -27,7 +27,7 @@
     "browserify": "17.0.0",
     "gulp": "^4.0.2",
     "gulp-mocha": "^8.0.0",
-    "mocha": "^10.1.0",
+    "mocha": "^10.2.0",
     "should": "^13.2.3"
   },
   "scripts": {

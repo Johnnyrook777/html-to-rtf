@@ -587,11 +587,7 @@ class Rtf {
     contentOfTag = Character.asciiToRtfScape(contentOfTag);
 
     if(contentOfTag != undefined && !MyString.hasOnlyWhiteSpace(contentOfTag))
-      this.rtfContentReferences.push({ content: this.addSpaceAroundString(contentOfTag.trim()), tag: false });
-  }
-
-  addSpaceAroundString(contentOfTag,) {
-    return `{${ contentOfTag }}`;
+      this.rtfContentReferences.push({ content: contentOfTag, tag: false });
   }
 
   setHighlightInRtf() {
