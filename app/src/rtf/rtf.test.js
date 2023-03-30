@@ -60,14 +60,14 @@ describe('RtfTest', () => {
     let html = `<mytag style="color:#333; margin:5px;" class="test" align="center">texto de p<b>negrito <i>italico com  negrito</i>texto final b</b><i>italico</i>texto final de p</mytag>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc texto de p{\\b negrito {\\i italico com  negrito}texto final b}{\\i italico}texto final de p\\sb70\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc texto de p{\\b negrito {\\i italico com  negrito}texto final b}{\\i italico}texto final de p\\sb70\\par}}');
   });
 
   it('convertHtmlToRtf() With stranger tag: <my-tag></my-tag>', () => {
     let html = `<my-tag style="color:#333; margin:5px;" class="test" align="center">My text in <b>bold<i> and italic with bold</i> text in bold</b><i> italic</i> final text</my-tag>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc My text in {\\b bold{\\i  and italic with bold} text in bold}{\\i  italic} final text\\sb70\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc My text in {\\b bold{\\i  and italic with bold} text in bold}{\\i  italic} final text\\sb70\\par}}');
   });
 
   const h1TagName = `h1`;
@@ -75,7 +75,7 @@ describe('RtfTest', () => {
     let html = `<${ h1TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h1TagName }<${ h1TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs32\\b\\ul Title {\\cf1 with} tag ${ h1TagName }\\par}{\\pard\\sb240\\sa120\\fs32\\b\\ul \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs32\\b\\ul Title {\\cf1 with} tag ${ h1TagName }\\par}{\\pard\\sb240\\sa120\\fs32\\b\\ul \\par}}`);
   });
 
   const h2TagName = `h2`;
@@ -83,7 +83,7 @@ describe('RtfTest', () => {
     let html = `<${ h2TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h2TagName }<${ h2TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs28\\i\\b Title {\\cf1 with} tag ${ h2TagName }\\par}{\\pard\\sb240\\sa120\\fs28\\i\\b \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs28\\i\\b Title {\\cf1 with} tag ${ h2TagName }\\par}{\\pard\\sb240\\sa120\\fs28\\i\\b \\par}}`);
   });
 
   const h3TagName = `h3`;
@@ -91,7 +91,7 @@ describe('RtfTest', () => {
     let html = `<${ h3TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h3TagName }<${ h3TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs28\\b Title {\\cf1 with} tag ${ h3TagName }\\par}{\\pard\\sb240\\sa120\\fs28\\b \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs28\\b Title {\\cf1 with} tag ${ h3TagName }\\par}{\\pard\\sb240\\sa120\\fs28\\b \\par}}`);
   });
 
   const h4TagName = `h4`;
@@ -99,7 +99,7 @@ describe('RtfTest', () => {
     let html = `<${ h4TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h4TagName }<${ h4TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs23\\i\\b Title {\\cf1 with} tag ${ h4TagName }\\par}{\\pard\\sb240\\sa120\\fs23\\i\\b \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs23\\i\\b Title {\\cf1 with} tag ${ h4TagName }\\par}{\\pard\\sb240\\sa120\\fs23\\i\\b \\par}}`);
   });
 
   const h5TagName = `h5`;
@@ -107,7 +107,7 @@ describe('RtfTest', () => {
     let html = `<${ h5TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h5TagName }<${ h5TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs23\\b Title {\\cf1 with} tag ${ h5TagName }\\par}{\\pard\\sb240\\sa120\\fs23\\b \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs23\\b Title {\\cf1 with} tag ${ h5TagName }\\par}{\\pard\\sb240\\sa120\\fs23\\b \\par}}`);
   });
 
   const h6TagName = `h6`;
@@ -115,7 +115,7 @@ describe('RtfTest', () => {
     let html = `<${ h6TagName }>Title <span style="color:rgb(255,0,0);">with</span> tag ${ h6TagName }<${ h6TagName }>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs21\\b Title {\\cf1 with} tag ${ h6TagName }\\par}{\\pard\\sb240\\sa120\\fs21\\b \\par}}`);
+    should(rtf.convertHtmlToRtf(html)).be.equal(`{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red255\\green0\\blue0;}{\\pard\\sb240\\sa120\\fs21\\b Title {\\cf1 with} tag ${ h6TagName }\\par}{\\pard\\sb240\\sa120\\fs21\\b \\par}}`);
   });
 
 
@@ -127,7 +127,7 @@ describe('RtfTest', () => {
     rtf.addContentOfTagInRtfCode('test test test test');
     rtf.addClosingFatherTagInRtfCode('b');
 
-    should(rtf.buildRtf()).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;}{\\b test test test test}}');
+    should(rtf.buildRtf()).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;}{\\b test test test test}}');
   });
 
   it('getRtfContentReferences()', () => {
@@ -227,19 +227,19 @@ describe('RtfTest', () => {
     const html = `<p>comparação</p>`;
     const rtf = new Rtf();
 
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;}{\\pard compara\\\'e7\\\'e3o\\sb70\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;}{\\pard compara\\\'e7\\\'e3o\\sb70\\par}}');
   });
 
   it('Should set correct space', () => {
     const html = '<h1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;My test&nbsp;&nbsp;&nbsp;paragraph</h1>';
     const rtf = new Rtf();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;}{\\pard\\sb240\\sa120\\fs32\\b\\ul       My test   paragraph\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;}{\\pard\\sb240\\sa120\\fs32\\b\\ul       My test   paragraph\\par}}');
   });
 
   it('Should set correct space between open and close tags', () => {
     const html = `Lorem <b>IPSUM</b> dolor sit amet..`;
     const rtf = new Rtf();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}{\\colortbl ;}Lorem {\\b IPSUM} dolor sit amet..}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;}Lorem {\\b IPSUM} dolor sit amet..}');
   });
 
 });

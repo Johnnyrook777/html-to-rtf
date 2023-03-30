@@ -11,7 +11,7 @@ const Image           = require('../image/image.class');
 
 class Rtf {
   constructor() {
-    this.rtfHeaderOpening = "{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}";
+    this.rtfHeaderOpening = "{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134";
     this.rtfHeaderContent = '';
     this.rtfClosing = "}";
     this.rtfContentReferences = [];

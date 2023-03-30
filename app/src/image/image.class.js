@@ -3,7 +3,7 @@ const sizeOf = require('image-size')
 class Image {
 
   static  getImageCode(tag) {
-    const maxPageWidth = 964;
+    const maxPageWidth = 642;
     const twipsRatio = 15; // 15 twips per pixel at 96dpi
 
     let attribs = tag.attribs;
