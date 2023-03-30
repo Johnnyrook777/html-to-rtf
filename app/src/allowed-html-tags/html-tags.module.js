@@ -220,5 +220,18 @@ module.exports = [
       openingRtf: ' ',
       closing: '/html-space',
       closingRtf: ''
-   }
+   },
+   {
+      opening: 'img',
+      openingRtf: '{',
+      closing: 'img/',
+      closingRtf: '}'
+   },
+
+   /*
+   string mpic = @"{\pict\pngblip\picw" + 
+    img.Width.ToString() + @"\pich" + img.Height.ToString() +
+    @"\picwgoal" + width.ToString() + @"\pichgoal" + height.ToString() + 
+    @"\bin " + str + "}";
+    */
 ];

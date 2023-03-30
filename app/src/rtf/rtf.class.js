@@ -6,6 +6,8 @@ const MyString        = require('../string/my-string.class');
 const juice 		      = require('juice');
 const fs 				      = require('fs');
 const Character       = require('./character.class');
+const Image           = require('../image/image.class');
+
 
 class Rtf {
   constructor() {
@@ -70,6 +72,11 @@ class Rtf {
           this.addContentOfTagInRtfCode(child.data);
       });
     }
+
+    if (fatherTag.name.toLowerCase() == 'img') {
+      this.embedImage(fatherTag);
+    }
+
     this.addClosingFatherTagInRtfCode(fatherTag.name);
   }
 
@@ -128,8 +135,16 @@ class Rtf {
     contentOfTag = MyString.removeCharacterOfEscapeInAllString(contentOfTag, '\n\t');
     contentOfTag = Character.asciiToRtfScape(contentOfTag);
 
-    if(contentOfTag != undefined && !MyString.hasOnlyWhiteSpace(contentOfTag))
+    if(contentOfTag != undefined && !MyString.hasOnlyWhiteSpace(contentOfTag)) {
       this.rtfContentReferences.push({ content: contentOfTag, tag: false });
+    }
+  }
+
+  embedImage(imageTag) {
+    let contentOfTag = Image.getImageCode(imageTag);
+    if(contentOfTag != undefined && !MyString.hasOnlyWhiteSpace(contentOfTag)) {
+      this.rtfContentReferences.push({ content: contentOfTag, tag: false });
+    }
   }
 
   setHighlightInRtf() {

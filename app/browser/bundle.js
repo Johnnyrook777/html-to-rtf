@@ -551,6 +551,11 @@ class Rtf {
           this.addContentOfTagInRtfCode(child.data);
       });
     }
+
+    if(fatherTag.name.toLowerCase() == 'img') {
+      Image.embedImage(fatherTag);
+    }
+    
     this.addClosingFatherTagInRtfCode(fatherTag.name);
   }
 

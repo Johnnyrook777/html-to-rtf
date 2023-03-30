@@ -22,6 +22,7 @@ class AllowedHtmlTags {
 
   static getAllowedTag(tag) {
     tag = tag.toLowerCase();
+
     return HtmlTags.find(knowedTag => knowedTag.opening == tag || knowedTag.closing == tag);
   }
 
