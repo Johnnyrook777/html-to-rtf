@@ -4,6 +4,7 @@ class Image {
 
   static  getImageCode(tag) {
     const maxPageWidth = 964;
+    const twipsRatio = 15; // 15 twips per pixel at 96dpi
 
     let attribs = tag.attribs;
 
@@ -38,9 +39,12 @@ class Image {
     let ratiow = parseInt(width / dimensions.width * 100);
     let ratioh = parseInt(height / dimensions.height * 100);
 
+    let widthT = parseInt(width * twipsRatio);
+    let heightT = parseInt(height * twipsRatio);
+
     var bufString = this.getImageDataAsHex(imageBase64);
 
-    let result = `\\*\\shppict{\\pict\\picscalex${ratiow}\\picscaley${ratioh}\\picw${dimensions.width}\\pich${dimensions.height}${imageType} ${bufString}}}`;
+    let result = `\\*\\shppict{\\pict\\picscalex${ratiow}\\picscaley${ratioh}\\picw${dimensions.width}\\pich${dimensions.height}\\picwgoal${widthT}\\pichgoal${heightT}${imageType} ${bufString}}}`;
 
     return result;
   }
