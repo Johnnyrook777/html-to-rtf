@@ -1,6 +1,7 @@
 const sizeOf = require('image-size')
 
 class Image {
+
   static  getImageCode(tag) {
     let attribs = tag.attribs;
 
@@ -12,9 +13,7 @@ class Image {
 
     var dimensions = this.getImageSize(imageBase64);
 
-    console.log(dimensions);
-    console.log({ height, width });
-
+    // Need both width and height
     if (!width) {
       width = parseInt((height / dimensions.height * dimensions.width));
     }
@@ -23,7 +22,13 @@ class Image {
       height = parseInt((width / dimensions.width * dimensions.width));
     }
 
-    console.log({ height, width });
+    if (width > 1200) {
+      // Resize so it doesn't exceed the max width of a page
+      let ratio = width / 1200;
+
+      height = parseInt(height / ratio);
+      width = parseInt(width / ratio);
+    }
 
     var bufString = this.getImageDataAsHex(imageBase64);
 
