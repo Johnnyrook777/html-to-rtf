@@ -23,9 +23,9 @@ class Image {
     }
 
     let ratio = 100;
-    if (width > 1200) {
+    if (width > 964) {
       // Resize so it doesn't exceed the max width of a page
-      ratio = parseInt((1200 / width) * 100);
+      ratio = parseInt((964 / width) * 100);
     }
 
     var bufString = this.getImageDataAsHex(imageBase64);
