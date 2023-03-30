@@ -223,9 +223,9 @@ module.exports = [
    },
    {
       opening: 'hr',
-      openingRtf: '',
+      openingRtf: '{/page',
       closing: 'hr/',
-      closingRtf: '/page'
+      closingRtf: '}'
    },
    {
       opening: 'img',
