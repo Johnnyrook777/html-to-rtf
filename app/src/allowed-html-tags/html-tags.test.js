@@ -19,7 +19,7 @@ describe('HtmlTagsTest', () => {
       it(`<br> || <br/>`, () => {
         should(element.closing).be.equal('br/');
         should(element.openingRtf).be.equal('\\line');
-        should(element.closingRtf).be.equal('\\line');
+        should(element.closingRtf).be.equal('');
       });
     }
 

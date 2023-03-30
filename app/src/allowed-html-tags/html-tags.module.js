@@ -9,7 +9,7 @@ module.exports = [
       opening: 'br',
       openingRtf: '\\line',
       closing: 'br/',
-      closingRtf: '\\line'
+      closingRtf: ''
    },
    {
       opening: 'center',
