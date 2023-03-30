@@ -22,17 +22,17 @@ class Image {
       height = parseInt((width / dimensions.width * dimensions.width));
     }
 
+    let ratio = 100;
     if (width > 1200) {
       // Resize so it doesn't exceed the max width of a page
-      let ratio = width / 1200;
-
-      height = parseInt(height / ratio);
-      width = parseInt(width / ratio);
+      ratio = parseInt((1200 / width) * 100);
     }
 
     var bufString = this.getImageDataAsHex(imageBase64);
 
-    let result = `\\*\\shppict{\\pict${width ? '\\picw' + width : ''}${height ? '\\pich' + height : ''}${imageType} ${bufString}}}`;
+
+    // \picscalex80\picscaley80
+    let result = `\\*\\shppict{\\pict\\picscalex${ratio}\\picscaley${ratio}${width ? '\\picw' + width : ''}${height ? '\\pich' + height : ''}${imageType} ${bufString}}}`;
 
     return result;
   }
