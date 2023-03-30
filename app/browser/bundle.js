@@ -1,9 +1,9 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 var alignmentReferenceList = [
-  { name: 'center',   reference: '\\qc' },
-  { name: 'left',     reference: '\\ql' },
-  { name: 'right',    reference: '\\qr' },
-  { name: 'justify',  reference: '\\qj' }
+  { name: 'center',   reference: '\\qc ' },
+  { name: 'left',     reference: '\\ql ' },
+  { name: 'right',    reference: '\\qr ' },
+  { name: 'justify',  reference: '\\qj ' }
 ];
 
 class Alignment {
@@ -264,6 +264,12 @@ module.exports = [
       openingRtf: '',
       closing: '/title',
       closingRtf: ''
+   },
+   {
+      opening: 'html-space',
+      openingRtf: ' ',
+      closing: '/html-space',
+      closingRtf: ''
    }
 ];
 },{}],4:[function(require,module,exports){
@@ -357,7 +363,7 @@ class Color {
     let rtfReferenceColor, amountColorPosition = 0, colorsPosition = 1;
     colorTable[amountColorPosition].amount++;
     rtfReferenceColor = '\\cf' + colorTable[amountColorPosition].amount;
-    colorTable[colorsPosition].push({ red: rgb[0], green: rgb[1], blue: rgb[2], reference: rtfReferenceColor });
+    colorTable[colorsPosition].push({ red: rgb[0], green: rgb[1], blue: rgb[2], reference: rtfReferenceColor + ' ' });
   }
 
   static getRtfReferenceColorInColorTable(rgb) {
@@ -494,6 +500,7 @@ class Rtf {
   convertHtmlToRtf(html) {
     let htmlWithoutStrangerTags, $, treeOfTags;
 
+    html = html.replace(/&nbsp;/gi, '<html-space>');
     htmlWithoutStrangerTags = this.swapHtmlStrangerTags(html, 'p');
     $ = cheerio.load(juice(htmlWithoutStrangerTags));
     treeOfTags = $('html').children();
@@ -570,12 +577,29 @@ class Rtf {
   }
 
   addReferenceTagInRtfCode(referenceTag) {
-    if(referenceTag != undefined)
-      this.rtfContentReferences.push({ content: referenceTag, tag: true });
+    if(referenceTag != undefined) {
+      const space = referenceTag.includes('\\cf') ? '' : '';
+      this.rtfContentReferences.push({ content: referenceTag + space, tag: true });
+    }
   }
 
   addOpeningTagInRtfCode(tag) {
-    this.addReferenceTagInRtfCode(AllowedHtmlTags.getRtfReferenceTag(tag));
+    let value = AllowedHtmlTags.getRtfReferenceTag(tag);
+    let space = '';
+    
+    if (value) {
+      if (value === ' ') {
+        space = '';
+      }
+      else if (value === '{') {
+        space = '';
+      }
+      else {
+        space = ' ';
+      }
+
+      this.addReferenceTagInRtfCode(value + space);
+    }
   }
 
   addClosingFatherTagInRtfCode(closingFatherTag) {
@@ -759,37 +783,6 @@ function htmlToRtf(html) {
 
 window.htmlToRtf = htmlToRtf;
 },{"./app/src/rtf/rtf.class":9}],14:[function(require,module,exports){
-(function (global){(function (){
-'use strict';
-
-var possibleNames = [
-	'BigInt64Array',
-	'BigUint64Array',
-	'Float32Array',
-	'Float64Array',
-	'Int16Array',
-	'Int32Array',
-	'Int8Array',
-	'Uint16Array',
-	'Uint32Array',
-	'Uint8Array',
-	'Uint8ClampedArray'
-];
-
-var g = typeof globalThis === 'undefined' ? global : globalThis;
-
-module.exports = function availableTypedArrays() {
-	var out = [];
-	for (var i = 0; i < possibleNames.length; i++) {
-		if (typeof g[possibleNames[i]] === 'function') {
-			out[out.length] = possibleNames[i];
-		}
-	}
-	return out;
-};
-
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],15:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -941,7 +934,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],16:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 module.exports = {
 	trueFunc: function trueFunc(){
 		return true;
@@ -950,11 +943,11 @@ module.exports = {
 		return false;
 	}
 };
-},{}],17:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 
-},{}],18:[function(require,module,exports){
-arguments[4][17][0].apply(exports,arguments)
-},{"dup":17}],19:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
+arguments[4][16][0].apply(exports,arguments)
+},{"dup":16}],18:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -2774,31 +2767,114 @@ if ($defineProperty) {
 		$defineProperty = null;
 	}
 }
+exports.groupSelectors = groupSelectors;
 
-module.exports = function callBind(originalFunction) {
-	var func = $reflectApply(bind, $call, arguments);
-	if ($gOPD && $defineProperty) {
-		var desc = $gOPD(func, 'length');
-		if (desc.configurable) {
-			// original length, plus the receiver, minus any additional arguments (after the receiver)
-			$defineProperty(
-				func,
-				'length',
-				{ value: 1 + $max(0, originalFunction.length - (arguments.length - 1)) }
-			);
-		}
-	}
-	return func;
+},{"./positionals.js":21}],20:[function(require,module,exports){
+"use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
 };
-
-var applyBind = function applyBind() {
-	return $reflectApply(bind, $apply, arguments);
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
-
-if ($defineProperty) {
-	$defineProperty(module.exports, 'apply', { value: applyBind });
-} else {
-	module.exports.apply = applyBind;
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.select = exports.filter = exports.some = exports.is = exports.aliases = exports.pseudos = exports.filters = void 0;
+var css_what_1 = require("css-what");
+var css_select_1 = require("css-select");
+var DomUtils = __importStar(require("domutils"));
+var boolbase = __importStar(require("boolbase"));
+var helpers_js_1 = require("./helpers.js");
+var positionals_js_1 = require("./positionals.js");
+// Re-export pseudo extension points
+var css_select_2 = require("css-select");
+Object.defineProperty(exports, "filters", { enumerable: true, get: function () { return css_select_2.filters; } });
+Object.defineProperty(exports, "pseudos", { enumerable: true, get: function () { return css_select_2.pseudos; } });
+Object.defineProperty(exports, "aliases", { enumerable: true, get: function () { return css_select_2.aliases; } });
+var UNIVERSAL_SELECTOR = {
+    type: css_what_1.SelectorType.Universal,
+    namespace: null,
+};
+var SCOPE_PSEUDO = {
+    type: css_what_1.SelectorType.Pseudo,
+    name: "scope",
+    data: null,
+};
+function is(element, selector, options) {
+    if (options === void 0) { options = {}; }
+    return some([element], selector, options);
+}
+exports.is = is;
+function some(elements, selector, options) {
+    if (options === void 0) { options = {}; }
+    if (typeof selector === "function")
+        return elements.some(selector);
+    var _a = (0, helpers_js_1.groupSelectors)((0, css_what_1.parse)(selector)), plain = _a[0], filtered = _a[1];
+    return ((plain.length > 0 && elements.some((0, css_select_1._compileToken)(plain, options))) ||
+        filtered.some(function (sel) { return filterBySelector(sel, elements, options).length > 0; }));
+}
+exports.some = some;
+function filterByPosition(filter, elems, data, options) {
+    var num = typeof data === "string" ? parseInt(data, 10) : NaN;
+    switch (filter) {
+        case "first":
+        case "lt":
+            // Already done in `getLimit`
+            return elems;
+        case "last":
+            return elems.length > 0 ? [elems[elems.length - 1]] : elems;
+        case "nth":
+        case "eq":
+            return isFinite(num) && Math.abs(num) < elems.length
+                ? [num < 0 ? elems[elems.length + num] : elems[num]]
+                : [];
+        case "gt":
+            return isFinite(num) ? elems.slice(num + 1) : [];
+        case "even":
+            return elems.filter(function (_, i) { return i % 2 === 0; });
+        case "odd":
+            return elems.filter(function (_, i) { return i % 2 === 1; });
+        case "not": {
+            var filtered_1 = new Set(filterParsed(data, elems, options));
+            return elems.filter(function (e) { return !filtered_1.has(e); });
+        }
+    }
 }
 
 },{"function-bind":107,"get-intrinsic":108}],22:[function(require,module,exports){
@@ -7766,6 +7842,108 @@ var readData = function(el, name) {
 
   return readAll ? el.data : value;
 };
+/**
+ * @param attrib Attribute to check.
+ * @param value Attribute value to look for.
+ * @returns A function to check whether the a node has an attribute with a
+ *   particular value.
+ */
+function getAttribCheck(attrib, value) {
+    if (typeof value === "function") {
+        return function (elem) { return (0, domhandler_1.isTag)(elem) && value(elem.attribs[attrib]); };
+    }
+    return function (elem) { return (0, domhandler_1.isTag)(elem) && elem.attribs[attrib] === value; };
+}
+/**
+ * @param a First function to combine.
+ * @param b Second function to combine.
+ * @returns A function taking a node and returning `true` if either of the input
+ *   functions returns `true` for the node.
+ */
+function combineFuncs(a, b) {
+    return function (elem) { return a(elem) || b(elem); };
+}
+/**
+ * @param options An object describing nodes to look for.
+ * @returns A function executing all checks in `options` and returning `true` if
+ *   any of them match a node.
+ */
+function compileTest(options) {
+    var funcs = Object.keys(options).map(function (key) {
+        var value = options[key];
+        return Object.prototype.hasOwnProperty.call(Checks, key)
+            ? Checks[key](value)
+            : getAttribCheck(key, value);
+    });
+    return funcs.length === 0 ? null : funcs.reduce(combineFuncs);
+}
+/**
+ * @category Legacy Query Functions
+ * @param options An object describing nodes to look for.
+ * @param node The element to test.
+ * @returns Whether the element matches the description in `options`.
+ */
+function testElement(options, node) {
+    var test = compileTest(options);
+    return test ? test(node) : true;
+}
+exports.testElement = testElement;
+/**
+ * @category Legacy Query Functions
+ * @param options An object describing nodes to look for.
+ * @param nodes Nodes to search through.
+ * @param recurse Also consider child nodes.
+ * @param limit Maximum number of nodes to return.
+ * @returns All nodes that match `options`.
+ */
+function getElements(options, nodes, recurse, limit) {
+    if (limit === void 0) { limit = Infinity; }
+    var test = compileTest(options);
+    return test ? (0, querying_js_1.filter)(test, nodes, recurse, limit) : [];
+}
+exports.getElements = getElements;
+/**
+ * @category Legacy Query Functions
+ * @param id The unique ID attribute value to look for.
+ * @param nodes Nodes to search through.
+ * @param recurse Also consider child nodes.
+ * @returns The node with the supplied ID.
+ */
+function getElementById(id, nodes, recurse) {
+    if (recurse === void 0) { recurse = true; }
+    if (!Array.isArray(nodes))
+        nodes = [nodes];
+    return (0, querying_js_1.findOne)(getAttribCheck("id", id), nodes, recurse);
+}
+exports.getElementById = getElementById;
+/**
+ * @category Legacy Query Functions
+ * @param tagName Tag name to search for.
+ * @param nodes Nodes to search through.
+ * @param recurse Also consider child nodes.
+ * @param limit Maximum number of nodes to return.
+ * @returns All nodes with the supplied `tagName`.
+ */
+function getElementsByTagName(tagName, nodes, recurse, limit) {
+    if (recurse === void 0) { recurse = true; }
+    if (limit === void 0) { limit = Infinity; }
+    return (0, querying_js_1.filter)(Checks["tag_name"](tagName), nodes, recurse, limit);
+}
+exports.getElementsByTagName = getElementsByTagName;
+/**
+ * @category Legacy Query Functions
+ * @param type Element type to look for.
+ * @param nodes Nodes to search through.
+ * @param recurse Also consider child nodes.
+ * @param limit Maximum number of nodes to return.
+ * @returns All nodes with the supplied `type`.
+ */
+function getElementsByTagType(type, nodes, recurse, limit) {
+    if (recurse === void 0) { recurse = true; }
+    if (limit === void 0) { limit = Infinity; }
+    return (0, querying_js_1.filter)(Checks["tag_type"](type), nodes, recurse, limit);
+}
+exports.getElementsByTagType = getElementsByTagType;
 
 exports.data = function(name, value) {
   var elem = this[0];
@@ -7793,6 +7971,18 @@ exports.data = function(name, value) {
 
   return readData(elem, name);
 };
+function replaceCodePoint(codePoint) {
+    var _a;
+    if ((codePoint >= 0xd800 && codePoint <= 0xdfff) || codePoint > 0x10ffff) {
+        return 0xfffd;
+    }
+    return (_a = decodeMap.get(codePoint)) !== null && _a !== void 0 ? _a : codePoint;
+}
+exports.replaceCodePoint = replaceCodePoint;
+function decodeCodePoint(codePoint) {
+    return (0, exports.fromCodePoint)(replaceCodePoint(codePoint));
+}
+exports.default = decodeCodePoint;
 
 /**
  * Get the value of an element
@@ -7874,6 +8064,122 @@ exports.removeAttr = function(name) {
 
   return this;
 };
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.generate = exports.compile = void 0;
+var boolbase_1 = __importDefault(require("boolbase"));
+/**
+ * Returns a function that checks if an elements index matches the given rule
+ * highly optimized to return the fastest solution.
+ *
+ * @param parsed A tuple [a, b], as returned by `parse`.
+ * @returns A highly optimized function that returns whether an index matches the nth-check.
+ * @example
+ *
+ * ```js
+ * const check = nthCheck.compile([2, 3]);
+ *
+ * check(0); // `false`
+ * check(1); // `false`
+ * check(2); // `true`
+ * check(3); // `false`
+ * check(4); // `true`
+ * check(5); // `false`
+ * check(6); // `true`
+ * ```
+ */
+function compile(parsed) {
+    var a = parsed[0];
+    // Subtract 1 from `b`, to convert from one- to zero-indexed.
+    var b = parsed[1] - 1;
+    /*
+     * When `b <= 0`, `a * n` won't be lead to any matches for `a < 0`.
+     * Besides, the specification states that no elements are
+     * matched when `a` and `b` are 0.
+     *
+     * `b < 0` here as we subtracted 1 from `b` above.
+     */
+    if (b < 0 && a <= 0)
+        return boolbase_1.default.falseFunc;
+    // When `a` is in the range -1..1, it matches any element (so only `b` is checked).
+    if (a === -1)
+        return function (index) { return index <= b; };
+    if (a === 0)
+        return function (index) { return index === b; };
+    // When `b <= 0` and `a === 1`, they match any element.
+    if (a === 1)
+        return b < 0 ? boolbase_1.default.trueFunc : function (index) { return index >= b; };
+    /*
+     * Otherwise, modulo can be used to check if there is a match.
+     *
+     * Modulo doesn't care about the sign, so let's use `a`s absolute value.
+     */
+    var absA = Math.abs(a);
+    // Get `b mod a`, + a if this is negative.
+    var bMod = ((b % absA) + absA) % absA;
+    return a > 1
+        ? function (index) { return index >= b && index % absA === bMod; }
+        : function (index) { return index <= b && index % absA === bMod; };
+}
+exports.compile = compile;
+/**
+ * Returns a function that produces a monotonously increasing sequence of indices.
+ *
+ * If the sequence has an end, the returned function will return `null` after
+ * the last index in the sequence.
+ *
+ * @param parsed A tuple [a, b], as returned by `parse`.
+ * @returns A function that produces a sequence of indices.
+ * @example <caption>Always increasing (2n+3)</caption>
+ *
+ * ```js
+ * const gen = nthCheck.generate([2, 3])
+ *
+ * gen() // `1`
+ * gen() // `3`
+ * gen() // `5`
+ * gen() // `8`
+ * gen() // `11`
+ * ```
+ *
+ * @example <caption>With end value (-2n+10)</caption>
+ *
+ * ```js
+ *
+ * const gen = nthCheck.generate([-2, 5]);
+ *
+ * gen() // 0
+ * gen() // 2
+ * gen() // 4
+ * gen() // null
+ * ```
+ */
+function generate(parsed) {
+    var a = parsed[0];
+    // Subtract 1 from `b`, to convert from one- to zero-indexed.
+    var b = parsed[1] - 1;
+    var n = 0;
+    // Make sure to always return an increasing sequence
+    if (a < 0) {
+        var aPos_1 = -a;
+        // Get `b mod a`
+        var minValue_1 = ((b % aPos_1) + aPos_1) % aPos_1;
+        return function () {
+            var val = minValue_1 + aPos_1 * n++;
+            return val > b ? null : val;
+        };
+    }
+    if (a === 0)
+        return b < 0
+            ? // There are no result — always return `null`
+                function () { return null; }
+            : // Return `b` exactly once
+                function () { return (n++ === 0 ? b : null); };
+    if (b < 0) {
+        b += a * Math.ceil(-b / a);
+    }
+    return function () { return a * n++ + b; };
+}
+exports.generate = generate;
 
 exports.hasClass = function(className) {
   return _.some(this, function(elem) {
@@ -9667,6 +9973,39 @@ exports.domEach = function(cheerio, fn) {
   return cheerio;
 };
 
+},{"./api/attributes.js":60,"./api/css.js":61,"./api/forms.js":62,"./api/manipulation.js":63,"./api/traversing.js":64}],66:[function(require,module,exports){
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __exportStar = (this && this.__exportStar) || function(m, exports) {
+    for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
+};
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.root = exports.parseHTML = exports.merge = exports.contains = exports.text = exports.xml = exports.html = exports.load = void 0;
 /**
  * Create a deep copy of the given DOM structure by first rendering it to a
  * string and then parsing the resultant markup.
@@ -15843,6 +16182,8 @@ function parseContent(el) {
 
     parsed.push(tokens[i]);
   }
+  return property;
+};
 
   content = parsed.join('');
   // Naive unescape, assume no unicode char codes
@@ -30489,8 +30830,12 @@ var isObject = require('./isObject'),
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
-/** Used to check objects for own properties. */
-var hasOwnProperty = objectProto.hasOwnProperty;
+    case boolTag:
+    case dateTag:
+    case numberTag:
+      // Coerce booleans to `1` or `0` and dates to milliseconds.
+      // Invalid dates are coerced to `NaN`.
+      return eq(+object, +other);
 
 /**
  * The base implementation of `_.keysIn` which doesn't treat sparse arrays as dense.
@@ -31968,8 +32313,8 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
       arrLength = array.length,
       othLength = other.length;
 
-  if (arrLength != othLength && !(isPartial && othLength > arrLength)) {
-    return false;
+    buffer = '';
+    token = {};
   }
   // Check that cyclic values are equal.
   var arrStacked = stack.get(array);
@@ -31981,13 +32326,14 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
       result = true,
       seen = (bitmask & COMPARE_UNORDERED_FLAG) ? new SetCache : undefined;
 
-  stack.set(array, other);
-  stack.set(other, array);
+  // -- Main Loop ------------------------------------------------------------
 
-  // Ignore non-index properties.
-  while (++index < arrLength) {
-    var arrValue = array[index],
-        othValue = other[index];
+  /*
+  The main loop is a state machine that reads in one character at a time,
+  and determines what to do based on the current state and character.
+  This is implemented as a series of nested `switch` statements and the
+  case orders have been mildly optimized based on rough probabilities
+  calculated by processing a small sample of real-world CSS.
 
     if (customizer) {
       var compared = isPartial
@@ -32018,12 +32364,6 @@ function equalArrays(array, other, bitmask, customizer, equalFunc, stack) {
         )) {
       result = false;
       break;
-    }
-  }
-  stack['delete'](array);
-  stack['delete'](other);
-  return result;
-}
 
 module.exports = equalArrays;
 
@@ -32084,32 +32424,30 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
       object = object.buffer;
       other = other.buffer;
 
-    case arrayBufferTag:
-      if ((object.byteLength != other.byteLength) ||
-          !equalFunc(new Uint8Array(object), new Uint8Array(other))) {
-        return false;
+      case 'at-value':
+        // Tokenize an @-rule if a semi-colon was omitted.
+        if ('\n' === ch) {
+          token.value = buffer.trim();
+          addToken();
+          popState();
+        }
+        break;
       }
-      return true;
 
-    case boolTag:
-    case dateTag:
-    case numberTag:
-      // Coerce booleans to `1` or `0` and dates to milliseconds.
-      // Invalid dates are coerced to `NaN`.
-      return eq(+object, +other);
+      // if ('\n' === ch) {
+      //   column = 0;
+      //   line += 1;
+      // }
+      break;
 
-    case errorTag:
-      return object.name == other.name && object.message == other.message;
+    case ':':
+      switch (getState()) {
+      case 'name':
+        token.name = buffer.trim();
+        buffer = '';
 
-    case regexpTag:
-    case stringTag:
-      // Coerce regexes to strings and treat strings, primitives and objects,
-      // as equal. See http://www.ecma-international.org/ecma-262/7.0/#sec-regexp.prototype.tostring
-      // for more details.
-      return object == (other + '');
-
-    case mapTag:
-      var convert = mapToArray;
+        replaceState('before-value');
+        break;
 
     case setTag:
       var isPartial = bitmask & COMPARE_PARTIAL_FLAG;
@@ -32131,13 +32469,11 @@ function equalByTag(object, other, tag, bitmask, customizer, equalFunc, stack) {
       stack['delete'](object);
       return result;
 
-    case symbolTag:
-      if (symbolValueOf) {
-        return symbolValueOf.call(object) == symbolValueOf.call(other);
+      default:
+        buffer += ch;
+        break;
       }
-  }
-  return false;
-}
+      break;
 
 module.exports = equalByTag;
 
@@ -32193,11 +32529,12 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
   stack.set(object, other);
   stack.set(other, object);
 
-  var skipCtor = isPartial;
-  while (++index < objLength) {
-    key = objProps[index];
-    var objValue = object[key],
-        othValue = other[key];
+      case 'at-value':
+        // Tokenize an @-rule
+        token.value = buffer.trim();
+        addToken();
+        popState();
+        break;
 
     if (customizer) {
       var compared = isPartial
@@ -32218,18 +32555,11 @@ function equalObjects(object, other, bitmask, customizer, equalFunc, stack) {
     var objCtor = object.constructor,
         othCtor = other.constructor;
 
-    // Non `Object` object instances with different constructors are not equal.
-    if (objCtor != othCtor &&
-        ('constructor' in object && 'constructor' in other) &&
-        !(typeof objCtor == 'function' && objCtor instanceof objCtor &&
-          typeof othCtor == 'function' && othCtor instanceof othCtor)) {
-      result = false;
-    }
-  }
-  stack['delete'](object);
-  stack['delete'](other);
-  return result;
-}
+      default:
+        buffer += ch;
+        break;
+      }
+      break;
 
 module.exports = equalObjects;
 
@@ -32377,14 +32707,17 @@ function getMatchData(object) {
   var result = keys(object),
       length = result.length;
 
-  while (length--) {
-    var key = result[length],
-        value = object[key];
+      case 'at-group':
+        // Tokenize an @-group
+        token.name = buffer.trim();
 
-    result[length] = [key, value, isStrictComparable(value)];
-  }
-  return result;
-}
+        // XXX: @-rules are starting to get hairy
+        switch (token.type) {
+        case 'font-face':
+        case 'viewport' :
+        case 'page'     :
+          pushState('before-name');
+          break;
 
 module.exports = getMatchData;
 
@@ -32520,14 +32853,9 @@ var dataViewCtorString = toSource(DataView),
     setCtorString = toSource(Set),
     weakMapCtorString = toSource(WeakMap);
 
-/**
- * Gets the `toStringTag` of `value`.
- *
- * @private
- * @param {*} value The value to query.
- * @returns {string} Returns the `toStringTag`.
- */
-var getTag = baseGetTag;
+        addToken();
+        depth = depth + 1;
+        break;
 
 // Fallback for data views, maps, sets, and weak maps in IE 11 and promises in Node.js < 6.
 if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
@@ -32540,18 +32868,17 @@ if ((DataView && getTag(new DataView(new ArrayBuffer(1))) != dataViewTag) ||
         Ctor = result == objectTag ? value.constructor : undefined,
         ctorString = Ctor ? toSource(Ctor) : '';
 
-    if (ctorString) {
-      switch (ctorString) {
-        case dataViewCtorString: return dataViewTag;
-        case mapCtorString: return mapTag;
-        case promiseCtorString: return promiseTag;
-        case setCtorString: return setTag;
-        case weakMapCtorString: return weakMapTag;
+      case 'comment':
+      case 'double-string':
+      case 'single-string':
+        // Ignore braces in comments and strings
+        buffer += ch;
+        break;
+      case 'before-value':
+        replaceState('value');
+        buffer += ch;
+        break;
       }
-    }
-    return result;
-  };
-}
 
 module.exports = getTag;
 
@@ -33188,6 +33515,191 @@ var getMapData = require('./_getMapData');
 function mapCacheGet(key) {
   return getMapData(this, key).get(key);
 }
+exports.serializeDoctypeContent = serializeDoctypeContent;
+exports.adapter = {
+    // Re-exports from domhandler
+    isCommentNode: domhandler_1.isComment,
+    isElementNode: domhandler_1.isTag,
+    isTextNode: domhandler_1.isText,
+    //Node construction
+    createDocument() {
+        const node = new domhandler_1.Document([]);
+        node['x-mode'] = parse5_1.html.DOCUMENT_MODE.NO_QUIRKS;
+        return node;
+    },
+    createDocumentFragment() {
+        return new domhandler_1.Document([]);
+    },
+    createElement(tagName, namespaceURI, attrs) {
+        const attribs = Object.create(null);
+        const attribsNamespace = Object.create(null);
+        const attribsPrefix = Object.create(null);
+        for (let i = 0; i < attrs.length; i++) {
+            const attrName = attrs[i].name;
+            attribs[attrName] = attrs[i].value;
+            attribsNamespace[attrName] = attrs[i].namespace;
+            attribsPrefix[attrName] = attrs[i].prefix;
+        }
+        const node = new domhandler_1.Element(tagName, attribs, []);
+        node.namespace = namespaceURI;
+        node['x-attribsNamespace'] = attribsNamespace;
+        node['x-attribsPrefix'] = attribsPrefix;
+        return node;
+    },
+    createCommentNode(data) {
+        return new domhandler_1.Comment(data);
+    },
+    //Tree mutation
+    appendChild(parentNode, newNode) {
+        const prev = parentNode.children[parentNode.children.length - 1];
+        if (prev) {
+            prev.next = newNode;
+            newNode.prev = prev;
+        }
+        parentNode.children.push(newNode);
+        newNode.parent = parentNode;
+    },
+    insertBefore(parentNode, newNode, referenceNode) {
+        const insertionIdx = parentNode.children.indexOf(referenceNode);
+        const { prev } = referenceNode;
+        if (prev) {
+            prev.next = newNode;
+            newNode.prev = prev;
+        }
+        referenceNode.prev = newNode;
+        newNode.next = referenceNode;
+        parentNode.children.splice(insertionIdx, 0, newNode);
+        newNode.parent = parentNode;
+    },
+    setTemplateContent(templateElement, contentElement) {
+        exports.adapter.appendChild(templateElement, contentElement);
+    },
+    getTemplateContent(templateElement) {
+        return templateElement.children[0];
+    },
+    setDocumentType(document, name, publicId, systemId) {
+        const data = serializeDoctypeContent(name, publicId, systemId);
+        let doctypeNode = document.children.find((node) => (0, domhandler_1.isDirective)(node) && node.name === '!doctype');
+        if (doctypeNode) {
+            doctypeNode.data = data !== null && data !== void 0 ? data : null;
+        }
+        else {
+            doctypeNode = new domhandler_1.ProcessingInstruction('!doctype', data);
+            exports.adapter.appendChild(document, doctypeNode);
+        }
+        doctypeNode['x-name'] = name !== null && name !== void 0 ? name : undefined;
+        doctypeNode['x-publicId'] = publicId !== null && publicId !== void 0 ? publicId : undefined;
+        doctypeNode['x-systemId'] = systemId !== null && systemId !== void 0 ? systemId : undefined;
+    },
+    setDocumentMode(document, mode) {
+        document['x-mode'] = mode;
+    },
+    getDocumentMode(document) {
+        return document['x-mode'];
+    },
+    detachNode(node) {
+        if (node.parent) {
+            const idx = node.parent.children.indexOf(node);
+            const { prev, next } = node;
+            node.prev = null;
+            node.next = null;
+            if (prev) {
+                prev.next = next;
+            }
+            if (next) {
+                next.prev = prev;
+            }
+            node.parent.children.splice(idx, 1);
+            node.parent = null;
+        }
+    },
+    insertText(parentNode, text) {
+        const lastChild = parentNode.children[parentNode.children.length - 1];
+        if (lastChild && (0, domhandler_1.isText)(lastChild)) {
+            lastChild.data += text;
+        }
+        else {
+            exports.adapter.appendChild(parentNode, createTextNode(text));
+        }
+    },
+    insertTextBefore(parentNode, text, referenceNode) {
+        const prevNode = parentNode.children[parentNode.children.indexOf(referenceNode) - 1];
+        if (prevNode && (0, domhandler_1.isText)(prevNode)) {
+            prevNode.data += text;
+        }
+        else {
+            exports.adapter.insertBefore(parentNode, createTextNode(text), referenceNode);
+        }
+    },
+    adoptAttributes(recipient, attrs) {
+        for (let i = 0; i < attrs.length; i++) {
+            const attrName = attrs[i].name;
+            if (typeof recipient.attribs[attrName] === 'undefined') {
+                recipient.attribs[attrName] = attrs[i].value;
+                recipient['x-attribsNamespace'][attrName] = attrs[i].namespace;
+                recipient['x-attribsPrefix'][attrName] = attrs[i].prefix;
+            }
+        }
+    },
+    //Tree traversing
+    getFirstChild(node) {
+        return node.children[0];
+    },
+    getChildNodes(node) {
+        return node.children;
+    },
+    getParentNode(node) {
+        return node.parent;
+    },
+    getAttrList(element) {
+        return element.attributes;
+    },
+    //Node data
+    getTagName(element) {
+        return element.name;
+    },
+    getNamespaceURI(element) {
+        return element.namespace;
+    },
+    getTextNodeContent(textNode) {
+        return textNode.data;
+    },
+    getCommentNodeContent(commentNode) {
+        return commentNode.data;
+    },
+    getDocumentTypeNodeName(doctypeNode) {
+        var _a;
+        return (_a = doctypeNode['x-name']) !== null && _a !== void 0 ? _a : '';
+    },
+    getDocumentTypeNodePublicId(doctypeNode) {
+        var _a;
+        return (_a = doctypeNode['x-publicId']) !== null && _a !== void 0 ? _a : '';
+    },
+    getDocumentTypeNodeSystemId(doctypeNode) {
+        var _a;
+        return (_a = doctypeNode['x-systemId']) !== null && _a !== void 0 ? _a : '';
+    },
+    //Node types
+    isDocumentTypeNode(node) {
+        return (0, domhandler_1.isDirective)(node) && node.name === '!doctype';
+    },
+    // Source code location
+    setNodeSourceCodeLocation(node, location) {
+        if (location) {
+            node.startIndex = location.startOffset;
+            node.endIndex = location.endOffset;
+        }
+        node.sourceCodeLocation = location;
+    },
+    getNodeSourceCodeLocation(node) {
+        return node.sourceCodeLocation;
+    },
+    updateNodeSourceCodeLocation(node, endLocation) {
+        if (endLocation.endOffset != null)
+            node.endIndex = endLocation.endOffset;
+        node.sourceCodeLocation = Object.assign(Object.assign({}, node.sourceCodeLocation), endLocation);
+    },
+};
 
 module.exports = mapCacheGet;
 
@@ -33300,6 +33812,7 @@ function memoizeCapped(func) {
   var cache = result.cache;
   return result;
 }
+exports.getDocumentMode = getDocumentMode;
 
 module.exports = memoizeCapped;
 
@@ -33651,6 +34164,7 @@ function safeGet(object, key) {
 
   return object[key];
 }
+exports.isUndefinedCodePoint = isUndefinedCodePoint;
 
 module.exports = safeGet;
 
@@ -33730,6 +34244,7 @@ function setToArray(set) {
   });
   return result;
 }
+exports.parseFragment = parseFragment;
 
 module.exports = setToArray;
 
@@ -40974,956 +41489,1252 @@ function numberedHeaderEndTagInBody(p) {
         p.openElements.generateImpliedEndTags();
         p.openElements.popUntilNumberedHeaderPopped();
     }
-}
-
-function appletEndTagInBody(p, token) {
-    var tn = token.tagName;
-
-    if (p.openElements.hasInScope(tn)) {
-        p.openElements.generateImpliedEndTags();
-        p.openElements.popUntilTagNamePopped(tn);
-        p.activeFormattingElements.clearToLastMarker();
+    _setContextModes(current, tid) {
+        const isHTML = current === this.document || this.treeAdapter.getNamespaceURI(current) === html_js_1.NS.HTML;
+        this.currentNotInHTML = !isHTML;
+        this.tokenizer.inForeignNode = !isHTML && !this._isIntegrationPoint(tid, current);
     }
-}
-
-function brEndTagInBody(p) {
-    p._reconstructActiveFormattingElements();
-    p._insertFakeElement($.BR);
-    p.openElements.pop();
-    p.framesetOk = false;
-}
-
-function genericEndTagInBody(p, token) {
-    var tn = token.tagName;
-
-    for (var i = p.openElements.stackTop; i > 0; i--) {
-        var element = p.openElements.items[i];
-
-        if (p.treeAdapter.getTagName(element) === tn) {
-            p.openElements.generateImpliedEndTagsWithExclusion(tn);
-            p.openElements.popUntilElementPopped(element);
-            break;
-        }
-
-        if (p._isSpecialElement(element))
-            break;
+    _switchToTextParsing(currentToken, nextTokenizerState) {
+        this._insertElement(currentToken, html_js_1.NS.HTML);
+        this.tokenizer.state = nextTokenizerState;
+        this.originalInsertionMode = this.insertionMode;
+        this.insertionMode = InsertionMode.TEXT;
     }
-}
-
-//OPTIMIZATION: Integer comparisons are low-cost, so we can use very fast tag name length filters here.
-//It's faster than using dictionary.
-function endTagInBody(p, token) {
-    var tn = token.tagName;
-
-    switch (tn.length) {
-        case 1:
-            if (tn === $.A || tn === $.B || tn === $.I || tn === $.S || tn === $.U)
-                callAdoptionAgency(p, token);
-
-            else if (tn === $.P)
-                pEndTagInBody(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 2:
-            if (tn === $.DL || tn === $.UL || tn === $.OL)
-                addressEndTagInBody(p, token);
-
-            else if (tn === $.LI)
-                liEndTagInBody(p, token);
-
-            else if (tn === $.DD || tn === $.DT)
-                ddEndTagInBody(p, token);
-
-            else if (tn === $.H1 || tn === $.H2 || tn === $.H3 || tn === $.H4 || tn === $.H5 || tn === $.H6)
-                numberedHeaderEndTagInBody(p, token);
-
-            else if (tn === $.BR)
-                brEndTagInBody(p, token);
-
-            else if (tn === $.EM || tn === $.TT)
-                callAdoptionAgency(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 3:
-            if (tn === $.BIG)
-                callAdoptionAgency(p, token);
-
-            else if (tn === $.DIR || tn === $.DIV || tn === $.NAV)
-                addressEndTagInBody(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 4:
-            if (tn === $.BODY)
-                bodyEndTagInBody(p, token);
-
-            else if (tn === $.HTML)
-                htmlEndTagInBody(p, token);
-
-            else if (tn === $.FORM)
-                formEndTagInBody(p, token);
-
-            else if (tn === $.CODE || tn === $.FONT || tn === $.NOBR)
-                callAdoptionAgency(p, token);
-
-            else if (tn === $.MAIN || tn === $.MENU)
-                addressEndTagInBody(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 5:
-            if (tn === $.ASIDE)
-                addressEndTagInBody(p, token);
-
-            else if (tn === $.SMALL)
-                callAdoptionAgency(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 6:
-            if (tn === $.CENTER || tn === $.FIGURE || tn === $.FOOTER || tn === $.HEADER || tn === $.HGROUP)
-                addressEndTagInBody(p, token);
-
-            else if (tn === $.APPLET || tn === $.OBJECT)
-                appletEndTagInBody(p, token);
-
-            else if (tn === $.STRIKE || tn === $.STRONG)
-                callAdoptionAgency(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 7:
-            if (tn === $.ADDRESS || tn === $.ARTICLE || tn === $.DETAILS || tn === $.SECTION || tn === $.SUMMARY)
-                addressEndTagInBody(p, token);
-
-            else if (tn === $.MARQUEE)
-                appletEndTagInBody(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 8:
-            if (tn === $.FIELDSET)
-                addressEndTagInBody(p, token);
-
-            else if (tn === $.TEMPLATE)
-                endTagInHead(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        case 10:
-            if (tn === $.BLOCKQUOTE || tn === $.FIGCAPTION)
-                addressEndTagInBody(p, token);
-
-            else
-                genericEndTagInBody(p, token);
-
-            break;
-
-        default :
-            genericEndTagInBody(p, token);
+    switchToPlaintextParsing() {
+        this.insertionMode = InsertionMode.TEXT;
+        this.originalInsertionMode = InsertionMode.IN_BODY;
+        this.tokenizer.state = index_js_1.TokenizerMode.PLAINTEXT;
     }
-}
-
-function eofInBody(p, token) {
-    if (p.tmplInsertionModeStackTop > -1)
-        eofInTemplate(p, token);
-
-    else
-        p.stopped = true;
-}
-
-//12.2.5.4.8 The "text" insertion mode
-//------------------------------------------------------------------
-function endTagInText(p, token) {
-    if (token.tagName === $.SCRIPT)
-        p.pendingScript = p.openElements.current;
-
-    p.openElements.pop();
-    p.insertionMode = p.originalInsertionMode;
-}
-
-
-function eofInText(p, token) {
-    p.openElements.pop();
-    p.insertionMode = p.originalInsertionMode;
-    p._processToken(token);
-}
-
-
-//12.2.5.4.9 The "in table" insertion mode
-//------------------------------------------------------------------
-function characterInTable(p, token) {
-    var curTn = p.openElements.currentTagName;
-
-    if (curTn === $.TABLE || curTn === $.TBODY || curTn === $.TFOOT || curTn === $.THEAD || curTn === $.TR) {
-        p.pendingCharacterTokens = [];
-        p.hasNonWhitespacePendingCharacterToken = false;
-        p.originalInsertionMode = p.insertionMode;
-        p.insertionMode = IN_TABLE_TEXT_MODE;
-        p._processToken(token);
+    //Fragment parsing
+    _getAdjustedCurrentElement() {
+        return this.openElements.stackTop === 0 && this.fragmentContext
+            ? this.fragmentContext
+            : this.openElements.current;
     }
-
-    else
-        tokenInTable(p, token);
-}
-
-function captionStartTagInTable(p, token) {
-    p.openElements.clearBackToTableContext();
-    p.activeFormattingElements.insertMarker();
-    p._insertElement(token, NS.HTML);
-    p.insertionMode = IN_CAPTION_MODE;
-}
-
-function colgroupStartTagInTable(p, token) {
-    p.openElements.clearBackToTableContext();
-    p._insertElement(token, NS.HTML);
-    p.insertionMode = IN_COLUMN_GROUP_MODE;
-}
-
-function colStartTagInTable(p, token) {
-    p.openElements.clearBackToTableContext();
-    p._insertFakeElement($.COLGROUP);
-    p.insertionMode = IN_COLUMN_GROUP_MODE;
-    p._processToken(token);
-}
-
-function tbodyStartTagInTable(p, token) {
-    p.openElements.clearBackToTableContext();
-    p._insertElement(token, NS.HTML);
-    p.insertionMode = IN_TABLE_BODY_MODE;
-}
-
-function tdStartTagInTable(p, token) {
-    p.openElements.clearBackToTableContext();
-    p._insertFakeElement($.TBODY);
-    p.insertionMode = IN_TABLE_BODY_MODE;
-    p._processToken(token);
-}
-
-function tableStartTagInTable(p, token) {
-    if (p.openElements.hasInTableScope($.TABLE)) {
-        p.openElements.popUntilTagNamePopped($.TABLE);
-        p._resetInsertionMode();
-        p._processToken(token);
-    }
-}
-
-function inputStartTagInTable(p, token) {
-    var inputType = Tokenizer.getTokenAttr(token, ATTRS.TYPE);
-
-    if (inputType && inputType.toLowerCase() === HIDDEN_INPUT_TYPE)
-        p._appendElement(token, NS.HTML);
-
-    else
-        tokenInTable(p, token);
-}
-
-function formStartTagInTable(p, token) {
-    if (!p.formElement && p.openElements.tmplCount === 0) {
-        p._insertElement(token, NS.HTML);
-        p.formElement = p.openElements.current;
-        p.openElements.pop();
-    }
-}
-
-function startTagInTable(p, token) {
-    var tn = token.tagName;
-
-    switch (tn.length) {
-        case 2:
-            if (tn === $.TD || tn === $.TH || tn === $.TR)
-                tdStartTagInTable(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        case 3:
-            if (tn === $.COL)
-                colStartTagInTable(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        case 4:
-            if (tn === $.FORM)
-                formStartTagInTable(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        case 5:
-            if (tn === $.TABLE)
-                tableStartTagInTable(p, token);
-
-            else if (tn === $.STYLE)
-                startTagInHead(p, token);
-
-            else if (tn === $.TBODY || tn === $.TFOOT || tn === $.THEAD)
-                tbodyStartTagInTable(p, token);
-
-            else if (tn === $.INPUT)
-                inputStartTagInTable(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        case 6:
-            if (tn === $.SCRIPT)
-                startTagInHead(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        case 7:
-            if (tn === $.CAPTION)
-                captionStartTagInTable(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        case 8:
-            if (tn === $.COLGROUP)
-                colgroupStartTagInTable(p, token);
-
-            else if (tn === $.TEMPLATE)
-                startTagInHead(p, token);
-
-            else
-                tokenInTable(p, token);
-
-            break;
-
-        default:
-            tokenInTable(p, token);
-    }
-
-}
-
-function endTagInTable(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.TABLE) {
-        if (p.openElements.hasInTableScope($.TABLE)) {
-            p.openElements.popUntilTagNamePopped($.TABLE);
-            p._resetInsertionMode();
+    _findFormInFragmentContext() {
+        let node = this.fragmentContext;
+        while (node) {
+            if (this.treeAdapter.getTagName(node) === html_js_1.TAG_NAMES.FORM) {
+                this.formElement = node;
+                break;
+            }
+            node = this.treeAdapter.getParentNode(node);
         }
     }
-
-    else if (tn === $.TEMPLATE)
-        endTagInHead(p, token);
-
-    else if (tn !== $.BODY && tn !== $.CAPTION && tn !== $.COL && tn !== $.COLGROUP && tn !== $.HTML &&
-             tn !== $.TBODY && tn !== $.TD && tn !== $.TFOOT && tn !== $.TH && tn !== $.THEAD && tn !== $.TR)
-        tokenInTable(p, token);
-}
-
-function tokenInTable(p, token) {
-    var savedFosterParentingState = p.fosterParentingEnabled;
-
-    p.fosterParentingEnabled = true;
-    p._processTokenInBodyMode(token);
-    p.fosterParentingEnabled = savedFosterParentingState;
-}
-
-
-//12.2.5.4.10 The "in table text" insertion mode
-//------------------------------------------------------------------
-function whitespaceCharacterInTableText(p, token) {
-    p.pendingCharacterTokens.push(token);
-}
-
-function characterInTableText(p, token) {
-    p.pendingCharacterTokens.push(token);
-    p.hasNonWhitespacePendingCharacterToken = true;
-}
-
-function tokenInTableText(p, token) {
-    var i = 0;
-
-    if (p.hasNonWhitespacePendingCharacterToken) {
-        for (; i < p.pendingCharacterTokens.length; i++)
-            tokenInTable(p, p.pendingCharacterTokens[i]);
+    _initTokenizerForFragmentParsing() {
+        if (!this.fragmentContext || this.treeAdapter.getNamespaceURI(this.fragmentContext) !== html_js_1.NS.HTML) {
+            return;
+        }
+        switch (this.fragmentContextID) {
+            case html_js_1.TAG_ID.TITLE:
+            case html_js_1.TAG_ID.TEXTAREA: {
+                this.tokenizer.state = index_js_1.TokenizerMode.RCDATA;
+                break;
+            }
+            case html_js_1.TAG_ID.STYLE:
+            case html_js_1.TAG_ID.XMP:
+            case html_js_1.TAG_ID.IFRAME:
+            case html_js_1.TAG_ID.NOEMBED:
+            case html_js_1.TAG_ID.NOFRAMES:
+            case html_js_1.TAG_ID.NOSCRIPT: {
+                this.tokenizer.state = index_js_1.TokenizerMode.RAWTEXT;
+                break;
+            }
+            case html_js_1.TAG_ID.SCRIPT: {
+                this.tokenizer.state = index_js_1.TokenizerMode.SCRIPT_DATA;
+                break;
+            }
+            case html_js_1.TAG_ID.PLAINTEXT: {
+                this.tokenizer.state = index_js_1.TokenizerMode.PLAINTEXT;
+                break;
+            }
+            default:
+            // Do nothing
+        }
     }
-
+    //Tree mutation
+    _setDocumentType(token) {
+        const name = token.name || '';
+        const publicId = token.publicId || '';
+        const systemId = token.systemId || '';
+        this.treeAdapter.setDocumentType(this.document, name, publicId, systemId);
+        if (token.location) {
+            const documentChildren = this.treeAdapter.getChildNodes(this.document);
+            const docTypeNode = documentChildren.find((node) => this.treeAdapter.isDocumentTypeNode(node));
+            if (docTypeNode) {
+                this.treeAdapter.setNodeSourceCodeLocation(docTypeNode, token.location);
+            }
+        }
+    }
+    _attachElementToTree(element, location) {
+        if (this.options.sourceCodeLocationInfo) {
+            const loc = location && Object.assign(Object.assign({}, location), { startTag: location });
+            this.treeAdapter.setNodeSourceCodeLocation(element, loc);
+        }
+        if (this._shouldFosterParentOnInsertion()) {
+            this._fosterParentElement(element);
+        }
+        else {
+            const parent = this.openElements.currentTmplContentOrNode;
+            this.treeAdapter.appendChild(parent, element);
+        }
+    }
+    _appendElement(token, namespaceURI) {
+        const element = this.treeAdapter.createElement(token.tagName, namespaceURI, token.attrs);
+        this._attachElementToTree(element, token.location);
+    }
+    _insertElement(token, namespaceURI) {
+        const element = this.treeAdapter.createElement(token.tagName, namespaceURI, token.attrs);
+        this._attachElementToTree(element, token.location);
+        this.openElements.push(element, token.tagID);
+    }
+    _insertFakeElement(tagName, tagID) {
+        const element = this.treeAdapter.createElement(tagName, html_js_1.NS.HTML, []);
+        this._attachElementToTree(element, null);
+        this.openElements.push(element, tagID);
+    }
+    _insertTemplate(token) {
+        const tmpl = this.treeAdapter.createElement(token.tagName, html_js_1.NS.HTML, token.attrs);
+        const content = this.treeAdapter.createDocumentFragment();
+        this.treeAdapter.setTemplateContent(tmpl, content);
+        this._attachElementToTree(tmpl, token.location);
+        this.openElements.push(tmpl, token.tagID);
+        if (this.options.sourceCodeLocationInfo)
+            this.treeAdapter.setNodeSourceCodeLocation(content, null);
+    }
+    _insertFakeRootElement() {
+        const element = this.treeAdapter.createElement(html_js_1.TAG_NAMES.HTML, html_js_1.NS.HTML, []);
+        if (this.options.sourceCodeLocationInfo)
+            this.treeAdapter.setNodeSourceCodeLocation(element, null);
+        this.treeAdapter.appendChild(this.openElements.current, element);
+        this.openElements.push(element, html_js_1.TAG_ID.HTML);
+    }
+    _appendCommentNode(token, parent) {
+        const commentNode = this.treeAdapter.createCommentNode(token.data);
+        this.treeAdapter.appendChild(parent, commentNode);
+        if (this.options.sourceCodeLocationInfo) {
+            this.treeAdapter.setNodeSourceCodeLocation(commentNode, token.location);
+        }
+    }
+    _insertCharacters(token) {
+        let parent;
+        let beforeElement;
+        if (this._shouldFosterParentOnInsertion()) {
+            ({ parent, beforeElement } = this._findFosterParentingLocation());
+            if (beforeElement) {
+                this.treeAdapter.insertTextBefore(parent, token.chars, beforeElement);
+            }
+            else {
+                this.treeAdapter.insertText(parent, token.chars);
+            }
+        }
+        else {
+            parent = this.openElements.currentTmplContentOrNode;
+            this.treeAdapter.insertText(parent, token.chars);
+        }
+        if (!token.location)
+            return;
+        const siblings = this.treeAdapter.getChildNodes(parent);
+        const textNodeIdx = beforeElement ? siblings.lastIndexOf(beforeElement) : siblings.length;
+        const textNode = siblings[textNodeIdx - 1];
+        //NOTE: if we have a location assigned by another token, then just update the end position
+        const tnLoc = this.treeAdapter.getNodeSourceCodeLocation(textNode);
+        if (tnLoc) {
+            const { endLine, endCol, endOffset } = token.location;
+            this.treeAdapter.updateNodeSourceCodeLocation(textNode, { endLine, endCol, endOffset });
+        }
+        else if (this.options.sourceCodeLocationInfo) {
+            this.treeAdapter.setNodeSourceCodeLocation(textNode, token.location);
+        }
+    }
+    _adoptNodes(donor, recipient) {
+        for (let child = this.treeAdapter.getFirstChild(donor); child; child = this.treeAdapter.getFirstChild(donor)) {
+            this.treeAdapter.detachNode(child);
+            this.treeAdapter.appendChild(recipient, child);
+        }
+    }
+    _setEndLocation(element, closingToken) {
+        if (this.treeAdapter.getNodeSourceCodeLocation(element) && closingToken.location) {
+            const ctLoc = closingToken.location;
+            const tn = this.treeAdapter.getTagName(element);
+            const endLoc = 
+            // NOTE: For cases like <p> <p> </p> - First 'p' closes without a closing
+            // tag and for cases like <td> <p> </td> - 'p' closes without a closing tag.
+            closingToken.type === token_js_1.TokenType.END_TAG && tn === closingToken.tagName
+                ? {
+                    endTag: Object.assign({}, ctLoc),
+                    endLine: ctLoc.endLine,
+                    endCol: ctLoc.endCol,
+                    endOffset: ctLoc.endOffset,
+                }
+                : {
+                    endLine: ctLoc.startLine,
+                    endCol: ctLoc.startCol,
+                    endOffset: ctLoc.startOffset,
+                };
+            this.treeAdapter.updateNodeSourceCodeLocation(element, endLoc);
+        }
+    }
+    //Token processing
+    shouldProcessStartTagTokenInForeignContent(token) {
+        // Check that neither current === document, or ns === NS.HTML
+        if (!this.currentNotInHTML)
+            return false;
+        let current;
+        let currentTagId;
+        if (this.openElements.stackTop === 0 && this.fragmentContext) {
+            current = this.fragmentContext;
+            currentTagId = this.fragmentContextID;
+        }
+        else {
+            ({ current, currentTagId } = this.openElements);
+        }
+        if (token.tagID === html_js_1.TAG_ID.SVG &&
+            this.treeAdapter.getTagName(current) === html_js_1.TAG_NAMES.ANNOTATION_XML &&
+            this.treeAdapter.getNamespaceURI(current) === html_js_1.NS.MATHML) {
+            return false;
+        }
+        return (
+        // Check that `current` is not an integration point for HTML or MathML elements.
+        this.tokenizer.inForeignNode ||
+            // If it _is_ an integration point, then we might have to check that it is not an HTML
+            // integration point.
+            ((token.tagID === html_js_1.TAG_ID.MGLYPH || token.tagID === html_js_1.TAG_ID.MALIGNMARK) &&
+                !this._isIntegrationPoint(currentTagId, current, html_js_1.NS.HTML)));
+    }
+    _processToken(token) {
+        switch (token.type) {
+            case token_js_1.TokenType.CHARACTER: {
+                this.onCharacter(token);
+                break;
+            }
+            case token_js_1.TokenType.NULL_CHARACTER: {
+                this.onNullCharacter(token);
+                break;
+            }
+            case token_js_1.TokenType.COMMENT: {
+                this.onComment(token);
+                break;
+            }
+            case token_js_1.TokenType.DOCTYPE: {
+                this.onDoctype(token);
+                break;
+            }
+            case token_js_1.TokenType.START_TAG: {
+                this._processStartTag(token);
+                break;
+            }
+            case token_js_1.TokenType.END_TAG: {
+                this.onEndTag(token);
+                break;
+            }
+            case token_js_1.TokenType.EOF: {
+                this.onEof(token);
+                break;
+            }
+            case token_js_1.TokenType.WHITESPACE_CHARACTER: {
+                this.onWhitespaceCharacter(token);
+                break;
+            }
+        }
+    }
+    //Integration points
+    _isIntegrationPoint(tid, element, foreignNS) {
+        const ns = this.treeAdapter.getNamespaceURI(element);
+        const attrs = this.treeAdapter.getAttrList(element);
+        return foreignContent.isIntegrationPoint(tid, ns, attrs, foreignNS);
+    }
+    //Active formatting elements reconstruction
+    _reconstructActiveFormattingElements() {
+        const listLength = this.activeFormattingElements.entries.length;
+        if (listLength) {
+            const endIndex = this.activeFormattingElements.entries.findIndex((entry) => entry.type === formatting_element_list_js_1.EntryType.Marker || this.openElements.contains(entry.element));
+            const unopenIdx = endIndex < 0 ? listLength - 1 : endIndex - 1;
+            for (let i = unopenIdx; i >= 0; i--) {
+                const entry = this.activeFormattingElements.entries[i];
+                this._insertElement(entry.token, this.treeAdapter.getNamespaceURI(entry.element));
+                entry.element = this.openElements.current;
+            }
+        }
+    }
+    //Close elements
+    _closeTableCell() {
+        this.openElements.generateImpliedEndTags();
+        this.openElements.popUntilTableCellPopped();
+        this.activeFormattingElements.clearToLastMarker();
+        this.insertionMode = InsertionMode.IN_ROW;
+    }
+    _closePElement() {
+        this.openElements.generateImpliedEndTagsWithExclusion(html_js_1.TAG_ID.P);
+        this.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.P);
+    }
+    //Insertion modes
+    _resetInsertionMode() {
+        for (let i = this.openElements.stackTop; i >= 0; i--) {
+            //Insertion mode reset map
+            switch (i === 0 && this.fragmentContext ? this.fragmentContextID : this.openElements.tagIDs[i]) {
+                case html_js_1.TAG_ID.TR: {
+                    this.insertionMode = InsertionMode.IN_ROW;
+                    return;
+                }
+                case html_js_1.TAG_ID.TBODY:
+                case html_js_1.TAG_ID.THEAD:
+                case html_js_1.TAG_ID.TFOOT: {
+                    this.insertionMode = InsertionMode.IN_TABLE_BODY;
+                    return;
+                }
+                case html_js_1.TAG_ID.CAPTION: {
+                    this.insertionMode = InsertionMode.IN_CAPTION;
+                    return;
+                }
+                case html_js_1.TAG_ID.COLGROUP: {
+                    this.insertionMode = InsertionMode.IN_COLUMN_GROUP;
+                    return;
+                }
+                case html_js_1.TAG_ID.TABLE: {
+                    this.insertionMode = InsertionMode.IN_TABLE;
+                    return;
+                }
+                case html_js_1.TAG_ID.BODY: {
+                    this.insertionMode = InsertionMode.IN_BODY;
+                    return;
+                }
+                case html_js_1.TAG_ID.FRAMESET: {
+                    this.insertionMode = InsertionMode.IN_FRAMESET;
+                    return;
+                }
+                case html_js_1.TAG_ID.SELECT: {
+                    this._resetInsertionModeForSelect(i);
+                    return;
+                }
+                case html_js_1.TAG_ID.TEMPLATE: {
+                    this.insertionMode = this.tmplInsertionModeStack[0];
+                    return;
+                }
+                case html_js_1.TAG_ID.HTML: {
+                    this.insertionMode = this.headElement ? InsertionMode.AFTER_HEAD : InsertionMode.BEFORE_HEAD;
+                    return;
+                }
+                case html_js_1.TAG_ID.TD:
+                case html_js_1.TAG_ID.TH: {
+                    if (i > 0) {
+                        this.insertionMode = InsertionMode.IN_CELL;
+                        return;
+                    }
+                    break;
+                }
+                case html_js_1.TAG_ID.HEAD: {
+                    if (i > 0) {
+                        this.insertionMode = InsertionMode.IN_HEAD;
+                        return;
+                    }
+                    break;
+                }
+            }
+        }
+        this.insertionMode = InsertionMode.IN_BODY;
+    }
+    _resetInsertionModeForSelect(selectIdx) {
+        if (selectIdx > 0) {
+            for (let i = selectIdx - 1; i > 0; i--) {
+                const tn = this.openElements.tagIDs[i];
+                if (tn === html_js_1.TAG_ID.TEMPLATE) {
+                    break;
+                }
+                else if (tn === html_js_1.TAG_ID.TABLE) {
+                    this.insertionMode = InsertionMode.IN_SELECT_IN_TABLE;
+                    return;
+                }
+            }
+        }
+        this.insertionMode = InsertionMode.IN_SELECT;
+    }
+    //Foster parenting
+    _isElementCausesFosterParenting(tn) {
+        return TABLE_STRUCTURE_TAGS.has(tn);
+    }
+    _shouldFosterParentOnInsertion() {
+        return this.fosterParentingEnabled && this._isElementCausesFosterParenting(this.openElements.currentTagId);
+    }
+    _findFosterParentingLocation() {
+        for (let i = this.openElements.stackTop; i >= 0; i--) {
+            const openElement = this.openElements.items[i];
+            switch (this.openElements.tagIDs[i]) {
+                case html_js_1.TAG_ID.TEMPLATE: {
+                    if (this.treeAdapter.getNamespaceURI(openElement) === html_js_1.NS.HTML) {
+                        return { parent: this.treeAdapter.getTemplateContent(openElement), beforeElement: null };
+                    }
+                    break;
+                }
+                case html_js_1.TAG_ID.TABLE: {
+                    const parent = this.treeAdapter.getParentNode(openElement);
+                    if (parent) {
+                        return { parent, beforeElement: openElement };
+                    }
+                    return { parent: this.openElements.items[i - 1], beforeElement: null };
+                }
+                default:
+                // Do nothing
+            }
+        }
+        return { parent: this.openElements.items[0], beforeElement: null };
+    }
+    _fosterParentElement(element) {
+        const location = this._findFosterParentingLocation();
+        if (location.beforeElement) {
+            this.treeAdapter.insertBefore(location.parent, element, location.beforeElement);
+        }
+        else {
+            this.treeAdapter.appendChild(location.parent, element);
+        }
+    }
+    //Special elements
+    _isSpecialElement(element, id) {
+        const ns = this.treeAdapter.getNamespaceURI(element);
+        return html_js_1.SPECIAL_ELEMENTS[ns].has(id);
+    }
+    onCharacter(token) {
+        this.skipNextNewLine = false;
+        if (this.tokenizer.inForeignNode) {
+            characterInForeignContent(this, token);
+            return;
+        }
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL: {
+                tokenInInitialMode(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HTML: {
+                tokenBeforeHtml(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HEAD: {
+                tokenBeforeHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD: {
+                tokenInHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD_NO_SCRIPT: {
+                tokenInHeadNoScript(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_HEAD: {
+                tokenAfterHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_BODY:
+            case InsertionMode.IN_CAPTION:
+            case InsertionMode.IN_CELL:
+            case InsertionMode.IN_TEMPLATE: {
+                characterInBody(this, token);
+                break;
+            }
+            case InsertionMode.TEXT:
+            case InsertionMode.IN_SELECT:
+            case InsertionMode.IN_SELECT_IN_TABLE: {
+                this._insertCharacters(token);
+                break;
+            }
+            case InsertionMode.IN_TABLE:
+            case InsertionMode.IN_TABLE_BODY:
+            case InsertionMode.IN_ROW: {
+                characterInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                characterInTableText(this, token);
+                break;
+            }
+            case InsertionMode.IN_COLUMN_GROUP: {
+                tokenInColumnGroup(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_BODY: {
+                tokenAfterBody(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_AFTER_BODY: {
+                tokenAfterAfterBody(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onNullCharacter(token) {
+        this.skipNextNewLine = false;
+        if (this.tokenizer.inForeignNode) {
+            nullCharacterInForeignContent(this, token);
+            return;
+        }
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL: {
+                tokenInInitialMode(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HTML: {
+                tokenBeforeHtml(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HEAD: {
+                tokenBeforeHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD: {
+                tokenInHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD_NO_SCRIPT: {
+                tokenInHeadNoScript(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_HEAD: {
+                tokenAfterHead(this, token);
+                break;
+            }
+            case InsertionMode.TEXT: {
+                this._insertCharacters(token);
+                break;
+            }
+            case InsertionMode.IN_TABLE:
+            case InsertionMode.IN_TABLE_BODY:
+            case InsertionMode.IN_ROW: {
+                characterInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_COLUMN_GROUP: {
+                tokenInColumnGroup(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_BODY: {
+                tokenAfterBody(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_AFTER_BODY: {
+                tokenAfterAfterBody(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onComment(token) {
+        this.skipNextNewLine = false;
+        if (this.currentNotInHTML) {
+            appendComment(this, token);
+            return;
+        }
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL:
+            case InsertionMode.BEFORE_HTML:
+            case InsertionMode.BEFORE_HEAD:
+            case InsertionMode.IN_HEAD:
+            case InsertionMode.IN_HEAD_NO_SCRIPT:
+            case InsertionMode.AFTER_HEAD:
+            case InsertionMode.IN_BODY:
+            case InsertionMode.IN_TABLE:
+            case InsertionMode.IN_CAPTION:
+            case InsertionMode.IN_COLUMN_GROUP:
+            case InsertionMode.IN_TABLE_BODY:
+            case InsertionMode.IN_ROW:
+            case InsertionMode.IN_CELL:
+            case InsertionMode.IN_SELECT:
+            case InsertionMode.IN_SELECT_IN_TABLE:
+            case InsertionMode.IN_TEMPLATE:
+            case InsertionMode.IN_FRAMESET:
+            case InsertionMode.AFTER_FRAMESET: {
+                appendComment(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                tokenInTableText(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_BODY: {
+                appendCommentToRootHtmlElement(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_AFTER_BODY:
+            case InsertionMode.AFTER_AFTER_FRAMESET: {
+                appendCommentToDocument(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onDoctype(token) {
+        this.skipNextNewLine = false;
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL: {
+                doctypeInInitialMode(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HEAD:
+            case InsertionMode.IN_HEAD:
+            case InsertionMode.IN_HEAD_NO_SCRIPT:
+            case InsertionMode.AFTER_HEAD: {
+                this._err(token, error_codes_js_1.ERR.misplacedDoctype);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                tokenInTableText(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onStartTag(token) {
+        this.skipNextNewLine = false;
+        this.currentToken = token;
+        this._processStartTag(token);
+        if (token.selfClosing && !token.ackSelfClosing) {
+            this._err(token, error_codes_js_1.ERR.nonVoidHtmlElementStartTagWithTrailingSolidus);
+        }
+    }
+    /**
+     * Processes a given start tag.
+     *
+     * `onStartTag` checks if a self-closing tag was recognized. When a token
+     * is moved inbetween multiple insertion modes, this check for self-closing
+     * could lead to false positives. To avoid this, `_processStartTag` is used
+     * for nested calls.
+     *
+     * @param token The token to process.
+     */
+    _processStartTag(token) {
+        if (this.shouldProcessStartTagTokenInForeignContent(token)) {
+            startTagInForeignContent(this, token);
+        }
+        else {
+            this._startTagOutsideForeignContent(token);
+        }
+    }
+    _startTagOutsideForeignContent(token) {
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL: {
+                tokenInInitialMode(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HTML: {
+                startTagBeforeHtml(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HEAD: {
+                startTagBeforeHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD: {
+                startTagInHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD_NO_SCRIPT: {
+                startTagInHeadNoScript(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_HEAD: {
+                startTagAfterHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_BODY: {
+                startTagInBody(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE: {
+                startTagInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                tokenInTableText(this, token);
+                break;
+            }
+            case InsertionMode.IN_CAPTION: {
+                startTagInCaption(this, token);
+                break;
+            }
+            case InsertionMode.IN_COLUMN_GROUP: {
+                startTagInColumnGroup(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_BODY: {
+                startTagInTableBody(this, token);
+                break;
+            }
+            case InsertionMode.IN_ROW: {
+                startTagInRow(this, token);
+                break;
+            }
+            case InsertionMode.IN_CELL: {
+                startTagInCell(this, token);
+                break;
+            }
+            case InsertionMode.IN_SELECT: {
+                startTagInSelect(this, token);
+                break;
+            }
+            case InsertionMode.IN_SELECT_IN_TABLE: {
+                startTagInSelectInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_TEMPLATE: {
+                startTagInTemplate(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_BODY: {
+                startTagAfterBody(this, token);
+                break;
+            }
+            case InsertionMode.IN_FRAMESET: {
+                startTagInFrameset(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_FRAMESET: {
+                startTagAfterFrameset(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_AFTER_BODY: {
+                startTagAfterAfterBody(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_AFTER_FRAMESET: {
+                startTagAfterAfterFrameset(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onEndTag(token) {
+        this.skipNextNewLine = false;
+        this.currentToken = token;
+        if (this.currentNotInHTML) {
+            endTagInForeignContent(this, token);
+        }
+        else {
+            this._endTagOutsideForeignContent(token);
+        }
+    }
+    _endTagOutsideForeignContent(token) {
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL: {
+                tokenInInitialMode(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HTML: {
+                endTagBeforeHtml(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HEAD: {
+                endTagBeforeHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD: {
+                endTagInHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD_NO_SCRIPT: {
+                endTagInHeadNoScript(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_HEAD: {
+                endTagAfterHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_BODY: {
+                endTagInBody(this, token);
+                break;
+            }
+            case InsertionMode.TEXT: {
+                endTagInText(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE: {
+                endTagInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                tokenInTableText(this, token);
+                break;
+            }
+            case InsertionMode.IN_CAPTION: {
+                endTagInCaption(this, token);
+                break;
+            }
+            case InsertionMode.IN_COLUMN_GROUP: {
+                endTagInColumnGroup(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_BODY: {
+                endTagInTableBody(this, token);
+                break;
+            }
+            case InsertionMode.IN_ROW: {
+                endTagInRow(this, token);
+                break;
+            }
+            case InsertionMode.IN_CELL: {
+                endTagInCell(this, token);
+                break;
+            }
+            case InsertionMode.IN_SELECT: {
+                endTagInSelect(this, token);
+                break;
+            }
+            case InsertionMode.IN_SELECT_IN_TABLE: {
+                endTagInSelectInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_TEMPLATE: {
+                endTagInTemplate(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_BODY: {
+                endTagAfterBody(this, token);
+                break;
+            }
+            case InsertionMode.IN_FRAMESET: {
+                endTagInFrameset(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_FRAMESET: {
+                endTagAfterFrameset(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_AFTER_BODY: {
+                tokenAfterAfterBody(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onEof(token) {
+        switch (this.insertionMode) {
+            case InsertionMode.INITIAL: {
+                tokenInInitialMode(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HTML: {
+                tokenBeforeHtml(this, token);
+                break;
+            }
+            case InsertionMode.BEFORE_HEAD: {
+                tokenBeforeHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD: {
+                tokenInHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_HEAD_NO_SCRIPT: {
+                tokenInHeadNoScript(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_HEAD: {
+                tokenAfterHead(this, token);
+                break;
+            }
+            case InsertionMode.IN_BODY:
+            case InsertionMode.IN_TABLE:
+            case InsertionMode.IN_CAPTION:
+            case InsertionMode.IN_COLUMN_GROUP:
+            case InsertionMode.IN_TABLE_BODY:
+            case InsertionMode.IN_ROW:
+            case InsertionMode.IN_CELL:
+            case InsertionMode.IN_SELECT:
+            case InsertionMode.IN_SELECT_IN_TABLE: {
+                eofInBody(this, token);
+                break;
+            }
+            case InsertionMode.TEXT: {
+                eofInText(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                tokenInTableText(this, token);
+                break;
+            }
+            case InsertionMode.IN_TEMPLATE: {
+                eofInTemplate(this, token);
+                break;
+            }
+            case InsertionMode.AFTER_BODY:
+            case InsertionMode.IN_FRAMESET:
+            case InsertionMode.AFTER_FRAMESET:
+            case InsertionMode.AFTER_AFTER_BODY:
+            case InsertionMode.AFTER_AFTER_FRAMESET: {
+                stopParsing(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+    onWhitespaceCharacter(token) {
+        if (this.skipNextNewLine) {
+            this.skipNextNewLine = false;
+            if (token.chars.charCodeAt(0) === unicode.CODE_POINTS.LINE_FEED) {
+                if (token.chars.length === 1) {
+                    return;
+                }
+                token.chars = token.chars.substr(1);
+            }
+        }
+        if (this.tokenizer.inForeignNode) {
+            this._insertCharacters(token);
+            return;
+        }
+        switch (this.insertionMode) {
+            case InsertionMode.IN_HEAD:
+            case InsertionMode.IN_HEAD_NO_SCRIPT:
+            case InsertionMode.AFTER_HEAD:
+            case InsertionMode.TEXT:
+            case InsertionMode.IN_COLUMN_GROUP:
+            case InsertionMode.IN_SELECT:
+            case InsertionMode.IN_SELECT_IN_TABLE:
+            case InsertionMode.IN_FRAMESET:
+            case InsertionMode.AFTER_FRAMESET: {
+                this._insertCharacters(token);
+                break;
+            }
+            case InsertionMode.IN_BODY:
+            case InsertionMode.IN_CAPTION:
+            case InsertionMode.IN_CELL:
+            case InsertionMode.IN_TEMPLATE:
+            case InsertionMode.AFTER_BODY:
+            case InsertionMode.AFTER_AFTER_BODY:
+            case InsertionMode.AFTER_AFTER_FRAMESET: {
+                whitespaceCharacterInBody(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE:
+            case InsertionMode.IN_TABLE_BODY:
+            case InsertionMode.IN_ROW: {
+                characterInTable(this, token);
+                break;
+            }
+            case InsertionMode.IN_TABLE_TEXT: {
+                whitespaceCharacterInTableText(this, token);
+                break;
+            }
+            default:
+            // Do nothing
+        }
+    }
+}
+exports.Parser = Parser;
+//Adoption agency algorithm
+//(see: http://www.whatwg.org/specs/web-apps/current-work/multipage/tree-construction.html#adoptionAgency)
+//------------------------------------------------------------------
+//Steps 5-8 of the algorithm
+function aaObtainFormattingElementEntry(p, token) {
+    let formattingElementEntry = p.activeFormattingElements.getElementEntryInScopeWithTagName(token.tagName);
+    if (formattingElementEntry) {
+        if (!p.openElements.contains(formattingElementEntry.element)) {
+            p.activeFormattingElements.removeEntry(formattingElementEntry);
+            formattingElementEntry = null;
+        }
+        else if (!p.openElements.hasInScope(token.tagID)) {
+            formattingElementEntry = null;
+        }
+    }
     else {
-        for (; i < p.pendingCharacterTokens.length; i++)
-            p._insertCharacters(p.pendingCharacterTokens[i]);
+        genericEndTagInBody(p, token);
     }
-
-    p.insertionMode = p.originalInsertionMode;
-    p._processToken(token);
+    return formattingElementEntry;
 }
-
-
-//12.2.5.4.11 The "in caption" insertion mode
-//------------------------------------------------------------------
-function startTagInCaption(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.CAPTION || tn === $.COL || tn === $.COLGROUP || tn === $.TBODY ||
-        tn === $.TD || tn === $.TFOOT || tn === $.TH || tn === $.THEAD || tn === $.TR) {
-        if (p.openElements.hasInTableScope($.CAPTION)) {
-            p.openElements.generateImpliedEndTags();
-            p.openElements.popUntilTagNamePopped($.CAPTION);
-            p.activeFormattingElements.clearToLastMarker();
-            p.insertionMode = IN_TABLE_MODE;
-            p._processToken(token);
-        }
-    }
-
-    else
-        startTagInBody(p, token);
-}
-
-function endTagInCaption(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.CAPTION || tn === $.TABLE) {
-        if (p.openElements.hasInTableScope($.CAPTION)) {
-            p.openElements.generateImpliedEndTags();
-            p.openElements.popUntilTagNamePopped($.CAPTION);
-            p.activeFormattingElements.clearToLastMarker();
-            p.insertionMode = IN_TABLE_MODE;
-
-            if (tn === $.TABLE)
-                p._processToken(token);
-        }
-    }
-
-    else if (tn !== $.BODY && tn !== $.COL && tn !== $.COLGROUP && tn !== $.HTML && tn !== $.TBODY &&
-             tn !== $.TD && tn !== $.TFOOT && tn !== $.TH && tn !== $.THEAD && tn !== $.TR)
-        endTagInBody(p, token);
-}
-
-
-//12.2.5.4.12 The "in column group" insertion mode
-//------------------------------------------------------------------
-function startTagInColumnGroup(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.HTML)
-        startTagInBody(p, token);
-
-    else if (tn === $.COL)
-        p._appendElement(token, NS.HTML);
-
-    else if (tn === $.TEMPLATE)
-        startTagInHead(p, token);
-
-    else
-        tokenInColumnGroup(p, token);
-}
-
-function endTagInColumnGroup(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.COLGROUP) {
-        if (p.openElements.currentTagName === $.COLGROUP) {
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_MODE;
-        }
-    }
-
-    else if (tn === $.TEMPLATE)
-        endTagInHead(p, token);
-
-    else if (tn !== $.COL)
-        tokenInColumnGroup(p, token);
-}
-
-function tokenInColumnGroup(p, token) {
-    if (p.openElements.currentTagName === $.COLGROUP) {
-        p.openElements.pop();
-        p.insertionMode = IN_TABLE_MODE;
-        p._processToken(token);
-    }
-}
-
-//12.2.5.4.13 The "in table body" insertion mode
-//------------------------------------------------------------------
-function startTagInTableBody(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.TR) {
-        p.openElements.clearBackToTableBodyContext();
-        p._insertElement(token, NS.HTML);
-        p.insertionMode = IN_ROW_MODE;
-    }
-
-    else if (tn === $.TH || tn === $.TD) {
-        p.openElements.clearBackToTableBodyContext();
-        p._insertFakeElement($.TR);
-        p.insertionMode = IN_ROW_MODE;
-        p._processToken(token);
-    }
-
-    else if (tn === $.CAPTION || tn === $.COL || tn === $.COLGROUP ||
-             tn === $.TBODY || tn === $.TFOOT || tn === $.THEAD) {
-
-        if (p.openElements.hasTableBodyContextInTableScope()) {
-            p.openElements.clearBackToTableBodyContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_MODE;
-            p._processToken(token);
-        }
-    }
-
-    else
-        startTagInTable(p, token);
-}
-
-function endTagInTableBody(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.TBODY || tn === $.TFOOT || tn === $.THEAD) {
-        if (p.openElements.hasInTableScope(tn)) {
-            p.openElements.clearBackToTableBodyContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_MODE;
-        }
-    }
-
-    else if (tn === $.TABLE) {
-        if (p.openElements.hasTableBodyContextInTableScope()) {
-            p.openElements.clearBackToTableBodyContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_MODE;
-            p._processToken(token);
-        }
-    }
-
-    else if (tn !== $.BODY && tn !== $.CAPTION && tn !== $.COL && tn !== $.COLGROUP ||
-             tn !== $.HTML && tn !== $.TD && tn !== $.TH && tn !== $.TR)
-        endTagInTable(p, token);
-}
-
-//12.2.5.4.14 The "in row" insertion mode
-//------------------------------------------------------------------
-function startTagInRow(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.TH || tn === $.TD) {
-        p.openElements.clearBackToTableRowContext();
-        p._insertElement(token, NS.HTML);
-        p.insertionMode = IN_CELL_MODE;
-        p.activeFormattingElements.insertMarker();
-    }
-
-    else if (tn === $.CAPTION || tn === $.COL || tn === $.COLGROUP || tn === $.TBODY ||
-             tn === $.TFOOT || tn === $.THEAD || tn === $.TR) {
-        if (p.openElements.hasInTableScope($.TR)) {
-            p.openElements.clearBackToTableRowContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_BODY_MODE;
-            p._processToken(token);
-        }
-    }
-
-    else
-        startTagInTable(p, token);
-}
-
-function endTagInRow(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.TR) {
-        if (p.openElements.hasInTableScope($.TR)) {
-            p.openElements.clearBackToTableRowContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_BODY_MODE;
-        }
-    }
-
-    else if (tn === $.TABLE) {
-        if (p.openElements.hasInTableScope($.TR)) {
-            p.openElements.clearBackToTableRowContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_BODY_MODE;
-            p._processToken(token);
-        }
-    }
-
-    else if (tn === $.TBODY || tn === $.TFOOT || tn === $.THEAD) {
-        if (p.openElements.hasInTableScope(tn) || p.openElements.hasInTableScope($.TR)) {
-            p.openElements.clearBackToTableRowContext();
-            p.openElements.pop();
-            p.insertionMode = IN_TABLE_BODY_MODE;
-            p._processToken(token);
-        }
-    }
-
-    else if (tn !== $.BODY && tn !== $.CAPTION && tn !== $.COL && tn !== $.COLGROUP ||
-             tn !== $.HTML && tn !== $.TD && tn !== $.TH)
-        endTagInTable(p, token);
-}
-
-
-//12.2.5.4.15 The "in cell" insertion mode
-//------------------------------------------------------------------
-function startTagInCell(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.CAPTION || tn === $.COL || tn === $.COLGROUP || tn === $.TBODY ||
-        tn === $.TD || tn === $.TFOOT || tn === $.TH || tn === $.THEAD || tn === $.TR) {
-
-        if (p.openElements.hasInTableScope($.TD) || p.openElements.hasInTableScope($.TH)) {
-            p._closeTableCell();
-            p._processToken(token);
-        }
-    }
-
-    else
-        startTagInBody(p, token);
-}
-
-function endTagInCell(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.TD || tn === $.TH) {
-        if (p.openElements.hasInTableScope(tn)) {
-            p.openElements.generateImpliedEndTags();
-            p.openElements.popUntilTagNamePopped(tn);
-            p.activeFormattingElements.clearToLastMarker();
-            p.insertionMode = IN_ROW_MODE;
-        }
-    }
-
-    else if (tn === $.TABLE || tn === $.TBODY || tn === $.TFOOT || tn === $.THEAD || tn === $.TR) {
-        if (p.openElements.hasInTableScope(tn)) {
-            p._closeTableCell();
-            p._processToken(token);
-        }
-    }
-
-    else if (tn !== $.BODY && tn !== $.CAPTION && tn !== $.COL && tn !== $.COLGROUP && tn !== $.HTML)
-        endTagInBody(p, token);
-}
-
-//12.2.5.4.16 The "in select" insertion mode
-//------------------------------------------------------------------
-function startTagInSelect(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.HTML)
-        startTagInBody(p, token);
-
-    else if (tn === $.OPTION) {
-        if (p.openElements.currentTagName === $.OPTION)
-            p.openElements.pop();
-
-        p._insertElement(token, NS.HTML);
-    }
-
-    else if (tn === $.OPTGROUP) {
-        if (p.openElements.currentTagName === $.OPTION)
-            p.openElements.pop();
-
-        if (p.openElements.currentTagName === $.OPTGROUP)
-            p.openElements.pop();
-
-        p._insertElement(token, NS.HTML);
-    }
-
-    else if (tn === $.INPUT || tn === $.KEYGEN || tn === $.TEXTAREA || tn === $.SELECT) {
-        if (p.openElements.hasInSelectScope($.SELECT)) {
-            p.openElements.popUntilTagNamePopped($.SELECT);
-            p._resetInsertionMode();
-
-            if (tn !== $.SELECT)
-                p._processToken(token);
-        }
-    }
-
-    else if (tn === $.SCRIPT || tn === $.TEMPLATE)
-        startTagInHead(p, token);
-}
-
-function endTagInSelect(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.OPTGROUP) {
-        var prevOpenElement = p.openElements.items[p.openElements.stackTop - 1],
-            prevOpenElementTn = prevOpenElement && p.treeAdapter.getTagName(prevOpenElement);
-
-        if (p.openElements.currentTagName === $.OPTION && prevOpenElementTn === $.OPTGROUP)
-            p.openElements.pop();
-
-        if (p.openElements.currentTagName === $.OPTGROUP)
-            p.openElements.pop();
-    }
-
-    else if (tn === $.OPTION) {
-        if (p.openElements.currentTagName === $.OPTION)
-            p.openElements.pop();
-    }
-
-    else if (tn === $.SELECT && p.openElements.hasInSelectScope($.SELECT)) {
-        p.openElements.popUntilTagNamePopped($.SELECT);
-        p._resetInsertionMode();
-    }
-
-    else if (tn === $.TEMPLATE)
-        endTagInHead(p, token);
-}
-
-//12.2.5.4.17 The "in select in table" insertion mode
-//------------------------------------------------------------------
-function startTagInSelectInTable(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.CAPTION || tn === $.TABLE || tn === $.TBODY || tn === $.TFOOT ||
-        tn === $.THEAD || tn === $.TR || tn === $.TD || tn === $.TH) {
-        p.openElements.popUntilTagNamePopped($.SELECT);
-        p._resetInsertionMode();
-        p._processToken(token);
-    }
-
-    else
-        startTagInSelect(p, token);
-}
-
-function endTagInSelectInTable(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.CAPTION || tn === $.TABLE || tn === $.TBODY || tn === $.TFOOT ||
-        tn === $.THEAD || tn === $.TR || tn === $.TD || tn === $.TH) {
-        if (p.openElements.hasInTableScope(tn)) {
-            p.openElements.popUntilTagNamePopped($.SELECT);
-            p._resetInsertionMode();
-            p._processToken(token);
-        }
-    }
-
-    else
-        endTagInSelect(p, token);
-}
-
-//12.2.5.4.18 The "in template" insertion mode
-//------------------------------------------------------------------
-function startTagInTemplate(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.BASE || tn === $.BASEFONT || tn === $.BGSOUND || tn === $.LINK || tn === $.META ||
-        tn === $.NOFRAMES || tn === $.SCRIPT || tn === $.STYLE || tn === $.TEMPLATE || tn === $.TITLE)
-        startTagInHead(p, token);
-
-    else {
-        var newInsertionMode = TEMPLATE_INSERTION_MODE_SWITCH_MAP[tn] || IN_BODY_MODE;
-
-        p._popTmplInsertionMode();
-        p._pushTmplInsertionMode(newInsertionMode);
-        p.insertionMode = newInsertionMode;
-        p._processToken(token);
-    }
-}
-
-function endTagInTemplate(p, token) {
-    if (token.tagName === $.TEMPLATE)
-        endTagInHead(p, token);
-}
-
-function eofInTemplate(p, token) {
-    if (p.openElements.tmplCount > 0) {
-        p.openElements.popUntilTagNamePopped($.TEMPLATE);
-        p.activeFormattingElements.clearToLastMarker();
-        p._popTmplInsertionMode();
-        p._resetInsertionMode();
-        p._processToken(token);
-    }
-
-    else
-        p.stopped = true;
-}
-
-
-//12.2.5.4.19 The "after body" insertion mode
-//------------------------------------------------------------------
-function startTagAfterBody(p, token) {
-    if (token.tagName === $.HTML)
-        startTagInBody(p, token);
-
-    else
-        tokenAfterBody(p, token);
-}
-
-function endTagAfterBody(p, token) {
-    if (token.tagName === $.HTML) {
-        if (!p.fragmentContext)
-            p.insertionMode = AFTER_AFTER_BODY_MODE;
-    }
-
-    else
-        tokenAfterBody(p, token);
-}
-
-function tokenAfterBody(p, token) {
-    p.insertionMode = IN_BODY_MODE;
-    p._processToken(token);
-}
-
-//12.2.5.4.20 The "in frameset" insertion mode
-//------------------------------------------------------------------
-function startTagInFrameset(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.HTML)
-        startTagInBody(p, token);
-
-    else if (tn === $.FRAMESET)
-        p._insertElement(token, NS.HTML);
-
-    else if (tn === $.FRAME)
-        p._appendElement(token, NS.HTML);
-
-    else if (tn === $.NOFRAMES)
-        startTagInHead(p, token);
-}
-
-function endTagInFrameset(p, token) {
-    if (token.tagName === $.FRAMESET && !p.openElements.isRootHtmlElementCurrent()) {
-        p.openElements.pop();
-
-        if (!p.fragmentContext && p.openElements.currentTagName !== $.FRAMESET)
-            p.insertionMode = AFTER_FRAMESET_MODE;
-    }
-}
-
-//12.2.5.4.21 The "after frameset" insertion mode
-//------------------------------------------------------------------
-function startTagAfterFrameset(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.HTML)
-        startTagInBody(p, token);
-
-    else if (tn === $.NOFRAMES)
-        startTagInHead(p, token);
-}
-
-function endTagAfterFrameset(p, token) {
-    if (token.tagName === $.HTML)
-        p.insertionMode = AFTER_AFTER_FRAMESET_MODE;
-}
-
-//12.2.5.4.22 The "after after body" insertion mode
-//------------------------------------------------------------------
-function startTagAfterAfterBody(p, token) {
-    if (token.tagName === $.HTML)
-        startTagInBody(p, token);
-
-    else
-        tokenAfterAfterBody(p, token);
-}
-
-function tokenAfterAfterBody(p, token) {
-    p.insertionMode = IN_BODY_MODE;
-    p._processToken(token);
-}
-
-//12.2.5.4.23 The "after after frameset" insertion mode
-//------------------------------------------------------------------
-function startTagAfterAfterFrameset(p, token) {
-    var tn = token.tagName;
-
-    if (tn === $.HTML)
-        startTagInBody(p, token);
-
-    else if (tn === $.NOFRAMES)
-        startTagInHead(p, token);
-}
-
-
-//12.2.5.5 The rules for parsing tokens in foreign content
-//------------------------------------------------------------------
-function nullCharacterInForeignContent(p, token) {
-    token.chars = UNICODE.REPLACEMENT_CHARACTER;
-    p._insertCharacters(token);
-}
-
-function characterInForeignContent(p, token) {
-    p._insertCharacters(token);
-    p.framesetOk = false;
-}
-
-function startTagInForeignContent(p, token) {
-    if (foreignContent.causesExit(token) && !p.fragmentContext) {
-        while (p.treeAdapter.getNamespaceURI(p.openElements.current) !== NS.HTML && !p._isIntegrationPoint(p.openElements.current))
-            p.openElements.pop();
-
-        p._processToken(token);
-    }
-
-    else {
-        var current = p._getAdjustedCurrentElement(),
-            currentNs = p.treeAdapter.getNamespaceURI(current);
-
-        if (currentNs === NS.MATHML)
-            foreignContent.adjustTokenMathMLAttrs(token);
-
-        else if (currentNs === NS.SVG) {
-            foreignContent.adjustTokenSVGTagName(token);
-            foreignContent.adjustTokenSVGAttrs(token);
-        }
-
-        foreignContent.adjustTokenXMLAttrs(token);
-
-        if (token.selfClosing)
-            p._appendElement(token, currentNs);
-        else
-            p._insertElement(token, currentNs);
-    }
-}
-
-function endTagInForeignContent(p, token) {
-    for (var i = p.openElements.stackTop; i > 0; i--) {
-        var element = p.openElements.items[i];
-
-        if (p.treeAdapter.getNamespaceURI(element) === NS.HTML) {
-            p._processToken(token);
+//Steps 9 and 10 of the algorithm
+function aaObtainFurthestBlock(p, formattingElementEntry) {
+    let furthestBlock = null;
+    let idx = p.openElements.stackTop;
+    for (; idx >= 0; idx--) {
+        const element = p.openElements.items[idx];
+        if (element === formattingElementEntry.element) {
             break;
         }
-
-        if (p.treeAdapter.getTagName(element).toLowerCase() === token.tagName) {
-            p.openElements.popUntilElementPopped(element);
+        if (p._isSpecialElement(element, p.openElements.tagIDs[idx])) {
+            furthestBlock = element;
+        }
+    }
+    if (!furthestBlock) {
+        p.openElements.shortenToLength(idx < 0 ? 0 : idx);
+        p.activeFormattingElements.removeEntry(formattingElementEntry);
+    }
+    return furthestBlock;
+}
+//Step 13 of the algorithm
+function aaInnerLoop(p, furthestBlock, formattingElement) {
+    let lastElement = furthestBlock;
+    let nextElement = p.openElements.getCommonAncestor(furthestBlock);
+    for (let i = 0, element = nextElement; element !== formattingElement; i++, element = nextElement) {
+        //NOTE: store the next element for the next loop iteration (it may be deleted from the stack by step 9.5)
+        nextElement = p.openElements.getCommonAncestor(element);
+        const elementEntry = p.activeFormattingElements.getElementEntry(element);
+        const counterOverflow = elementEntry && i >= AA_INNER_LOOP_ITER;
+        const shouldRemoveFromOpenElements = !elementEntry || counterOverflow;
+        if (shouldRemoveFromOpenElements) {
+            if (counterOverflow) {
+                p.activeFormattingElements.removeEntry(elementEntry);
+            }
+            p.openElements.remove(element);
+        }
+        else {
+            element = aaRecreateElementFromEntry(p, elementEntry);
+            if (lastElement === furthestBlock) {
+                p.activeFormattingElements.bookmark = elementEntry;
+            }
+            p.treeAdapter.detachNode(lastElement);
+            p.treeAdapter.appendChild(element, lastElement);
+            lastElement = element;
+        }
+    }
+    return lastElement;
+}
+//Step 13.7 of the algorithm
+function aaRecreateElementFromEntry(p, elementEntry) {
+    const ns = p.treeAdapter.getNamespaceURI(elementEntry.element);
+    const newElement = p.treeAdapter.createElement(elementEntry.token.tagName, ns, elementEntry.token.attrs);
+    p.openElements.replace(elementEntry.element, newElement);
+    elementEntry.element = newElement;
+    return newElement;
+}
+//Step 14 of the algorithm
+function aaInsertLastNodeInCommonAncestor(p, commonAncestor, lastElement) {
+    const tn = p.treeAdapter.getTagName(commonAncestor);
+    const tid = (0, html_js_1.getTagID)(tn);
+    if (p._isElementCausesFosterParenting(tid)) {
+        p._fosterParentElement(lastElement);
+    }
+    else {
+        const ns = p.treeAdapter.getNamespaceURI(commonAncestor);
+        if (tid === html_js_1.TAG_ID.TEMPLATE && ns === html_js_1.NS.HTML) {
+            commonAncestor = p.treeAdapter.getTemplateContent(commonAncestor);
+        }
+        p.treeAdapter.appendChild(commonAncestor, lastElement);
+    }
+}
+//Steps 15-19 of the algorithm
+function aaReplaceFormattingElement(p, furthestBlock, formattingElementEntry) {
+    const ns = p.treeAdapter.getNamespaceURI(formattingElementEntry.element);
+    const { token } = formattingElementEntry;
+    const newElement = p.treeAdapter.createElement(token.tagName, ns, token.attrs);
+    p._adoptNodes(furthestBlock, newElement);
+    p.treeAdapter.appendChild(furthestBlock, newElement);
+    p.activeFormattingElements.insertElementAfterBookmark(newElement, token);
+    p.activeFormattingElements.removeEntry(formattingElementEntry);
+    p.openElements.remove(formattingElementEntry.element);
+    p.openElements.insertAfter(furthestBlock, newElement, token.tagID);
+}
+//Algorithm entry point
+function callAdoptionAgency(p, token) {
+    for (let i = 0; i < AA_OUTER_LOOP_ITER; i++) {
+        const formattingElementEntry = aaObtainFormattingElementEntry(p, token);
+        if (!formattingElementEntry) {
             break;
+        }
+        const furthestBlock = aaObtainFurthestBlock(p, formattingElementEntry);
+        if (!furthestBlock) {
+            break;
+        }
+        p.activeFormattingElements.bookmark = formattingElementEntry;
+        const lastElement = aaInnerLoop(p, furthestBlock, formattingElementEntry.element);
+        const commonAncestor = p.openElements.getCommonAncestor(formattingElementEntry.element);
+        p.treeAdapter.detachNode(lastElement);
+        if (commonAncestor)
+            aaInsertLastNodeInCommonAncestor(p, commonAncestor, lastElement);
+        aaReplaceFormattingElement(p, furthestBlock, formattingElementEntry);
+    }
+}
+//Generic token handlers
+//------------------------------------------------------------------
+function appendComment(p, token) {
+    p._appendCommentNode(token, p.openElements.currentTmplContentOrNode);
+}
+function appendCommentToRootHtmlElement(p, token) {
+    p._appendCommentNode(token, p.openElements.items[0]);
+}
+function appendCommentToDocument(p, token) {
+    p._appendCommentNode(token, p.document);
+}
+function stopParsing(p, token) {
+    p.stopped = true;
+    // NOTE: Set end locations for elements that remain on the open element stack.
+    if (token.location) {
+        // NOTE: If we are not in a fragment, `html` and `body` will stay on the stack.
+        // This is a problem, as we might overwrite their end position here.
+        const target = p.fragmentContext ? 0 : 2;
+        for (let i = p.openElements.stackTop; i >= target; i--) {
+            p._setEndLocation(p.openElements.items[i], token);
+        }
+        // Handle `html` and `body`
+        if (!p.fragmentContext && p.openElements.stackTop >= 0) {
+            const htmlElement = p.openElements.items[0];
+            const htmlLocation = p.treeAdapter.getNodeSourceCodeLocation(htmlElement);
+            if (htmlLocation && !htmlLocation.endTag) {
+                p._setEndLocation(htmlElement, token);
+                if (p.openElements.stackTop >= 1) {
+                    const bodyElement = p.openElements.items[1];
+                    const bodyLocation = p.treeAdapter.getNodeSourceCodeLocation(bodyElement);
+                    if (bodyLocation && !bodyLocation.endTag) {
+                        p._setEndLocation(bodyElement, token);
+                    }
+                }
+            }
+        }
+    }
+}
+// The "initial" insertion mode
+//------------------------------------------------------------------
+function doctypeInInitialMode(p, token) {
+    p._setDocumentType(token);
+    const mode = token.forceQuirks ? html_js_1.DOCUMENT_MODE.QUIRKS : doctype.getDocumentMode(token);
+    if (!doctype.isConforming(token)) {
+        p._err(token, error_codes_js_1.ERR.nonConformingDoctype);
+    }
+    p.treeAdapter.setDocumentMode(p.document, mode);
+    p.insertionMode = InsertionMode.BEFORE_HTML;
+}
+function tokenInInitialMode(p, token) {
+    p._err(token, error_codes_js_1.ERR.missingDoctype, true);
+    p.treeAdapter.setDocumentMode(p.document, html_js_1.DOCUMENT_MODE.QUIRKS);
+    p.insertionMode = InsertionMode.BEFORE_HTML;
+    p._processToken(token);
+}
+// The "before html" insertion mode
+//------------------------------------------------------------------
+function startTagBeforeHtml(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.HTML) {
+        p._insertElement(token, html_js_1.NS.HTML);
+        p.insertionMode = InsertionMode.BEFORE_HEAD;
+    }
+    else {
+        tokenBeforeHtml(p, token);
+    }
+}
+function endTagBeforeHtml(p, token) {
+    const tn = token.tagID;
+    if (tn === html_js_1.TAG_ID.HTML || tn === html_js_1.TAG_ID.HEAD || tn === html_js_1.TAG_ID.BODY || tn === html_js_1.TAG_ID.BR) {
+        tokenBeforeHtml(p, token);
+    }
+}
+function tokenBeforeHtml(p, token) {
+    p._insertFakeRootElement();
+    p.insertionMode = InsertionMode.BEFORE_HEAD;
+    p._processToken(token);
+}
+// The "before head" insertion mode
+//------------------------------------------------------------------
+function startTagBeforeHead(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.HEAD: {
+            p._insertElement(token, html_js_1.NS.HTML);
+            p.headElement = p.openElements.current;
+            p.insertionMode = InsertionMode.IN_HEAD;
+            break;
+        }
+        default: {
+            tokenBeforeHead(p, token);
+        }
+    }
+}
+function endTagBeforeHead(p, token) {
+    const tn = token.tagID;
+    if (tn === html_js_1.TAG_ID.HEAD || tn === html_js_1.TAG_ID.BODY || tn === html_js_1.TAG_ID.HTML || tn === html_js_1.TAG_ID.BR) {
+        tokenBeforeHead(p, token);
+    }
+    else {
+        p._err(token, error_codes_js_1.ERR.endTagWithoutMatchingOpenElement);
+    }
+}
+function tokenBeforeHead(p, token) {
+    p._insertFakeElement(html_js_1.TAG_NAMES.HEAD, html_js_1.TAG_ID.HEAD);
+    p.headElement = p.openElements.current;
+    p.insertionMode = InsertionMode.IN_HEAD;
+    p._processToken(token);
+}
+// The "in head" insertion mode
+//------------------------------------------------------------------
+function startTagInHead(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BASE:
+        case html_js_1.TAG_ID.BASEFONT:
+        case html_js_1.TAG_ID.BGSOUND:
+        case html_js_1.TAG_ID.LINK:
+        case html_js_1.TAG_ID.META: {
+            p._appendElement(token, html_js_1.NS.HTML);
+            token.ackSelfClosing = true;
+            break;
+        }
+        case html_js_1.TAG_ID.TITLE: {
+            p._switchToTextParsing(token, index_js_1.TokenizerMode.RCDATA);
+            break;
+        }
+        case html_js_1.TAG_ID.NOSCRIPT: {
+            if (p.options.scriptingEnabled) {
+                p._switchToTextParsing(token, index_js_1.TokenizerMode.RAWTEXT);
+            }
+            else {
+                p._insertElement(token, html_js_1.NS.HTML);
+                p.insertionMode = InsertionMode.IN_HEAD_NO_SCRIPT;
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.NOFRAMES:
+        case html_js_1.TAG_ID.STYLE: {
+            p._switchToTextParsing(token, index_js_1.TokenizerMode.RAWTEXT);
+            break;
+        }
+        case html_js_1.TAG_ID.SCRIPT: {
+            p._switchToTextParsing(token, index_js_1.TokenizerMode.SCRIPT_DATA);
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            p._insertTemplate(token);
+            p.activeFormattingElements.insertMarker();
+            p.framesetOk = false;
+            p.insertionMode = InsertionMode.IN_TEMPLATE;
+            p.tmplInsertionModeStack.unshift(InsertionMode.IN_TEMPLATE);
+            break;
+        }
+        case html_js_1.TAG_ID.HEAD: {
+            p._err(token, error_codes_js_1.ERR.misplacedStartTagForHeadElement);
+            break;
+        }
+        default: {
+            tokenInHead(p, token);
+        }
+    }
+}
+function endTagInHead(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HEAD: {
+            p.openElements.pop();
+            p.insertionMode = InsertionMode.AFTER_HEAD;
+            break;
+        }
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.BR:
+        case html_js_1.TAG_ID.HTML: {
+            tokenInHead(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            templateEndTagInHead(p, token);
+            break;
+        }
+        default: {
+            p._err(token, error_codes_js_1.ERR.endTagWithoutMatchingOpenElement);
         }
     }
 }
@@ -41958,357 +42769,179 @@ function isImpliedEndTagRequired(tn) {
         case 8:
             return tn === $.OPTGROUP || tn === $.MENUITEM;
     }
-
-    return false;
 }
-
-function isScopingElement(tn, ns) {
-    switch (tn.length) {
-        case 2:
-            if (tn === $.TD || tn === $.TH)
-                return ns === NS.HTML;
-
-            else if (tn === $.MI || tn === $.MO || tn === $.MN || tn === $.MS)
-                return ns === NS.MATHML;
-
-            break;
-
-        case 4:
-            if (tn === $.HTML)
-                return ns === NS.HTML;
-
-            else if (tn === $.DESC)
-                return ns === NS.SVG;
-
-            break;
-
-        case 5:
-            if (tn === $.TABLE)
-                return ns === NS.HTML;
-
-            else if (tn === $.MTEXT)
-                return ns === NS.MATHML;
-
-            else if (tn === $.TITLE)
-                return ns === NS.SVG;
-
-            break;
-
-        case 6:
-            return (tn === $.APPLET || tn === $.OBJECT) && ns === NS.HTML;
-
-        case 7:
-            return (tn === $.CAPTION || tn === $.MARQUEE) && ns === NS.HTML;
-
-        case 8:
-            return tn === $.TEMPLATE && ns === NS.HTML;
-
-        case 13:
-            return tn === $.FOREIGN_OBJECT && ns === NS.SVG;
-
-        case 14:
-            return tn === $.ANNOTATION_XML && ns === NS.MATHML;
-    }
-
-    return false;
+function tokenInHead(p, token) {
+    p.openElements.pop();
+    p.insertionMode = InsertionMode.AFTER_HEAD;
+    p._processToken(token);
 }
-
-//Stack of open elements
-var OpenElementStack = module.exports = function (document, treeAdapter) {
-    this.stackTop = -1;
-    this.items = [];
-    this.current = document;
-    this.currentTagName = null;
-    this.currentTmplContent = null;
-    this.tmplCount = 0;
-    this.treeAdapter = treeAdapter;
-};
-
-//Index of element
-OpenElementStack.prototype._indexOf = function (element) {
-    var idx = -1;
-
-    for (var i = this.stackTop; i >= 0; i--) {
-        if (this.items[i] === element) {
-            idx = i;
+// The "in head no script" insertion mode
+//------------------------------------------------------------------
+function startTagInHeadNoScript(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
             break;
         }
-    }
-    return idx;
-};
-
-//Update current element
-OpenElementStack.prototype._isInTemplate = function () {
-    return this.currentTagName === $.TEMPLATE && this.treeAdapter.getNamespaceURI(this.current) === NS.HTML;
-};
-
-OpenElementStack.prototype._updateCurrentElement = function () {
-    this.current = this.items[this.stackTop];
-    this.currentTagName = this.current && this.treeAdapter.getTagName(this.current);
-
-    this.currentTmplContent = this._isInTemplate() ? this.treeAdapter.getTemplateContent(this.current) : null;
-};
-
-//Mutations
-OpenElementStack.prototype.push = function (element) {
-    this.items[++this.stackTop] = element;
-    this._updateCurrentElement();
-
-    if (this._isInTemplate())
-        this.tmplCount++;
-
-};
-
-OpenElementStack.prototype.pop = function () {
-    this.stackTop--;
-
-    if (this.tmplCount > 0 && this._isInTemplate())
-        this.tmplCount--;
-
-    this._updateCurrentElement();
-};
-
-OpenElementStack.prototype.replace = function (oldElement, newElement) {
-    var idx = this._indexOf(oldElement);
-
-    this.items[idx] = newElement;
-
-    if (idx === this.stackTop)
-        this._updateCurrentElement();
-};
-
-OpenElementStack.prototype.insertAfter = function (referenceElement, newElement) {
-    var insertionIdx = this._indexOf(referenceElement) + 1;
-
-    this.items.splice(insertionIdx, 0, newElement);
-
-    if (insertionIdx === ++this.stackTop)
-        this._updateCurrentElement();
-};
-
-OpenElementStack.prototype.popUntilTagNamePopped = function (tagName) {
-    while (this.stackTop > -1) {
-        var tn = this.currentTagName,
-            ns = this.treeAdapter.getNamespaceURI(this.current);
-
-        this.pop();
-
-        if (tn === tagName && ns === NS.HTML)
-            break;
-    }
-};
-
-OpenElementStack.prototype.popUntilElementPopped = function (element) {
-    while (this.stackTop > -1) {
-        var poppedElement = this.current;
-
-        this.pop();
-
-        if (poppedElement === element)
-            break;
-    }
-};
-
-OpenElementStack.prototype.popUntilNumberedHeaderPopped = function () {
-    while (this.stackTop > -1) {
-        var tn = this.currentTagName,
-            ns = this.treeAdapter.getNamespaceURI(this.current);
-
-        this.pop();
-
-        if (tn === $.H1 || tn === $.H2 || tn === $.H3 || tn === $.H4 || tn === $.H5 || tn === $.H6 && ns === NS.HTML)
-            break;
-    }
-};
-
-OpenElementStack.prototype.popUntilTableCellPopped = function () {
-    while (this.stackTop > -1) {
-        var tn = this.currentTagName,
-            ns = this.treeAdapter.getNamespaceURI(this.current);
-
-        this.pop();
-
-        if (tn === $.TD || tn === $.TH && ns === NS.HTML)
-            break;
-    }
-};
-
-OpenElementStack.prototype.popAllUpToHtmlElement = function () {
-    //NOTE: here we assume that root <html> element is always first in the open element stack, so
-    //we perform this fast stack clean up.
-    this.stackTop = 0;
-    this._updateCurrentElement();
-};
-
-OpenElementStack.prototype.clearBackToTableContext = function () {
-    while (this.currentTagName !== $.TABLE &&
-           this.currentTagName !== $.TEMPLATE &&
-           this.currentTagName !== $.HTML ||
-           this.treeAdapter.getNamespaceURI(this.current) !== NS.HTML)
-        this.pop();
-};
-
-OpenElementStack.prototype.clearBackToTableBodyContext = function () {
-    while (this.currentTagName !== $.TBODY &&
-           this.currentTagName !== $.TFOOT &&
-           this.currentTagName !== $.THEAD &&
-           this.currentTagName !== $.TEMPLATE &&
-           this.currentTagName !== $.HTML ||
-           this.treeAdapter.getNamespaceURI(this.current) !== NS.HTML)
-        this.pop();
-};
-
-OpenElementStack.prototype.clearBackToTableRowContext = function () {
-    while (this.currentTagName !== $.TR &&
-           this.currentTagName !== $.TEMPLATE &&
-           this.currentTagName !== $.HTML ||
-           this.treeAdapter.getNamespaceURI(this.current) !== NS.HTML)
-        this.pop();
-};
-
-OpenElementStack.prototype.remove = function (element) {
-    for (var i = this.stackTop; i >= 0; i--) {
-        if (this.items[i] === element) {
-            this.items.splice(i, 1);
-            this.stackTop--;
-            this._updateCurrentElement();
+        case html_js_1.TAG_ID.BASEFONT:
+        case html_js_1.TAG_ID.BGSOUND:
+        case html_js_1.TAG_ID.HEAD:
+        case html_js_1.TAG_ID.LINK:
+        case html_js_1.TAG_ID.META:
+        case html_js_1.TAG_ID.NOFRAMES:
+        case html_js_1.TAG_ID.STYLE: {
+            startTagInHead(p, token);
             break;
         }
+        case html_js_1.TAG_ID.NOSCRIPT: {
+            p._err(token, error_codes_js_1.ERR.nestedNoscriptInHead);
+            break;
+        }
+        default: {
+            tokenInHeadNoScript(p, token);
+        }
     }
-};
-
-//Search
-OpenElementStack.prototype.tryPeekProperlyNestedBodyElement = function () {
-    //Properly nested <body> element (should be second element in stack).
-    var element = this.items[1];
-
-    return element && this.treeAdapter.getTagName(element) === $.BODY ? element : null;
-};
-
-OpenElementStack.prototype.contains = function (element) {
-    return this._indexOf(element) > -1;
-};
-
-OpenElementStack.prototype.getCommonAncestor = function (element) {
-    var elementIdx = this._indexOf(element);
-
-    return --elementIdx >= 0 ? this.items[elementIdx] : null;
-};
-
-OpenElementStack.prototype.isRootHtmlElementCurrent = function () {
-    return this.stackTop === 0 && this.currentTagName === $.HTML;
-};
-
-//Element in scope
-OpenElementStack.prototype.hasInScope = function (tagName) {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if (tn === tagName && ns === NS.HTML)
-            return true;
-
-        if (isScopingElement(tn, ns))
-            return false;
+}
+function endTagInHeadNoScript(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.NOSCRIPT: {
+            p.openElements.pop();
+            p.insertionMode = InsertionMode.IN_HEAD;
+            break;
+        }
+        case html_js_1.TAG_ID.BR: {
+            tokenInHeadNoScript(p, token);
+            break;
+        }
+        default: {
+            p._err(token, error_codes_js_1.ERR.endTagWithoutMatchingOpenElement);
+        }
     }
-
-    return true;
-};
-
-OpenElementStack.prototype.hasNumberedHeaderInScope = function () {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if ((tn === $.H1 || tn === $.H2 || tn === $.H3 || tn === $.H4 || tn === $.H5 || tn === $.H6) && ns === NS.HTML)
-            return true;
-
-        if (isScopingElement(tn, ns))
-            return false;
+}
+function tokenInHeadNoScript(p, token) {
+    const errCode = token.type === token_js_1.TokenType.EOF ? error_codes_js_1.ERR.openElementsLeftAfterEof : error_codes_js_1.ERR.disallowedContentInNoscriptInHead;
+    p._err(token, errCode);
+    p.openElements.pop();
+    p.insertionMode = InsertionMode.IN_HEAD;
+    p._processToken(token);
+}
+// The "after head" insertion mode
+//------------------------------------------------------------------
+function startTagAfterHead(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BODY: {
+            p._insertElement(token, html_js_1.NS.HTML);
+            p.framesetOk = false;
+            p.insertionMode = InsertionMode.IN_BODY;
+            break;
+        }
+        case html_js_1.TAG_ID.FRAMESET: {
+            p._insertElement(token, html_js_1.NS.HTML);
+            p.insertionMode = InsertionMode.IN_FRAMESET;
+            break;
+        }
+        case html_js_1.TAG_ID.BASE:
+        case html_js_1.TAG_ID.BASEFONT:
+        case html_js_1.TAG_ID.BGSOUND:
+        case html_js_1.TAG_ID.LINK:
+        case html_js_1.TAG_ID.META:
+        case html_js_1.TAG_ID.NOFRAMES:
+        case html_js_1.TAG_ID.SCRIPT:
+        case html_js_1.TAG_ID.STYLE:
+        case html_js_1.TAG_ID.TEMPLATE:
+        case html_js_1.TAG_ID.TITLE: {
+            p._err(token, error_codes_js_1.ERR.abandonedHeadElementChild);
+            p.openElements.push(p.headElement, html_js_1.TAG_ID.HEAD);
+            startTagInHead(p, token);
+            p.openElements.remove(p.headElement);
+            break;
+        }
+        case html_js_1.TAG_ID.HEAD: {
+            p._err(token, error_codes_js_1.ERR.misplacedStartTagForHeadElement);
+            break;
+        }
+        default: {
+            tokenAfterHead(p, token);
+        }
     }
-
-    return true;
-};
-
-OpenElementStack.prototype.hasInListItemScope = function (tagName) {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if (tn === tagName && ns === NS.HTML)
-            return true;
-
-        if ((tn === $.UL || tn === $.OL) && ns === NS.HTML || isScopingElement(tn, ns))
-            return false;
+}
+function endTagAfterHead(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.HTML:
+        case html_js_1.TAG_ID.BR: {
+            tokenAfterHead(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            templateEndTagInHead(p, token);
+            break;
+        }
+        default: {
+            p._err(token, error_codes_js_1.ERR.endTagWithoutMatchingOpenElement);
+        }
     }
-
-    return true;
-};
-
-OpenElementStack.prototype.hasInButtonScope = function (tagName) {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if (tn === tagName && ns === NS.HTML)
-            return true;
-
-        if (tn === $.BUTTON && ns === NS.HTML || isScopingElement(tn, ns))
-            return false;
+}
+function tokenAfterHead(p, token) {
+    p._insertFakeElement(html_js_1.TAG_NAMES.BODY, html_js_1.TAG_ID.BODY);
+    p.insertionMode = InsertionMode.IN_BODY;
+    modeInBody(p, token);
+}
+// The "in body" insertion mode
+//------------------------------------------------------------------
+function modeInBody(p, token) {
+    switch (token.type) {
+        case token_js_1.TokenType.CHARACTER: {
+            characterInBody(p, token);
+            break;
+        }
+        case token_js_1.TokenType.WHITESPACE_CHARACTER: {
+            whitespaceCharacterInBody(p, token);
+            break;
+        }
+        case token_js_1.TokenType.COMMENT: {
+            appendComment(p, token);
+            break;
+        }
+        case token_js_1.TokenType.START_TAG: {
+            startTagInBody(p, token);
+            break;
+        }
+        case token_js_1.TokenType.END_TAG: {
+            endTagInBody(p, token);
+            break;
+        }
+        case token_js_1.TokenType.EOF: {
+            eofInBody(p, token);
+            break;
+        }
+        default:
+        // Do nothing
     }
-
-    return true;
-};
-
-OpenElementStack.prototype.hasInTableScope = function (tagName) {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if (ns !== NS.HTML)
-            continue;
-
-        if (tn === tagName)
-            return true;
-
-        if (tn === $.TABLE || tn === $.TEMPLATE || tn === $.HTML)
-            return false;
+}
+function whitespaceCharacterInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._insertCharacters(token);
+}
+function characterInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._insertCharacters(token);
+    p.framesetOk = false;
+}
+function htmlStartTagInBody(p, token) {
+    if (p.openElements.tmplCount === 0) {
+        p.treeAdapter.adoptAttributes(p.openElements.items[0], token.attrs);
     }
-
-    return true;
-};
-
-OpenElementStack.prototype.hasTableBodyContextInTableScope = function () {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if (ns !== NS.HTML)
-            continue;
-
-        if (tn === $.TBODY || tn === $.THEAD || tn === $.TFOOT)
-            return true;
-
-        if (tn === $.TABLE || tn === $.HTML)
-            return false;
-    }
-
-    return true;
-};
-
-OpenElementStack.prototype.hasInSelectScope = function (tagName) {
-    for (var i = this.stackTop; i >= 0; i--) {
-        var tn = this.treeAdapter.getTagName(this.items[i]),
-            ns = this.treeAdapter.getNamespaceURI(this.items[i]);
-
-        if (ns !== NS.HTML)
-            continue;
-
-        if (tn === tagName)
-            return true;
-
-        if (tn !== $.OPTION && tn !== $.OPTGROUP)
-            return false;
+}
+function bodyStartTagInBody(p, token) {
+    const bodyElement = p.openElements.tryPeekProperlyNestedBodyElement();
+    if (bodyElement && p.openElements.tmplCount === 0) {
+        p.framesetOk = false;
+        p.treeAdapter.adoptAttributes(bodyElement, token.attrs);
     }
 
     return true;
@@ -42380,23 +43013,10 @@ ParserStream.prototype._resume = function () {
 
         this.parser.tokenizer.insertHtmlAtCurrentPos(html);
     }
-
-    this.pausedByScript = false;
-
-    //NOTE: keep parsing if we don't wait for the next input chunk
-    if (this.parser.tokenizer.active)
-        this._runParsingLoop();
-};
-
-ParserStream.prototype._documentWrite = function (html) {
-    if (!this.parser.stopped)
-        this.pendingHtmlInsertions.push(html);
-};
-
-ParserStream.prototype._scriptHandler = function (scriptElement) {
-    if (this.listeners('script').length) {
-        this.pausedByScript = true;
-        this.emit('script', scriptElement, this._documentWrite, this._resume);
+}
+function addressStartTagInBody(p, token) {
+    if (p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._closePElement();
     }
     else
         this._runParsingLoop();
@@ -42488,76 +43108,8 @@ SAXParser.prototype._transform = function (chunk, encoding, callback) {
         this.tokenizer.write(chunk.toString('utf8'), this.lastChunkWritten);
         this._runParsingLoop();
     }
-
-    this.push(chunk);
-
-    callback();
-};
-
-SAXParser.prototype._flush = function (callback) {
-    callback();
-};
-
-SAXParser.prototype.end = function (chunk, encoding, callback) {
-    this.lastChunkWritten = true;
-    TransformStream.prototype.end.call(this, chunk, encoding, callback);
-};
-
-SAXParser.prototype.stop = function () {
-    this.stopped = true;
-};
-
-//Internals
-SAXParser.prototype._runParsingLoop = function () {
-    do {
-        var token = this.parserFeedbackSimulator.getNextToken();
-
-        if (token.type === Tokenizer.HIBERNATION_TOKEN)
-            break;
-
-        if (token.type === Tokenizer.CHARACTER_TOKEN ||
-            token.type === Tokenizer.WHITESPACE_CHARACTER_TOKEN ||
-            token.type === Tokenizer.NULL_CHARACTER_TOKEN) {
-
-            if (this.options.locationInfo) {
-                if (this.pendingText === null)
-                    this.currentTokenLocation = token.location;
-
-                else
-                    this.currentTokenLocation.endOffset = token.location.endOffset;
-            }
-
-            this.pendingText = (this.pendingText || '') + token.chars;
-        }
-
-        else {
-            this._emitPendingText();
-            this._handleToken(token);
-        }
-    } while (!this.stopped && token.type !== Tokenizer.EOF_TOKEN);
-};
-
-SAXParser.prototype._handleToken = function (token) {
-    if (this.options.locationInfo)
-        this.currentTokenLocation = token.location;
-
-    if (token.type === Tokenizer.START_TAG_TOKEN)
-        this.emit('startTag', token.tagName, token.attrs, token.selfClosing, this.currentTokenLocation);
-
-    else if (token.type === Tokenizer.END_TAG_TOKEN)
-        this.emit('endTag', token.tagName, this.currentTokenLocation);
-
-    else if (token.type === Tokenizer.COMMENT_TOKEN)
-        this.emit('comment', token.data, this.currentTokenLocation);
-
-    else if (token.type === Tokenizer.DOCTYPE_TOKEN)
-        this.emit('doctype', token.name, token.publicId, token.systemId, this.currentTokenLocation);
-};
-
-SAXParser.prototype._emitPendingText = function () {
-    if (this.pendingText !== null) {
-        this.emit('text', this.pendingText, this.currentTokenLocation);
-        this.pendingText = null;
+    if ((0, html_js_1.isNumberedHeader)(p.openElements.currentTagId)) {
+        p.openElements.pop();
     }
 };
 
@@ -42598,113 +43150,50 @@ ParserFeedbackSimulator.prototype.getNextToken = function () {
         token.type = Tokenizer.CHARACTER_TOKEN;
         token.chars = UNICODE.REPLACEMENT_CHARACTER;
     }
-
-    else if (this.skipNextNewLine) {
-        if (token.type !== Tokenizer.HIBERNATION_TOKEN)
-            this.skipNextNewLine = false;
-
-        if (token.type === Tokenizer.WHITESPACE_CHARACTER_TOKEN && token.chars[0] === '\n') {
-            if (token.chars.length === 1)
-                return this.getNextToken();
-
-            token.chars = token.chars.substr(1);
+    p._insertElement(token, html_js_1.NS.HTML);
+    //NOTE: If the next token is a U+000A LINE FEED (LF) character token, then ignore that token and move
+    //on to the next one. (Newlines at the start of pre blocks are ignored as an authoring convenience.)
+    p.skipNextNewLine = true;
+    p.framesetOk = false;
+}
+function formStartTagInBody(p, token) {
+    const inTemplate = p.openElements.tmplCount > 0;
+    if (!p.formElement || inTemplate) {
+        if (p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+            p._closePElement();
+        }
+        p._insertElement(token, html_js_1.NS.HTML);
+        if (!inTemplate) {
+            p.formElement = p.openElements.current;
         }
     }
-
-    return token;
-};
-
-//Namespace stack mutations
-ParserFeedbackSimulator.prototype._enterNamespace = function (namespace) {
-    this.namespaceStackTop++;
-    this.namespaceStack.push(namespace);
-
-    this.inForeignContent = namespace !== NS.HTML;
-    this.currentNamespace = namespace;
-    this.tokenizer.allowCDATA = this.inForeignContent;
-};
-
-ParserFeedbackSimulator.prototype._leaveCurrentNamespace = function () {
-    this.namespaceStackTop--;
-    this.namespaceStack.pop();
-
-    this.currentNamespace = this.namespaceStack[this.namespaceStackTop];
-    this.inForeignContent = this.currentNamespace !== NS.HTML;
-    this.tokenizer.allowCDATA = this.inForeignContent;
-};
-
-//Token handlers
-ParserFeedbackSimulator.prototype._ensureTokenizerMode = function (tn) {
-    if (tn === $.TEXTAREA || tn === $.TITLE)
-        this.tokenizer.state = Tokenizer.MODE.RCDATA;
-
-    else if (tn === $.PLAINTEXT)
-        this.tokenizer.state = Tokenizer.MODE.PLAINTEXT;
-
-    else if (tn === $.SCRIPT)
-        this.tokenizer.state = Tokenizer.MODE.SCRIPT_DATA;
-
-    else if (tn === $.STYLE || tn === $.IFRAME || tn === $.XMP ||
-             tn === $.NOEMBED || tn === $.NOFRAMES || tn === $.NOSCRIPT)
-        this.tokenizer.state = Tokenizer.MODE.RAWTEXT;
-};
-
-ParserFeedbackSimulator.prototype._handleStartTagToken = function (token) {
-    var tn = token.tagName;
-
-    if (tn === $.SVG)
-        this._enterNamespace(NS.SVG);
-
-    else if (tn === $.MATH)
-        this._enterNamespace(NS.MATHML);
-
-    if (this.inForeignContent) {
-        if (foreignContent.causesExit(token)) {
-            this._leaveCurrentNamespace();
-            return;
+}
+function listItemStartTagInBody(p, token) {
+    p.framesetOk = false;
+    const tn = token.tagID;
+    for (let i = p.openElements.stackTop; i >= 0; i--) {
+        const elementId = p.openElements.tagIDs[i];
+        if ((tn === html_js_1.TAG_ID.LI && elementId === html_js_1.TAG_ID.LI) ||
+            ((tn === html_js_1.TAG_ID.DD || tn === html_js_1.TAG_ID.DT) && (elementId === html_js_1.TAG_ID.DD || elementId === html_js_1.TAG_ID.DT))) {
+            p.openElements.generateImpliedEndTagsWithExclusion(elementId);
+            p.openElements.popUntilTagNamePopped(elementId);
+            break;
         }
-
-        var currentNs = this.currentNamespace;
-
-        if (currentNs === NS.MATHML)
-            foreignContent.adjustTokenMathMLAttrs(token);
-
-        else if (currentNs === NS.SVG) {
-            foreignContent.adjustTokenSVGTagName(token);
-            foreignContent.adjustTokenSVGAttrs(token);
+        if (elementId !== html_js_1.TAG_ID.ADDRESS &&
+            elementId !== html_js_1.TAG_ID.DIV &&
+            elementId !== html_js_1.TAG_ID.P &&
+            p._isSpecialElement(p.openElements.items[i], elementId)) {
+            break;
         }
-
-        foreignContent.adjustTokenXMLAttrs(token);
-
-        tn = token.tagName;
-
-        if (!token.selfClosing && foreignContent.isIntegrationPoint(tn, currentNs, token.attrs))
-            this._enterNamespace(NS.HTML);
     }
-
-    else {
-        if (tn === $.PRE || tn === $.TEXTAREA || tn === $.LISTING)
-            this.skipNextNewLine = true;
-
-        else if (tn === $.IMAGE)
-            token.tagName = $.IMG;
-
-        this._ensureTokenizerMode(tn);
+    if (p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._closePElement();
     }
-};
-
-ParserFeedbackSimulator.prototype._handleEndTagToken = function (token) {
-    var tn = token.tagName;
-
-    if (!this.inForeignContent) {
-        var previousNs = this.namespaceStack[this.namespaceStackTop - 1];
-
-        if (previousNs === NS.SVG && foreignContent.SVG_TAG_NAMES_ADJUSTMENT_MAP[tn])
-            tn = foreignContent.SVG_TAG_NAMES_ADJUSTMENT_MAP[tn];
-
-        //NOTE: check for exit from integration point
-        if (foreignContent.isIntegrationPoint(tn, previousNs, token.attrs))
-            this._leaveCurrentNamespace();
+    p._insertElement(token, html_js_1.NS.HTML);
+}
+function plaintextStartTagInBody(p, token) {
+    if (p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._closePElement();
     }
 
     else if (tn === $.SVG && this.currentNamespace === NS.SVG ||
@@ -42763,93 +43252,44 @@ Serializer.escapeString = function (str, attrMode) {
             .replace(LT_REGEX, '&lt;')
             .replace(GT_REGEX, '&gt;');
     }
-
-    return str;
-};
-
-
-//API
-Serializer.prototype.serialize = function () {
-    this._serializeChildNodes(this.startNode);
-
-    return this.html;
-};
-
-
-//Internals
-Serializer.prototype._serializeChildNodes = function (parentNode) {
-    var childNodes = this.treeAdapter.getChildNodes(parentNode);
-
-    if (childNodes) {
-        for (var i = 0, cnLength = childNodes.length; i < cnLength; i++) {
-            var currentNode = childNodes[i];
-
-            if (this.treeAdapter.isElementNode(currentNode))
-                this._serializeElement(currentNode);
-
-            else if (this.treeAdapter.isTextNode(currentNode))
-                this._serializeTextNode(currentNode);
-
-            else if (this.treeAdapter.isCommentNode(currentNode))
-                this._serializeCommentNode(currentNode);
-
-            else if (this.treeAdapter.isDocumentTypeNode(currentNode))
-                this._serializeDocumentTypeNode(currentNode);
-        }
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.framesetOk = false;
+}
+function aStartTagInBody(p, token) {
+    const activeElementEntry = p.activeFormattingElements.getElementEntryInScopeWithTagName(html_js_1.TAG_NAMES.A);
+    if (activeElementEntry) {
+        callAdoptionAgency(p, token);
+        p.openElements.remove(activeElementEntry.element);
+        p.activeFormattingElements.removeEntry(activeElementEntry);
     }
-};
-
-Serializer.prototype._serializeElement = function (node) {
-    var tn = this.treeAdapter.getTagName(node),
-        ns = this.treeAdapter.getNamespaceURI(node);
-
-    this.html += '<' + tn;
-    this._serializeAttributes(node);
-    this.html += '>';
-
-    if (tn !== $.AREA && tn !== $.BASE && tn !== $.BASEFONT && tn !== $.BGSOUND && tn !== $.BR && tn !== $.BR &&
-        tn !== $.COL && tn !== $.EMBED && tn !== $.FRAME && tn !== $.HR && tn !== $.IMG && tn !== $.INPUT &&
-        tn !== $.KEYGEN && tn !== $.LINK && tn !== $.MENUITEM && tn !== $.META && tn !== $.PARAM && tn !== $.SOURCE &&
-        tn !== $.TRACK && tn !== $.WBR) {
-
-        var childNodesHolder = tn === $.TEMPLATE && ns === NS.HTML ?
-            this.treeAdapter.getTemplateContent(node) :
-            node;
-
-        this._serializeChildNodes(childNodesHolder);
-        this.html += '</' + tn + '>';
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.activeFormattingElements.pushElement(p.openElements.current, token);
+}
+function bStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.activeFormattingElements.pushElement(p.openElements.current, token);
+}
+function nobrStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    if (p.openElements.hasInScope(html_js_1.TAG_ID.NOBR)) {
+        callAdoptionAgency(p, token);
+        p._reconstructActiveFormattingElements();
     }
-};
-
-Serializer.prototype._serializeAttributes = function (node) {
-    var attrs = this.treeAdapter.getAttrList(node);
-
-    for (var i = 0, attrsLength = attrs.length; i < attrsLength; i++) {
-        var attr = attrs[i],
-            value = Serializer.escapeString(attr.value, true);
-
-        this.html += ' ';
-
-        if (!attr.namespace)
-            this.html += attr.name;
-
-        else if (attr.namespace === NS.XML)
-            this.html += 'xml:' + attr.name;
-
-        else if (attr.namespace === NS.XMLNS) {
-            if (attr.name !== 'xmlns')
-                this.html += 'xmlns:';
-
-            this.html += attr.name;
-        }
-
-        else if (attr.namespace === NS.XLINK)
-            this.html += 'xlink:' + attr.name;
-
-        else
-            this.html += attr.namespace + ':' + attr.name;
-
-        this.html += '="' + value + '"';
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.activeFormattingElements.pushElement(p.openElements.current, token);
+}
+function appletStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.activeFormattingElements.insertMarker();
+    p.framesetOk = false;
+}
+function tableStartTagInBody(p, token) {
+    if (p.treeAdapter.getDocumentMode(p.document) !== html_js_1.DOCUMENT_MODE.QUIRKS && p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._closePElement();
     }
 };
 
@@ -43012,2046 +43452,3148 @@ var DATA_STATE = 'DATA_STATE',
 function isWhitespace(cp) {
     return cp === $.SPACE || cp === $.LINE_FEED || cp === $.TABULATION || cp === $.FORM_FEED;
 }
+function areaStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._appendElement(token, html_js_1.NS.HTML);
+    p.framesetOk = false;
+    token.ackSelfClosing = true;
+}
+function isHiddenInput(token) {
+    const inputType = (0, token_js_1.getTokenAttr)(token, html_js_1.ATTRS.TYPE);
+    return inputType != null && inputType.toLowerCase() === HIDDEN_INPUT_TYPE;
+}
+function inputStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._appendElement(token, html_js_1.NS.HTML);
+    if (!isHiddenInput(token)) {
+        p.framesetOk = false;
+    }
+    token.ackSelfClosing = true;
+}
+function paramStartTagInBody(p, token) {
+    p._appendElement(token, html_js_1.NS.HTML);
+    token.ackSelfClosing = true;
+}
+function hrStartTagInBody(p, token) {
+    if (p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._closePElement();
+    }
+    p._appendElement(token, html_js_1.NS.HTML);
+    p.framesetOk = false;
+    token.ackSelfClosing = true;
+}
+function imageStartTagInBody(p, token) {
+    token.tagName = html_js_1.TAG_NAMES.IMG;
+    token.tagID = html_js_1.TAG_ID.IMG;
+    areaStartTagInBody(p, token);
+}
+function textareaStartTagInBody(p, token) {
+    p._insertElement(token, html_js_1.NS.HTML);
+    //NOTE: If the next token is a U+000A LINE FEED (LF) character token, then ignore that token and move
+    //on to the next one. (Newlines at the start of textarea elements are ignored as an authoring convenience.)
+    p.skipNextNewLine = true;
+    p.tokenizer.state = index_js_1.TokenizerMode.RCDATA;
+    p.originalInsertionMode = p.insertionMode;
+    p.framesetOk = false;
+    p.insertionMode = InsertionMode.TEXT;
+}
+function xmpStartTagInBody(p, token) {
+    if (p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._closePElement();
+    }
+    p._reconstructActiveFormattingElements();
+    p.framesetOk = false;
+    p._switchToTextParsing(token, index_js_1.TokenizerMode.RAWTEXT);
+}
+function iframeStartTagInBody(p, token) {
+    p.framesetOk = false;
+    p._switchToTextParsing(token, index_js_1.TokenizerMode.RAWTEXT);
+}
+//NOTE: here we assume that we always act as an user agent with enabled plugins, so we parse
+//<noembed> as rawtext.
+function noembedStartTagInBody(p, token) {
+    p._switchToTextParsing(token, index_js_1.TokenizerMode.RAWTEXT);
+}
+function selectStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.framesetOk = false;
+    p.insertionMode =
+        p.insertionMode === InsertionMode.IN_TABLE ||
+            p.insertionMode === InsertionMode.IN_CAPTION ||
+            p.insertionMode === InsertionMode.IN_TABLE_BODY ||
+            p.insertionMode === InsertionMode.IN_ROW ||
+            p.insertionMode === InsertionMode.IN_CELL
+            ? InsertionMode.IN_SELECT_IN_TABLE
+            : InsertionMode.IN_SELECT;
+}
+function optgroupStartTagInBody(p, token) {
+    if (p.openElements.currentTagId === html_js_1.TAG_ID.OPTION) {
+        p.openElements.pop();
+    }
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+}
+function rbStartTagInBody(p, token) {
+    if (p.openElements.hasInScope(html_js_1.TAG_ID.RUBY)) {
+        p.openElements.generateImpliedEndTags();
+    }
+    p._insertElement(token, html_js_1.NS.HTML);
+}
+function rtStartTagInBody(p, token) {
+    if (p.openElements.hasInScope(html_js_1.TAG_ID.RUBY)) {
+        p.openElements.generateImpliedEndTagsWithExclusion(html_js_1.TAG_ID.RTC);
+    }
+    p._insertElement(token, html_js_1.NS.HTML);
+}
+function mathStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    foreignContent.adjustTokenMathMLAttrs(token);
+    foreignContent.adjustTokenXMLAttrs(token);
+    if (token.selfClosing) {
+        p._appendElement(token, html_js_1.NS.MATHML);
+    }
+    else {
+        p._insertElement(token, html_js_1.NS.MATHML);
+    }
+    token.ackSelfClosing = true;
+}
+function svgStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    foreignContent.adjustTokenSVGAttrs(token);
+    foreignContent.adjustTokenXMLAttrs(token);
+    if (token.selfClosing) {
+        p._appendElement(token, html_js_1.NS.SVG);
+    }
+    else {
+        p._insertElement(token, html_js_1.NS.SVG);
+    }
+    token.ackSelfClosing = true;
+}
+function genericStartTagInBody(p, token) {
+    p._reconstructActiveFormattingElements();
+    p._insertElement(token, html_js_1.NS.HTML);
+}
+function startTagInBody(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.I:
+        case html_js_1.TAG_ID.S:
+        case html_js_1.TAG_ID.B:
+        case html_js_1.TAG_ID.U:
+        case html_js_1.TAG_ID.EM:
+        case html_js_1.TAG_ID.TT:
+        case html_js_1.TAG_ID.BIG:
+        case html_js_1.TAG_ID.CODE:
+        case html_js_1.TAG_ID.FONT:
+        case html_js_1.TAG_ID.SMALL:
+        case html_js_1.TAG_ID.STRIKE:
+        case html_js_1.TAG_ID.STRONG: {
+            bStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.A: {
+            aStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.H1:
+        case html_js_1.TAG_ID.H2:
+        case html_js_1.TAG_ID.H3:
+        case html_js_1.TAG_ID.H4:
+        case html_js_1.TAG_ID.H5:
+        case html_js_1.TAG_ID.H6: {
+            numberedHeaderStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.P:
+        case html_js_1.TAG_ID.DL:
+        case html_js_1.TAG_ID.OL:
+        case html_js_1.TAG_ID.UL:
+        case html_js_1.TAG_ID.DIV:
+        case html_js_1.TAG_ID.DIR:
+        case html_js_1.TAG_ID.NAV:
+        case html_js_1.TAG_ID.MAIN:
+        case html_js_1.TAG_ID.MENU:
+        case html_js_1.TAG_ID.ASIDE:
+        case html_js_1.TAG_ID.CENTER:
+        case html_js_1.TAG_ID.FIGURE:
+        case html_js_1.TAG_ID.FOOTER:
+        case html_js_1.TAG_ID.HEADER:
+        case html_js_1.TAG_ID.HGROUP:
+        case html_js_1.TAG_ID.DIALOG:
+        case html_js_1.TAG_ID.DETAILS:
+        case html_js_1.TAG_ID.ADDRESS:
+        case html_js_1.TAG_ID.ARTICLE:
+        case html_js_1.TAG_ID.SECTION:
+        case html_js_1.TAG_ID.SUMMARY:
+        case html_js_1.TAG_ID.FIELDSET:
+        case html_js_1.TAG_ID.BLOCKQUOTE:
+        case html_js_1.TAG_ID.FIGCAPTION: {
+            addressStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.LI:
+        case html_js_1.TAG_ID.DD:
+        case html_js_1.TAG_ID.DT: {
+            listItemStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BR:
+        case html_js_1.TAG_ID.IMG:
+        case html_js_1.TAG_ID.WBR:
+        case html_js_1.TAG_ID.AREA:
+        case html_js_1.TAG_ID.EMBED:
+        case html_js_1.TAG_ID.KEYGEN: {
+            areaStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.HR: {
+            hrStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.RB:
+        case html_js_1.TAG_ID.RTC: {
+            rbStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.RT:
+        case html_js_1.TAG_ID.RP: {
+            rtStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.PRE:
+        case html_js_1.TAG_ID.LISTING: {
+            preStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.XMP: {
+            xmpStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.SVG: {
+            svgStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.HTML: {
+            htmlStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BASE:
+        case html_js_1.TAG_ID.LINK:
+        case html_js_1.TAG_ID.META:
+        case html_js_1.TAG_ID.STYLE:
+        case html_js_1.TAG_ID.TITLE:
+        case html_js_1.TAG_ID.SCRIPT:
+        case html_js_1.TAG_ID.BGSOUND:
+        case html_js_1.TAG_ID.BASEFONT:
+        case html_js_1.TAG_ID.TEMPLATE: {
+            startTagInHead(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BODY: {
+            bodyStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.FORM: {
+            formStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.NOBR: {
+            nobrStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.MATH: {
+            mathStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TABLE: {
+            tableStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.INPUT: {
+            inputStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.PARAM:
+        case html_js_1.TAG_ID.TRACK:
+        case html_js_1.TAG_ID.SOURCE: {
+            paramStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.IMAGE: {
+            imageStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BUTTON: {
+            buttonStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.APPLET:
+        case html_js_1.TAG_ID.OBJECT:
+        case html_js_1.TAG_ID.MARQUEE: {
+            appletStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.IFRAME: {
+            iframeStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.SELECT: {
+            selectStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.OPTION:
+        case html_js_1.TAG_ID.OPTGROUP: {
+            optgroupStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.NOEMBED: {
+            noembedStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.FRAMESET: {
+            framesetStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TEXTAREA: {
+            textareaStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.NOSCRIPT: {
+            if (p.options.scriptingEnabled) {
+                noembedStartTagInBody(p, token);
+            }
+            else {
+                genericStartTagInBody(p, token);
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.PLAINTEXT: {
+            plaintextStartTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TR:
+        case html_js_1.TAG_ID.HEAD:
+        case html_js_1.TAG_ID.FRAME:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD:
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COLGROUP: {
+            // Ignore token
+            break;
+        }
+        default: {
+            genericStartTagInBody(p, token);
+        }
+    }
+}
+function bodyEndTagInBody(p, token) {
+    if (p.openElements.hasInScope(html_js_1.TAG_ID.BODY)) {
+        p.insertionMode = InsertionMode.AFTER_BODY;
+        //NOTE: <body> is never popped from the stack, so we need to updated
+        //the end location explicitly.
+        if (p.options.sourceCodeLocationInfo) {
+            const bodyElement = p.openElements.tryPeekProperlyNestedBodyElement();
+            if (bodyElement) {
+                p._setEndLocation(bodyElement, token);
+            }
+        }
+    }
+}
+function htmlEndTagInBody(p, token) {
+    if (p.openElements.hasInScope(html_js_1.TAG_ID.BODY)) {
+        p.insertionMode = InsertionMode.AFTER_BODY;
+        endTagAfterBody(p, token);
+    }
+}
+function addressEndTagInBody(p, token) {
+    const tn = token.tagID;
+    if (p.openElements.hasInScope(tn)) {
+        p.openElements.generateImpliedEndTags();
+        p.openElements.popUntilTagNamePopped(tn);
+    }
+}
+function formEndTagInBody(p) {
+    const inTemplate = p.openElements.tmplCount > 0;
+    const { formElement } = p;
+    if (!inTemplate) {
+        p.formElement = null;
+    }
+    if ((formElement || inTemplate) && p.openElements.hasInScope(html_js_1.TAG_ID.FORM)) {
+        p.openElements.generateImpliedEndTags();
+        if (inTemplate) {
+            p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.FORM);
+        }
+        else if (formElement) {
+            p.openElements.remove(formElement);
+        }
+    }
+}
+function pEndTagInBody(p) {
+    if (!p.openElements.hasInButtonScope(html_js_1.TAG_ID.P)) {
+        p._insertFakeElement(html_js_1.TAG_NAMES.P, html_js_1.TAG_ID.P);
+    }
+    p._closePElement();
+}
+function liEndTagInBody(p) {
+    if (p.openElements.hasInListItemScope(html_js_1.TAG_ID.LI)) {
+        p.openElements.generateImpliedEndTagsWithExclusion(html_js_1.TAG_ID.LI);
+        p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.LI);
+    }
+}
+function ddEndTagInBody(p, token) {
+    const tn = token.tagID;
+    if (p.openElements.hasInScope(tn)) {
+        p.openElements.generateImpliedEndTagsWithExclusion(tn);
+        p.openElements.popUntilTagNamePopped(tn);
+    }
+}
+function numberedHeaderEndTagInBody(p) {
+    if (p.openElements.hasNumberedHeaderInScope()) {
+        p.openElements.generateImpliedEndTags();
+        p.openElements.popUntilNumberedHeaderPopped();
+    }
+}
+function appletEndTagInBody(p, token) {
+    const tn = token.tagID;
+    if (p.openElements.hasInScope(tn)) {
+        p.openElements.generateImpliedEndTags();
+        p.openElements.popUntilTagNamePopped(tn);
+        p.activeFormattingElements.clearToLastMarker();
+    }
+}
+function brEndTagInBody(p) {
+    p._reconstructActiveFormattingElements();
+    p._insertFakeElement(html_js_1.TAG_NAMES.BR, html_js_1.TAG_ID.BR);
+    p.openElements.pop();
+    p.framesetOk = false;
+}
+function genericEndTagInBody(p, token) {
+    const tn = token.tagName;
+    const tid = token.tagID;
+    for (let i = p.openElements.stackTop; i > 0; i--) {
+        const element = p.openElements.items[i];
+        const elementId = p.openElements.tagIDs[i];
+        // Compare the tag name here, as the tag might not be a known tag with an ID.
+        if (tid === elementId && (tid !== html_js_1.TAG_ID.UNKNOWN || p.treeAdapter.getTagName(element) === tn)) {
+            p.openElements.generateImpliedEndTagsWithExclusion(tid);
+            if (p.openElements.stackTop >= i)
+                p.openElements.shortenToLength(i);
+            break;
+        }
+        if (p._isSpecialElement(element, elementId)) {
+            break;
+        }
+    }
+}
+function endTagInBody(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.A:
+        case html_js_1.TAG_ID.B:
+        case html_js_1.TAG_ID.I:
+        case html_js_1.TAG_ID.S:
+        case html_js_1.TAG_ID.U:
+        case html_js_1.TAG_ID.EM:
+        case html_js_1.TAG_ID.TT:
+        case html_js_1.TAG_ID.BIG:
+        case html_js_1.TAG_ID.CODE:
+        case html_js_1.TAG_ID.FONT:
+        case html_js_1.TAG_ID.NOBR:
+        case html_js_1.TAG_ID.SMALL:
+        case html_js_1.TAG_ID.STRIKE:
+        case html_js_1.TAG_ID.STRONG: {
+            callAdoptionAgency(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.P: {
+            pEndTagInBody(p);
+            break;
+        }
+        case html_js_1.TAG_ID.DL:
+        case html_js_1.TAG_ID.UL:
+        case html_js_1.TAG_ID.OL:
+        case html_js_1.TAG_ID.DIR:
+        case html_js_1.TAG_ID.DIV:
+        case html_js_1.TAG_ID.NAV:
+        case html_js_1.TAG_ID.PRE:
+        case html_js_1.TAG_ID.MAIN:
+        case html_js_1.TAG_ID.MENU:
+        case html_js_1.TAG_ID.ASIDE:
+        case html_js_1.TAG_ID.BUTTON:
+        case html_js_1.TAG_ID.CENTER:
+        case html_js_1.TAG_ID.FIGURE:
+        case html_js_1.TAG_ID.FOOTER:
+        case html_js_1.TAG_ID.HEADER:
+        case html_js_1.TAG_ID.HGROUP:
+        case html_js_1.TAG_ID.DIALOG:
+        case html_js_1.TAG_ID.ADDRESS:
+        case html_js_1.TAG_ID.ARTICLE:
+        case html_js_1.TAG_ID.DETAILS:
+        case html_js_1.TAG_ID.SECTION:
+        case html_js_1.TAG_ID.SUMMARY:
+        case html_js_1.TAG_ID.LISTING:
+        case html_js_1.TAG_ID.FIELDSET:
+        case html_js_1.TAG_ID.BLOCKQUOTE:
+        case html_js_1.TAG_ID.FIGCAPTION: {
+            addressEndTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.LI: {
+            liEndTagInBody(p);
+            break;
+        }
+        case html_js_1.TAG_ID.DD:
+        case html_js_1.TAG_ID.DT: {
+            ddEndTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.H1:
+        case html_js_1.TAG_ID.H2:
+        case html_js_1.TAG_ID.H3:
+        case html_js_1.TAG_ID.H4:
+        case html_js_1.TAG_ID.H5:
+        case html_js_1.TAG_ID.H6: {
+            numberedHeaderEndTagInBody(p);
+            break;
+        }
+        case html_js_1.TAG_ID.BR: {
+            brEndTagInBody(p);
+            break;
+        }
+        case html_js_1.TAG_ID.BODY: {
+            bodyEndTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.HTML: {
+            htmlEndTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.FORM: {
+            formEndTagInBody(p);
+            break;
+        }
+        case html_js_1.TAG_ID.APPLET:
+        case html_js_1.TAG_ID.OBJECT:
+        case html_js_1.TAG_ID.MARQUEE: {
+            appletEndTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            templateEndTagInHead(p, token);
+            break;
+        }
+        default: {
+            genericEndTagInBody(p, token);
+        }
+    }
+}
+function eofInBody(p, token) {
+    if (p.tmplInsertionModeStack.length > 0) {
+        eofInTemplate(p, token);
+    }
+    else {
+        stopParsing(p, token);
+    }
+}
+// The "text" insertion mode
+//------------------------------------------------------------------
+function endTagInText(p, token) {
+    var _a;
+    if (token.tagID === html_js_1.TAG_ID.SCRIPT) {
+        (_a = p.scriptHandler) === null || _a === void 0 ? void 0 : _a.call(p, p.openElements.current);
+    }
+    p.openElements.pop();
+    p.insertionMode = p.originalInsertionMode;
+}
+function eofInText(p, token) {
+    p._err(token, error_codes_js_1.ERR.eofInElementThatCanContainOnlyText);
+    p.openElements.pop();
+    p.insertionMode = p.originalInsertionMode;
+    p.onEof(token);
+}
+// The "in table" insertion mode
+//------------------------------------------------------------------
+function characterInTable(p, token) {
+    if (TABLE_STRUCTURE_TAGS.has(p.openElements.currentTagId)) {
+        p.pendingCharacterTokens.length = 0;
+        p.hasNonWhitespacePendingCharacterToken = false;
+        p.originalInsertionMode = p.insertionMode;
+        p.insertionMode = InsertionMode.IN_TABLE_TEXT;
+        switch (token.type) {
+            case token_js_1.TokenType.CHARACTER: {
+                characterInTableText(p, token);
+                break;
+            }
+            case token_js_1.TokenType.WHITESPACE_CHARACTER: {
+                whitespaceCharacterInTableText(p, token);
+                break;
+            }
+            // Ignore null
+        }
+    }
+    else {
+        tokenInTable(p, token);
+    }
+}
+function captionStartTagInTable(p, token) {
+    p.openElements.clearBackToTableContext();
+    p.activeFormattingElements.insertMarker();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.insertionMode = InsertionMode.IN_CAPTION;
+}
+function colgroupStartTagInTable(p, token) {
+    p.openElements.clearBackToTableContext();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.insertionMode = InsertionMode.IN_COLUMN_GROUP;
+}
+function colStartTagInTable(p, token) {
+    p.openElements.clearBackToTableContext();
+    p._insertFakeElement(html_js_1.TAG_NAMES.COLGROUP, html_js_1.TAG_ID.COLGROUP);
+    p.insertionMode = InsertionMode.IN_COLUMN_GROUP;
+    startTagInColumnGroup(p, token);
+}
+function tbodyStartTagInTable(p, token) {
+    p.openElements.clearBackToTableContext();
+    p._insertElement(token, html_js_1.NS.HTML);
+    p.insertionMode = InsertionMode.IN_TABLE_BODY;
+}
+function tdStartTagInTable(p, token) {
+    p.openElements.clearBackToTableContext();
+    p._insertFakeElement(html_js_1.TAG_NAMES.TBODY, html_js_1.TAG_ID.TBODY);
+    p.insertionMode = InsertionMode.IN_TABLE_BODY;
+    startTagInTableBody(p, token);
+}
+function tableStartTagInTable(p, token) {
+    if (p.openElements.hasInTableScope(html_js_1.TAG_ID.TABLE)) {
+        p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.TABLE);
+        p._resetInsertionMode();
+        p._processStartTag(token);
+    }
+}
+function inputStartTagInTable(p, token) {
+    if (isHiddenInput(token)) {
+        p._appendElement(token, html_js_1.NS.HTML);
+    }
+    else {
+        tokenInTable(p, token);
+    }
+    token.ackSelfClosing = true;
+}
+function formStartTagInTable(p, token) {
+    if (!p.formElement && p.openElements.tmplCount === 0) {
+        p._insertElement(token, html_js_1.NS.HTML);
+        p.formElement = p.openElements.current;
+        p.openElements.pop();
+    }
+}
+function startTagInTable(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.TR: {
+            tdStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.STYLE:
+        case html_js_1.TAG_ID.SCRIPT:
+        case html_js_1.TAG_ID.TEMPLATE: {
+            startTagInHead(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.COL: {
+            colStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.FORM: {
+            formStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TABLE: {
+            tableStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD: {
+            tbodyStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.INPUT: {
+            inputStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.CAPTION: {
+            captionStartTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.COLGROUP: {
+            colgroupStartTagInTable(p, token);
+            break;
+        }
+        default: {
+            tokenInTable(p, token);
+        }
+    }
+}
+function endTagInTable(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.TABLE: {
+            if (p.openElements.hasInTableScope(html_js_1.TAG_ID.TABLE)) {
+                p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.TABLE);
+                p._resetInsertionMode();
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            templateEndTagInHead(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.HTML:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.THEAD:
+        case html_js_1.TAG_ID.TR: {
+            // Ignore token
+            break;
+        }
+        default: {
+            tokenInTable(p, token);
+        }
+    }
+}
+function tokenInTable(p, token) {
+    const savedFosterParentingState = p.fosterParentingEnabled;
+    p.fosterParentingEnabled = true;
+    // Process token in `In Body` mode
+    modeInBody(p, token);
+    p.fosterParentingEnabled = savedFosterParentingState;
+}
+// The "in table text" insertion mode
+//------------------------------------------------------------------
+function whitespaceCharacterInTableText(p, token) {
+    p.pendingCharacterTokens.push(token);
+}
+function characterInTableText(p, token) {
+    p.pendingCharacterTokens.push(token);
+    p.hasNonWhitespacePendingCharacterToken = true;
+}
+function tokenInTableText(p, token) {
+    let i = 0;
+    if (p.hasNonWhitespacePendingCharacterToken) {
+        for (; i < p.pendingCharacterTokens.length; i++) {
+            tokenInTable(p, p.pendingCharacterTokens[i]);
+        }
+    }
+    else {
+        for (; i < p.pendingCharacterTokens.length; i++) {
+            p._insertCharacters(p.pendingCharacterTokens[i]);
+        }
+    }
+    p.insertionMode = p.originalInsertionMode;
+    p._processToken(token);
+}
+// The "in caption" insertion mode
+//------------------------------------------------------------------
+const TABLE_VOID_ELEMENTS = new Set([html_js_1.TAG_ID.CAPTION, html_js_1.TAG_ID.COL, html_js_1.TAG_ID.COLGROUP, html_js_1.TAG_ID.TBODY, html_js_1.TAG_ID.TD, html_js_1.TAG_ID.TFOOT, html_js_1.TAG_ID.TH, html_js_1.TAG_ID.THEAD, html_js_1.TAG_ID.TR]);
+function startTagInCaption(p, token) {
+    const tn = token.tagID;
+    if (TABLE_VOID_ELEMENTS.has(tn)) {
+        if (p.openElements.hasInTableScope(html_js_1.TAG_ID.CAPTION)) {
+            p.openElements.generateImpliedEndTags();
+            p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.CAPTION);
+            p.activeFormattingElements.clearToLastMarker();
+            p.insertionMode = InsertionMode.IN_TABLE;
+            startTagInTable(p, token);
+        }
+    }
+    else {
+        startTagInBody(p, token);
+    }
+}
+function endTagInCaption(p, token) {
+    const tn = token.tagID;
+    switch (tn) {
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.TABLE: {
+            if (p.openElements.hasInTableScope(html_js_1.TAG_ID.CAPTION)) {
+                p.openElements.generateImpliedEndTags();
+                p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.CAPTION);
+                p.activeFormattingElements.clearToLastMarker();
+                p.insertionMode = InsertionMode.IN_TABLE;
+                if (tn === html_js_1.TAG_ID.TABLE) {
+                    endTagInTable(p, token);
+                }
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.HTML:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.THEAD:
+        case html_js_1.TAG_ID.TR: {
+            // Ignore token
+            break;
+        }
+        default: {
+            endTagInBody(p, token);
+        }
+    }
+}
+// The "in column group" insertion mode
+//------------------------------------------------------------------
+function startTagInColumnGroup(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.COL: {
+            p._appendElement(token, html_js_1.NS.HTML);
+            token.ackSelfClosing = true;
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            startTagInHead(p, token);
+            break;
+        }
+        default: {
+            tokenInColumnGroup(p, token);
+        }
+    }
+}
+function endTagInColumnGroup(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.COLGROUP: {
+            if (p.openElements.currentTagId === html_js_1.TAG_ID.COLGROUP) {
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE;
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            templateEndTagInHead(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.COL: {
+            // Ignore token
+            break;
+        }
+        default: {
+            tokenInColumnGroup(p, token);
+        }
+    }
+}
+function tokenInColumnGroup(p, token) {
+    if (p.openElements.currentTagId === html_js_1.TAG_ID.COLGROUP) {
+        p.openElements.pop();
+        p.insertionMode = InsertionMode.IN_TABLE;
+        p._processToken(token);
+    }
+}
+// The "in table body" insertion mode
+//------------------------------------------------------------------
+function startTagInTableBody(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.TR: {
+            p.openElements.clearBackToTableBodyContext();
+            p._insertElement(token, html_js_1.NS.HTML);
+            p.insertionMode = InsertionMode.IN_ROW;
+            break;
+        }
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.TD: {
+            p.openElements.clearBackToTableBodyContext();
+            p._insertFakeElement(html_js_1.TAG_NAMES.TR, html_js_1.TAG_ID.TR);
+            p.insertionMode = InsertionMode.IN_ROW;
+            startTagInRow(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD: {
+            if (p.openElements.hasTableBodyContextInTableScope()) {
+                p.openElements.clearBackToTableBodyContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE;
+                startTagInTable(p, token);
+            }
+            break;
+        }
+        default: {
+            startTagInTable(p, token);
+        }
+    }
+}
+function endTagInTableBody(p, token) {
+    const tn = token.tagID;
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD: {
+            if (p.openElements.hasInTableScope(tn)) {
+                p.openElements.clearBackToTableBodyContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE;
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TABLE: {
+            if (p.openElements.hasTableBodyContextInTableScope()) {
+                p.openElements.clearBackToTableBodyContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE;
+                endTagInTable(p, token);
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.HTML:
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.TR: {
+            // Ignore token
+            break;
+        }
+        default: {
+            endTagInTable(p, token);
+        }
+    }
+}
+// The "in row" insertion mode
+//------------------------------------------------------------------
+function startTagInRow(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.TH:
+        case html_js_1.TAG_ID.TD: {
+            p.openElements.clearBackToTableRowContext();
+            p._insertElement(token, html_js_1.NS.HTML);
+            p.insertionMode = InsertionMode.IN_CELL;
+            p.activeFormattingElements.insertMarker();
+            break;
+        }
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD:
+        case html_js_1.TAG_ID.TR: {
+            if (p.openElements.hasInTableScope(html_js_1.TAG_ID.TR)) {
+                p.openElements.clearBackToTableRowContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE_BODY;
+                startTagInTableBody(p, token);
+            }
+            break;
+        }
+        default: {
+            startTagInTable(p, token);
+        }
+    }
+}
+function endTagInRow(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.TR: {
+            if (p.openElements.hasInTableScope(html_js_1.TAG_ID.TR)) {
+                p.openElements.clearBackToTableRowContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE_BODY;
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TABLE: {
+            if (p.openElements.hasInTableScope(html_js_1.TAG_ID.TR)) {
+                p.openElements.clearBackToTableRowContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE_BODY;
+                endTagInTableBody(p, token);
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD: {
+            if (p.openElements.hasInTableScope(token.tagID) || p.openElements.hasInTableScope(html_js_1.TAG_ID.TR)) {
+                p.openElements.clearBackToTableRowContext();
+                p.openElements.pop();
+                p.insertionMode = InsertionMode.IN_TABLE_BODY;
+                endTagInTableBody(p, token);
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.HTML:
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TH: {
+            // Ignore end tag
+            break;
+        }
+        default: {
+            endTagInTable(p, token);
+        }
+    }
+}
+// The "in cell" insertion mode
+//------------------------------------------------------------------
+function startTagInCell(p, token) {
+    const tn = token.tagID;
+    if (TABLE_VOID_ELEMENTS.has(tn)) {
+        if (p.openElements.hasInTableScope(html_js_1.TAG_ID.TD) || p.openElements.hasInTableScope(html_js_1.TAG_ID.TH)) {
+            p._closeTableCell();
+            startTagInRow(p, token);
+        }
+    }
+    else {
+        startTagInBody(p, token);
+    }
+}
+function endTagInCell(p, token) {
+    const tn = token.tagID;
+    switch (tn) {
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TH: {
+            if (p.openElements.hasInTableScope(tn)) {
+                p.openElements.generateImpliedEndTags();
+                p.openElements.popUntilTagNamePopped(tn);
+                p.activeFormattingElements.clearToLastMarker();
+                p.insertionMode = InsertionMode.IN_ROW;
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TABLE:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD:
+        case html_js_1.TAG_ID.TR: {
+            if (p.openElements.hasInTableScope(tn)) {
+                p._closeTableCell();
+                endTagInRow(p, token);
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.BODY:
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COL:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.HTML: {
+            // Ignore token
+            break;
+        }
+        default: {
+            endTagInBody(p, token);
+        }
+    }
+}
+// The "in select" insertion mode
+//------------------------------------------------------------------
+function startTagInSelect(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.OPTION: {
+            if (p.openElements.currentTagId === html_js_1.TAG_ID.OPTION) {
+                p.openElements.pop();
+            }
+            p._insertElement(token, html_js_1.NS.HTML);
+            break;
+        }
+        case html_js_1.TAG_ID.OPTGROUP: {
+            if (p.openElements.currentTagId === html_js_1.TAG_ID.OPTION) {
+                p.openElements.pop();
+            }
+            if (p.openElements.currentTagId === html_js_1.TAG_ID.OPTGROUP) {
+                p.openElements.pop();
+            }
+            p._insertElement(token, html_js_1.NS.HTML);
+            break;
+        }
+        case html_js_1.TAG_ID.INPUT:
+        case html_js_1.TAG_ID.KEYGEN:
+        case html_js_1.TAG_ID.TEXTAREA:
+        case html_js_1.TAG_ID.SELECT: {
+            if (p.openElements.hasInSelectScope(html_js_1.TAG_ID.SELECT)) {
+                p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.SELECT);
+                p._resetInsertionMode();
+                if (token.tagID !== html_js_1.TAG_ID.SELECT) {
+                    p._processStartTag(token);
+                }
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.SCRIPT:
+        case html_js_1.TAG_ID.TEMPLATE: {
+            startTagInHead(p, token);
+            break;
+        }
+        default:
+        // Do nothing
+    }
+}
+function endTagInSelect(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.OPTGROUP: {
+            if (p.openElements.stackTop > 0 &&
+                p.openElements.currentTagId === html_js_1.TAG_ID.OPTION &&
+                p.openElements.tagIDs[p.openElements.stackTop - 1] === html_js_1.TAG_ID.OPTGROUP) {
+                p.openElements.pop();
+            }
+            if (p.openElements.currentTagId === html_js_1.TAG_ID.OPTGROUP) {
+                p.openElements.pop();
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.OPTION: {
+            if (p.openElements.currentTagId === html_js_1.TAG_ID.OPTION) {
+                p.openElements.pop();
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.SELECT: {
+            if (p.openElements.hasInSelectScope(html_js_1.TAG_ID.SELECT)) {
+                p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.SELECT);
+                p._resetInsertionMode();
+            }
+            break;
+        }
+        case html_js_1.TAG_ID.TEMPLATE: {
+            templateEndTagInHead(p, token);
+            break;
+        }
+        default:
+        // Do nothing
+    }
+}
+// The "in select in table" insertion mode
+//------------------------------------------------------------------
+function startTagInSelectInTable(p, token) {
+    const tn = token.tagID;
+    if (tn === html_js_1.TAG_ID.CAPTION ||
+        tn === html_js_1.TAG_ID.TABLE ||
+        tn === html_js_1.TAG_ID.TBODY ||
+        tn === html_js_1.TAG_ID.TFOOT ||
+        tn === html_js_1.TAG_ID.THEAD ||
+        tn === html_js_1.TAG_ID.TR ||
+        tn === html_js_1.TAG_ID.TD ||
+        tn === html_js_1.TAG_ID.TH) {
+        p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.SELECT);
+        p._resetInsertionMode();
+        p._processStartTag(token);
+    }
+    else {
+        startTagInSelect(p, token);
+    }
+}
+function endTagInSelectInTable(p, token) {
+    const tn = token.tagID;
+    if (tn === html_js_1.TAG_ID.CAPTION ||
+        tn === html_js_1.TAG_ID.TABLE ||
+        tn === html_js_1.TAG_ID.TBODY ||
+        tn === html_js_1.TAG_ID.TFOOT ||
+        tn === html_js_1.TAG_ID.THEAD ||
+        tn === html_js_1.TAG_ID.TR ||
+        tn === html_js_1.TAG_ID.TD ||
+        tn === html_js_1.TAG_ID.TH) {
+        if (p.openElements.hasInTableScope(tn)) {
+            p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.SELECT);
+            p._resetInsertionMode();
+            p.onEndTag(token);
+        }
+    }
+    else {
+        endTagInSelect(p, token);
+    }
+}
+// The "in template" insertion mode
+//------------------------------------------------------------------
+function startTagInTemplate(p, token) {
+    switch (token.tagID) {
+        // First, handle tags that can start without a mode change
+        case html_js_1.TAG_ID.BASE:
+        case html_js_1.TAG_ID.BASEFONT:
+        case html_js_1.TAG_ID.BGSOUND:
+        case html_js_1.TAG_ID.LINK:
+        case html_js_1.TAG_ID.META:
+        case html_js_1.TAG_ID.NOFRAMES:
+        case html_js_1.TAG_ID.SCRIPT:
+        case html_js_1.TAG_ID.STYLE:
+        case html_js_1.TAG_ID.TEMPLATE:
+        case html_js_1.TAG_ID.TITLE: {
+            startTagInHead(p, token);
+            break;
+        }
+        // Re-process the token in the appropriate mode
+        case html_js_1.TAG_ID.CAPTION:
+        case html_js_1.TAG_ID.COLGROUP:
+        case html_js_1.TAG_ID.TBODY:
+        case html_js_1.TAG_ID.TFOOT:
+        case html_js_1.TAG_ID.THEAD: {
+            p.tmplInsertionModeStack[0] = InsertionMode.IN_TABLE;
+            p.insertionMode = InsertionMode.IN_TABLE;
+            startTagInTable(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.COL: {
+            p.tmplInsertionModeStack[0] = InsertionMode.IN_COLUMN_GROUP;
+            p.insertionMode = InsertionMode.IN_COLUMN_GROUP;
+            startTagInColumnGroup(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TR: {
+            p.tmplInsertionModeStack[0] = InsertionMode.IN_TABLE_BODY;
+            p.insertionMode = InsertionMode.IN_TABLE_BODY;
+            startTagInTableBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.TD:
+        case html_js_1.TAG_ID.TH: {
+            p.tmplInsertionModeStack[0] = InsertionMode.IN_ROW;
+            p.insertionMode = InsertionMode.IN_ROW;
+            startTagInRow(p, token);
+            break;
+        }
+        default: {
+            p.tmplInsertionModeStack[0] = InsertionMode.IN_BODY;
+            p.insertionMode = InsertionMode.IN_BODY;
+            startTagInBody(p, token);
+        }
+    }
+}
+function endTagInTemplate(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.TEMPLATE) {
+        templateEndTagInHead(p, token);
+    }
+}
+function eofInTemplate(p, token) {
+    if (p.openElements.tmplCount > 0) {
+        p.openElements.popUntilTagNamePopped(html_js_1.TAG_ID.TEMPLATE);
+        p.activeFormattingElements.clearToLastMarker();
+        p.tmplInsertionModeStack.shift();
+        p._resetInsertionMode();
+        p.onEof(token);
+    }
+    else {
+        stopParsing(p, token);
+    }
+}
+// The "after body" insertion mode
+//------------------------------------------------------------------
+function startTagAfterBody(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.HTML) {
+        startTagInBody(p, token);
+    }
+    else {
+        tokenAfterBody(p, token);
+    }
+}
+function endTagAfterBody(p, token) {
+    var _a;
+    if (token.tagID === html_js_1.TAG_ID.HTML) {
+        if (!p.fragmentContext) {
+            p.insertionMode = InsertionMode.AFTER_AFTER_BODY;
+        }
+        //NOTE: <html> is never popped from the stack, so we need to updated
+        //the end location explicitly.
+        if (p.options.sourceCodeLocationInfo && p.openElements.tagIDs[0] === html_js_1.TAG_ID.HTML) {
+            p._setEndLocation(p.openElements.items[0], token);
+            // Update the body element, if it doesn't have an end tag
+            const bodyElement = p.openElements.items[1];
+            if (bodyElement && !((_a = p.treeAdapter.getNodeSourceCodeLocation(bodyElement)) === null || _a === void 0 ? void 0 : _a.endTag)) {
+                p._setEndLocation(bodyElement, token);
+            }
+        }
+    }
+    else {
+        tokenAfterBody(p, token);
+    }
+}
+function tokenAfterBody(p, token) {
+    p.insertionMode = InsertionMode.IN_BODY;
+    modeInBody(p, token);
+}
+// The "in frameset" insertion mode
+//------------------------------------------------------------------
+function startTagInFrameset(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.FRAMESET: {
+            p._insertElement(token, html_js_1.NS.HTML);
+            break;
+        }
+        case html_js_1.TAG_ID.FRAME: {
+            p._appendElement(token, html_js_1.NS.HTML);
+            token.ackSelfClosing = true;
+            break;
+        }
+        case html_js_1.TAG_ID.NOFRAMES: {
+            startTagInHead(p, token);
+            break;
+        }
+        default:
+        // Do nothing
+    }
+}
+function endTagInFrameset(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.FRAMESET && !p.openElements.isRootHtmlElementCurrent()) {
+        p.openElements.pop();
+        if (!p.fragmentContext && p.openElements.currentTagId !== html_js_1.TAG_ID.FRAMESET) {
+            p.insertionMode = InsertionMode.AFTER_FRAMESET;
+        }
+    }
+}
+// The "after frameset" insertion mode
+//------------------------------------------------------------------
+function startTagAfterFrameset(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.NOFRAMES: {
+            startTagInHead(p, token);
+            break;
+        }
+        default:
+        // Do nothing
+    }
+}
+function endTagAfterFrameset(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.HTML) {
+        p.insertionMode = InsertionMode.AFTER_AFTER_FRAMESET;
+    }
+}
+// The "after after body" insertion mode
+//------------------------------------------------------------------
+function startTagAfterAfterBody(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.HTML) {
+        startTagInBody(p, token);
+    }
+    else {
+        tokenAfterAfterBody(p, token);
+    }
+}
+function tokenAfterAfterBody(p, token) {
+    p.insertionMode = InsertionMode.IN_BODY;
+    modeInBody(p, token);
+}
+// The "after after frameset" insertion mode
+//------------------------------------------------------------------
+function startTagAfterAfterFrameset(p, token) {
+    switch (token.tagID) {
+        case html_js_1.TAG_ID.HTML: {
+            startTagInBody(p, token);
+            break;
+        }
+        case html_js_1.TAG_ID.NOFRAMES: {
+            startTagInHead(p, token);
+            break;
+        }
+        default:
+        // Do nothing
+    }
+}
+// The rules for parsing tokens in foreign content
+//------------------------------------------------------------------
+function nullCharacterInForeignContent(p, token) {
+    token.chars = unicode.REPLACEMENT_CHARACTER;
+    p._insertCharacters(token);
+}
+function characterInForeignContent(p, token) {
+    p._insertCharacters(token);
+    p.framesetOk = false;
+}
+function popUntilHtmlOrIntegrationPoint(p) {
+    while (p.treeAdapter.getNamespaceURI(p.openElements.current) !== html_js_1.NS.HTML &&
+        !p._isIntegrationPoint(p.openElements.currentTagId, p.openElements.current)) {
+        p.openElements.pop();
+    }
+}
+function startTagInForeignContent(p, token) {
+    if (foreignContent.causesExit(token)) {
+        popUntilHtmlOrIntegrationPoint(p);
+        p._startTagOutsideForeignContent(token);
+    }
+    else {
+        const current = p._getAdjustedCurrentElement();
+        const currentNs = p.treeAdapter.getNamespaceURI(current);
+        if (currentNs === html_js_1.NS.MATHML) {
+            foreignContent.adjustTokenMathMLAttrs(token);
+        }
+        else if (currentNs === html_js_1.NS.SVG) {
+            foreignContent.adjustTokenSVGTagName(token);
+            foreignContent.adjustTokenSVGAttrs(token);
+        }
+        foreignContent.adjustTokenXMLAttrs(token);
+        if (token.selfClosing) {
+            p._appendElement(token, currentNs);
+        }
+        else {
+            p._insertElement(token, currentNs);
+        }
+        token.ackSelfClosing = true;
+    }
+}
+function endTagInForeignContent(p, token) {
+    if (token.tagID === html_js_1.TAG_ID.P || token.tagID === html_js_1.TAG_ID.BR) {
+        popUntilHtmlOrIntegrationPoint(p);
+        p._endTagOutsideForeignContent(token);
+        return;
+    }
+    for (let i = p.openElements.stackTop; i > 0; i--) {
+        const element = p.openElements.items[i];
+        if (p.treeAdapter.getNamespaceURI(element) === html_js_1.NS.HTML) {
+            p._endTagOutsideForeignContent(token);
+            break;
+        }
+        const tagName = p.treeAdapter.getTagName(element);
+        if (tagName.toLowerCase() === token.tagName) {
+            //NOTE: update the token tag name for `_setEndLocation`.
+            token.tagName = tagName;
+            p.openElements.shortenToLength(i);
+            break;
+        }
+    }
+}
 
+},{"../common/doctype.js":179,"../common/error-codes.js":180,"../common/foreign-content.js":181,"../common/html.js":182,"../common/token.js":183,"../common/unicode.js":184,"../tokenizer/index.js":190,"../tree-adapters/default.js":192,"./formatting-element-list.js":186,"./open-element-stack.js":188}],188:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OpenElementStack = void 0;
+const html_js_1 = require("../common/html.js");
+//Element utils
+const IMPLICIT_END_TAG_REQUIRED = new Set([html_js_1.TAG_ID.DD, html_js_1.TAG_ID.DT, html_js_1.TAG_ID.LI, html_js_1.TAG_ID.OPTGROUP, html_js_1.TAG_ID.OPTION, html_js_1.TAG_ID.P, html_js_1.TAG_ID.RB, html_js_1.TAG_ID.RP, html_js_1.TAG_ID.RT, html_js_1.TAG_ID.RTC]);
+const IMPLICIT_END_TAG_REQUIRED_THOROUGHLY = new Set([
+    ...IMPLICIT_END_TAG_REQUIRED,
+    html_js_1.TAG_ID.CAPTION,
+    html_js_1.TAG_ID.COLGROUP,
+    html_js_1.TAG_ID.TBODY,
+    html_js_1.TAG_ID.TD,
+    html_js_1.TAG_ID.TFOOT,
+    html_js_1.TAG_ID.TH,
+    html_js_1.TAG_ID.THEAD,
+    html_js_1.TAG_ID.TR,
+]);
+const SCOPING_ELEMENT_NS = new Map([
+    [html_js_1.TAG_ID.APPLET, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.CAPTION, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.HTML, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.MARQUEE, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.OBJECT, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.TABLE, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.TD, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.TEMPLATE, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.TH, html_js_1.NS.HTML],
+    [html_js_1.TAG_ID.ANNOTATION_XML, html_js_1.NS.MATHML],
+    [html_js_1.TAG_ID.MI, html_js_1.NS.MATHML],
+    [html_js_1.TAG_ID.MN, html_js_1.NS.MATHML],
+    [html_js_1.TAG_ID.MO, html_js_1.NS.MATHML],
+    [html_js_1.TAG_ID.MS, html_js_1.NS.MATHML],
+    [html_js_1.TAG_ID.MTEXT, html_js_1.NS.MATHML],
+    [html_js_1.TAG_ID.DESC, html_js_1.NS.SVG],
+    [html_js_1.TAG_ID.FOREIGN_OBJECT, html_js_1.NS.SVG],
+    [html_js_1.TAG_ID.TITLE, html_js_1.NS.SVG],
+]);
+const NAMED_HEADERS = [html_js_1.TAG_ID.H1, html_js_1.TAG_ID.H2, html_js_1.TAG_ID.H3, html_js_1.TAG_ID.H4, html_js_1.TAG_ID.H5, html_js_1.TAG_ID.H6];
+const TABLE_ROW_CONTEXT = [html_js_1.TAG_ID.TR, html_js_1.TAG_ID.TEMPLATE, html_js_1.TAG_ID.HTML];
+const TABLE_BODY_CONTEXT = [html_js_1.TAG_ID.TBODY, html_js_1.TAG_ID.TFOOT, html_js_1.TAG_ID.THEAD, html_js_1.TAG_ID.TEMPLATE, html_js_1.TAG_ID.HTML];
+const TABLE_CONTEXT = [html_js_1.TAG_ID.TABLE, html_js_1.TAG_ID.TEMPLATE, html_js_1.TAG_ID.HTML];
+const TABLE_CELLS = [html_js_1.TAG_ID.TD, html_js_1.TAG_ID.TH];
+//Stack of open elements
+class OpenElementStack {
+    get currentTmplContentOrNode() {
+        return this._isInTemplate() ? this.treeAdapter.getTemplateContent(this.current) : this.current;
+    }
+    constructor(document, treeAdapter, handler) {
+        this.treeAdapter = treeAdapter;
+        this.handler = handler;
+        this.items = [];
+        this.tagIDs = [];
+        this.stackTop = -1;
+        this.tmplCount = 0;
+        this.currentTagId = html_js_1.TAG_ID.UNKNOWN;
+        this.current = document;
+    }
+    //Index of element
+    _indexOf(element) {
+        return this.items.lastIndexOf(element, this.stackTop);
+    }
+    //Update current element
+    _isInTemplate() {
+        return this.currentTagId === html_js_1.TAG_ID.TEMPLATE && this.treeAdapter.getNamespaceURI(this.current) === html_js_1.NS.HTML;
+    }
+    _updateCurrentElement() {
+        this.current = this.items[this.stackTop];
+        this.currentTagId = this.tagIDs[this.stackTop];
+    }
+    //Mutations
+    push(element, tagID) {
+        this.stackTop++;
+        this.items[this.stackTop] = element;
+        this.current = element;
+        this.tagIDs[this.stackTop] = tagID;
+        this.currentTagId = tagID;
+        if (this._isInTemplate()) {
+            this.tmplCount++;
+        }
+        this.handler.onItemPush(element, tagID, true);
+    }
+    pop() {
+        const popped = this.current;
+        if (this.tmplCount > 0 && this._isInTemplate()) {
+            this.tmplCount--;
+        }
+        this.stackTop--;
+        this._updateCurrentElement();
+        this.handler.onItemPop(popped, true);
+    }
+    replace(oldElement, newElement) {
+        const idx = this._indexOf(oldElement);
+        this.items[idx] = newElement;
+        if (idx === this.stackTop) {
+            this.current = newElement;
+        }
+    }
+    insertAfter(referenceElement, newElement, newElementID) {
+        const insertionIdx = this._indexOf(referenceElement) + 1;
+        this.items.splice(insertionIdx, 0, newElement);
+        this.tagIDs.splice(insertionIdx, 0, newElementID);
+        this.stackTop++;
+        if (insertionIdx === this.stackTop) {
+            this._updateCurrentElement();
+        }
+        this.handler.onItemPush(this.current, this.currentTagId, insertionIdx === this.stackTop);
+    }
+    popUntilTagNamePopped(tagName) {
+        let targetIdx = this.stackTop + 1;
+        do {
+            targetIdx = this.tagIDs.lastIndexOf(tagName, targetIdx - 1);
+        } while (targetIdx > 0 && this.treeAdapter.getNamespaceURI(this.items[targetIdx]) !== html_js_1.NS.HTML);
+        this.shortenToLength(targetIdx < 0 ? 0 : targetIdx);
+    }
+    shortenToLength(idx) {
+        while (this.stackTop >= idx) {
+            const popped = this.current;
+            if (this.tmplCount > 0 && this._isInTemplate()) {
+                this.tmplCount -= 1;
+            }
+            this.stackTop--;
+            this._updateCurrentElement();
+            this.handler.onItemPop(popped, this.stackTop < idx);
+        }
+    }
+    popUntilElementPopped(element) {
+        const idx = this._indexOf(element);
+        this.shortenToLength(idx < 0 ? 0 : idx);
+    }
+    popUntilPopped(tagNames, targetNS) {
+        const idx = this._indexOfTagNames(tagNames, targetNS);
+        this.shortenToLength(idx < 0 ? 0 : idx);
+    }
+    popUntilNumberedHeaderPopped() {
+        this.popUntilPopped(NAMED_HEADERS, html_js_1.NS.HTML);
+    }
+    popUntilTableCellPopped() {
+        this.popUntilPopped(TABLE_CELLS, html_js_1.NS.HTML);
+    }
+    popAllUpToHtmlElement() {
+        //NOTE: here we assume that the root <html> element is always first in the open element stack, so
+        //we perform this fast stack clean up.
+        this.tmplCount = 0;
+        this.shortenToLength(1);
+    }
+    _indexOfTagNames(tagNames, namespace) {
+        for (let i = this.stackTop; i >= 0; i--) {
+            if (tagNames.includes(this.tagIDs[i]) && this.treeAdapter.getNamespaceURI(this.items[i]) === namespace) {
+                return i;
+            }
+        }
+        return -1;
+    }
+    clearBackTo(tagNames, targetNS) {
+        const idx = this._indexOfTagNames(tagNames, targetNS);
+        this.shortenToLength(idx + 1);
+    }
+    clearBackToTableContext() {
+        this.clearBackTo(TABLE_CONTEXT, html_js_1.NS.HTML);
+    }
+    clearBackToTableBodyContext() {
+        this.clearBackTo(TABLE_BODY_CONTEXT, html_js_1.NS.HTML);
+    }
+    clearBackToTableRowContext() {
+        this.clearBackTo(TABLE_ROW_CONTEXT, html_js_1.NS.HTML);
+    }
+    remove(element) {
+        const idx = this._indexOf(element);
+        if (idx >= 0) {
+            if (idx === this.stackTop) {
+                this.pop();
+            }
+            else {
+                this.items.splice(idx, 1);
+                this.tagIDs.splice(idx, 1);
+                this.stackTop--;
+                this._updateCurrentElement();
+                this.handler.onItemPop(element, false);
+            }
+        }
+    }
+    //Search
+    tryPeekProperlyNestedBodyElement() {
+        //Properly nested <body> element (should be second element in stack).
+        return this.stackTop >= 1 && this.tagIDs[1] === html_js_1.TAG_ID.BODY ? this.items[1] : null;
+    }
+    contains(element) {
+        return this._indexOf(element) > -1;
+    }
+    getCommonAncestor(element) {
+        const elementIdx = this._indexOf(element) - 1;
+        return elementIdx >= 0 ? this.items[elementIdx] : null;
+    }
+    isRootHtmlElementCurrent() {
+        return this.stackTop === 0 && this.tagIDs[0] === html_js_1.TAG_ID.HTML;
+    }
+    //Element in scope
+    hasInScope(tagName) {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if (tn === tagName && ns === html_js_1.NS.HTML) {
+                return true;
+            }
+            if (SCOPING_ELEMENT_NS.get(tn) === ns) {
+                return false;
+            }
+        }
+        return true;
+    }
+    hasNumberedHeaderInScope() {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if ((0, html_js_1.isNumberedHeader)(tn) && ns === html_js_1.NS.HTML) {
+                return true;
+            }
+            if (SCOPING_ELEMENT_NS.get(tn) === ns) {
+                return false;
+            }
+        }
+        return true;
+    }
+    hasInListItemScope(tagName) {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if (tn === tagName && ns === html_js_1.NS.HTML) {
+                return true;
+            }
+            if (((tn === html_js_1.TAG_ID.UL || tn === html_js_1.TAG_ID.OL) && ns === html_js_1.NS.HTML) || SCOPING_ELEMENT_NS.get(tn) === ns) {
+                return false;
+            }
+        }
+        return true;
+    }
+    hasInButtonScope(tagName) {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if (tn === tagName && ns === html_js_1.NS.HTML) {
+                return true;
+            }
+            if ((tn === html_js_1.TAG_ID.BUTTON && ns === html_js_1.NS.HTML) || SCOPING_ELEMENT_NS.get(tn) === ns) {
+                return false;
+            }
+        }
+        return true;
+    }
+    hasInTableScope(tagName) {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if (ns !== html_js_1.NS.HTML) {
+                continue;
+            }
+            if (tn === tagName) {
+                return true;
+            }
+            if (tn === html_js_1.TAG_ID.TABLE || tn === html_js_1.TAG_ID.TEMPLATE || tn === html_js_1.TAG_ID.HTML) {
+                return false;
+            }
+        }
+        return true;
+    }
+    hasTableBodyContextInTableScope() {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if (ns !== html_js_1.NS.HTML) {
+                continue;
+            }
+            if (tn === html_js_1.TAG_ID.TBODY || tn === html_js_1.TAG_ID.THEAD || tn === html_js_1.TAG_ID.TFOOT) {
+                return true;
+            }
+            if (tn === html_js_1.TAG_ID.TABLE || tn === html_js_1.TAG_ID.HTML) {
+                return false;
+            }
+        }
+        return true;
+    }
+    hasInSelectScope(tagName) {
+        for (let i = this.stackTop; i >= 0; i--) {
+            const tn = this.tagIDs[i];
+            const ns = this.treeAdapter.getNamespaceURI(this.items[i]);
+            if (ns !== html_js_1.NS.HTML) {
+                continue;
+            }
+            if (tn === tagName) {
+                return true;
+            }
+            if (tn !== html_js_1.TAG_ID.OPTION && tn !== html_js_1.TAG_ID.OPTGROUP) {
+                return false;
+            }
+        }
+        return true;
+    }
+    //Implied end tags
+    generateImpliedEndTags() {
+        while (IMPLICIT_END_TAG_REQUIRED.has(this.currentTagId)) {
+            this.pop();
+        }
+    }
+    generateImpliedEndTagsThoroughly() {
+        while (IMPLICIT_END_TAG_REQUIRED_THOROUGHLY.has(this.currentTagId)) {
+            this.pop();
+        }
+    }
+    generateImpliedEndTagsWithExclusion(exclusionId) {
+        while (this.currentTagId !== exclusionId && IMPLICIT_END_TAG_REQUIRED_THOROUGHLY.has(this.currentTagId)) {
+            this.pop();
+        }
+    }
+}
+exports.OpenElementStack = OpenElementStack;
+
+},{"../common/html.js":182}],189:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.serializeOuter = exports.serialize = void 0;
+const html_js_1 = require("../common/html.js");
+const escape_js_1 = require("entities/lib/escape.js");
+const default_js_1 = require("../tree-adapters/default.js");
+// Sets
+const VOID_ELEMENTS = new Set([
+    html_js_1.TAG_NAMES.AREA,
+    html_js_1.TAG_NAMES.BASE,
+    html_js_1.TAG_NAMES.BASEFONT,
+    html_js_1.TAG_NAMES.BGSOUND,
+    html_js_1.TAG_NAMES.BR,
+    html_js_1.TAG_NAMES.COL,
+    html_js_1.TAG_NAMES.EMBED,
+    html_js_1.TAG_NAMES.FRAME,
+    html_js_1.TAG_NAMES.HR,
+    html_js_1.TAG_NAMES.IMG,
+    html_js_1.TAG_NAMES.INPUT,
+    html_js_1.TAG_NAMES.KEYGEN,
+    html_js_1.TAG_NAMES.LINK,
+    html_js_1.TAG_NAMES.META,
+    html_js_1.TAG_NAMES.PARAM,
+    html_js_1.TAG_NAMES.SOURCE,
+    html_js_1.TAG_NAMES.TRACK,
+    html_js_1.TAG_NAMES.WBR,
+]);
+function isVoidElement(node, options) {
+    return (options.treeAdapter.isElementNode(node) &&
+        options.treeAdapter.getNamespaceURI(node) === html_js_1.NS.HTML &&
+        VOID_ELEMENTS.has(options.treeAdapter.getTagName(node)));
+}
+const defaultOpts = { treeAdapter: default_js_1.defaultTreeAdapter, scriptingEnabled: true };
+/**
+ * Serializes an AST node to an HTML string.
+ *
+ * @example
+ *
+ * ```js
+ * const parse5 = require('parse5');
+ *
+ * const document = parse5.parse('<!DOCTYPE html><html><head></head><body>Hi there!</body></html>');
+ *
+ * // Serializes a document.
+ * const html = parse5.serialize(document);
+ *
+ * // Serializes the <html> element content.
+ * const str = parse5.serialize(document.childNodes[1]);
+ *
+ * console.log(str); //> '<head></head><body>Hi there!</body>'
+ * ```
+ *
+ * @param node Node to serialize.
+ * @param options Serialization options.
+ */
+function serialize(node, options) {
+    const opts = Object.assign(Object.assign({}, defaultOpts), options);
+    if (isVoidElement(node, opts)) {
+        return '';
+    }
+    return serializeChildNodes(node, opts);
+}
+exports.serialize = serialize;
+/**
+ * Serializes an AST element node to an HTML string, including the element node.
+ *
+ * @example
+ *
+ * ```js
+ * const parse5 = require('parse5');
+ *
+ * const document = parse5.parseFragment('<div>Hello, <b>world</b>!</div>');
+ *
+ * // Serializes the <div> element.
+ * const html = parse5.serializeOuter(document.childNodes[0]);
+ *
+ * console.log(str); //> '<div>Hello, <b>world</b>!</div>'
+ * ```
+ *
+ * @param node Node to serialize.
+ * @param options Serialization options.
+ */
+function serializeOuter(node, options) {
+    const opts = Object.assign(Object.assign({}, defaultOpts), options);
+    return serializeNode(node, opts);
+}
+exports.serializeOuter = serializeOuter;
+function serializeChildNodes(parentNode, options) {
+    let html = '';
+    // Get container of the child nodes
+    const container = options.treeAdapter.isElementNode(parentNode) &&
+        options.treeAdapter.getTagName(parentNode) === html_js_1.TAG_NAMES.TEMPLATE &&
+        options.treeAdapter.getNamespaceURI(parentNode) === html_js_1.NS.HTML
+        ? options.treeAdapter.getTemplateContent(parentNode)
+        : parentNode;
+    const childNodes = options.treeAdapter.getChildNodes(container);
+    if (childNodes) {
+        for (const currentNode of childNodes) {
+            html += serializeNode(currentNode, options);
+        }
+    }
+    return html;
+}
+function serializeNode(node, options) {
+    if (options.treeAdapter.isElementNode(node)) {
+        return serializeElement(node, options);
+    }
+    if (options.treeAdapter.isTextNode(node)) {
+        return serializeTextNode(node, options);
+    }
+    if (options.treeAdapter.isCommentNode(node)) {
+        return serializeCommentNode(node, options);
+    }
+    if (options.treeAdapter.isDocumentTypeNode(node)) {
+        return serializeDocumentTypeNode(node, options);
+    }
+    // Return an empty string for unknown nodes
+    return '';
+}
+function serializeElement(node, options) {
+    const tn = options.treeAdapter.getTagName(node);
+    return `<${tn}${serializeAttributes(node, options)}>${isVoidElement(node, options) ? '' : `${serializeChildNodes(node, options)}</${tn}>`}`;
+}
+function serializeAttributes(node, { treeAdapter }) {
+    let html = '';
+    for (const attr of treeAdapter.getAttrList(node)) {
+        html += ' ';
+        if (!attr.namespace) {
+            html += attr.name;
+        }
+        else
+            switch (attr.namespace) {
+                case html_js_1.NS.XML: {
+                    html += `xml:${attr.name}`;
+                    break;
+                }
+                case html_js_1.NS.XMLNS: {
+                    if (attr.name !== 'xmlns') {
+                        html += 'xmlns:';
+                    }
+                    html += attr.name;
+                    break;
+                }
+                case html_js_1.NS.XLINK: {
+                    html += `xlink:${attr.name}`;
+                    break;
+                }
+                default: {
+                    html += `${attr.prefix}:${attr.name}`;
+                }
+            }
+        html += `="${(0, escape_js_1.escapeAttribute)(attr.value)}"`;
+    }
+    return html;
+}
+function serializeTextNode(node, options) {
+    const { treeAdapter } = options;
+    const content = treeAdapter.getTextNodeContent(node);
+    const parent = treeAdapter.getParentNode(node);
+    const parentTn = parent && treeAdapter.isElementNode(parent) && treeAdapter.getTagName(parent);
+    return parentTn &&
+        treeAdapter.getNamespaceURI(parent) === html_js_1.NS.HTML &&
+        (0, html_js_1.hasUnescapedText)(parentTn, options.scriptingEnabled)
+        ? content
+        : (0, escape_js_1.escapeText)(content);
+}
+function serializeCommentNode(node, { treeAdapter }) {
+    return `<!--${treeAdapter.getCommentNodeContent(node)}-->`;
+}
+function serializeDocumentTypeNode(node, { treeAdapter }) {
+    return `<!DOCTYPE ${treeAdapter.getDocumentTypeNodeName(node)}>`;
+}
+
+},{"../common/html.js":182,"../tree-adapters/default.js":192,"entities/lib/escape.js":195}],190:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Tokenizer = exports.TokenizerMode = void 0;
+const preprocessor_js_1 = require("./preprocessor.js");
+const unicode_js_1 = require("../common/unicode.js");
+const token_js_1 = require("../common/token.js");
+const decode_js_1 = require("entities/lib/decode.js");
+const error_codes_js_1 = require("../common/error-codes.js");
+const html_js_1 = require("../common/html.js");
+//C1 Unicode control character reference replacements
+const C1_CONTROLS_REFERENCE_REPLACEMENTS = new Map([
+    [0x80, 8364],
+    [0x82, 8218],
+    [0x83, 402],
+    [0x84, 8222],
+    [0x85, 8230],
+    [0x86, 8224],
+    [0x87, 8225],
+    [0x88, 710],
+    [0x89, 8240],
+    [0x8a, 352],
+    [0x8b, 8249],
+    [0x8c, 338],
+    [0x8e, 381],
+    [0x91, 8216],
+    [0x92, 8217],
+    [0x93, 8220],
+    [0x94, 8221],
+    [0x95, 8226],
+    [0x96, 8211],
+    [0x97, 8212],
+    [0x98, 732],
+    [0x99, 8482],
+    [0x9a, 353],
+    [0x9b, 8250],
+    [0x9c, 339],
+    [0x9e, 382],
+    [0x9f, 376],
+]);
+//States
+var State;
+(function (State) {
+    State[State["DATA"] = 0] = "DATA";
+    State[State["RCDATA"] = 1] = "RCDATA";
+    State[State["RAWTEXT"] = 2] = "RAWTEXT";
+    State[State["SCRIPT_DATA"] = 3] = "SCRIPT_DATA";
+    State[State["PLAINTEXT"] = 4] = "PLAINTEXT";
+    State[State["TAG_OPEN"] = 5] = "TAG_OPEN";
+    State[State["END_TAG_OPEN"] = 6] = "END_TAG_OPEN";
+    State[State["TAG_NAME"] = 7] = "TAG_NAME";
+    State[State["RCDATA_LESS_THAN_SIGN"] = 8] = "RCDATA_LESS_THAN_SIGN";
+    State[State["RCDATA_END_TAG_OPEN"] = 9] = "RCDATA_END_TAG_OPEN";
+    State[State["RCDATA_END_TAG_NAME"] = 10] = "RCDATA_END_TAG_NAME";
+    State[State["RAWTEXT_LESS_THAN_SIGN"] = 11] = "RAWTEXT_LESS_THAN_SIGN";
+    State[State["RAWTEXT_END_TAG_OPEN"] = 12] = "RAWTEXT_END_TAG_OPEN";
+    State[State["RAWTEXT_END_TAG_NAME"] = 13] = "RAWTEXT_END_TAG_NAME";
+    State[State["SCRIPT_DATA_LESS_THAN_SIGN"] = 14] = "SCRIPT_DATA_LESS_THAN_SIGN";
+    State[State["SCRIPT_DATA_END_TAG_OPEN"] = 15] = "SCRIPT_DATA_END_TAG_OPEN";
+    State[State["SCRIPT_DATA_END_TAG_NAME"] = 16] = "SCRIPT_DATA_END_TAG_NAME";
+    State[State["SCRIPT_DATA_ESCAPE_START"] = 17] = "SCRIPT_DATA_ESCAPE_START";
+    State[State["SCRIPT_DATA_ESCAPE_START_DASH"] = 18] = "SCRIPT_DATA_ESCAPE_START_DASH";
+    State[State["SCRIPT_DATA_ESCAPED"] = 19] = "SCRIPT_DATA_ESCAPED";
+    State[State["SCRIPT_DATA_ESCAPED_DASH"] = 20] = "SCRIPT_DATA_ESCAPED_DASH";
+    State[State["SCRIPT_DATA_ESCAPED_DASH_DASH"] = 21] = "SCRIPT_DATA_ESCAPED_DASH_DASH";
+    State[State["SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN"] = 22] = "SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN";
+    State[State["SCRIPT_DATA_ESCAPED_END_TAG_OPEN"] = 23] = "SCRIPT_DATA_ESCAPED_END_TAG_OPEN";
+    State[State["SCRIPT_DATA_ESCAPED_END_TAG_NAME"] = 24] = "SCRIPT_DATA_ESCAPED_END_TAG_NAME";
+    State[State["SCRIPT_DATA_DOUBLE_ESCAPE_START"] = 25] = "SCRIPT_DATA_DOUBLE_ESCAPE_START";
+    State[State["SCRIPT_DATA_DOUBLE_ESCAPED"] = 26] = "SCRIPT_DATA_DOUBLE_ESCAPED";
+    State[State["SCRIPT_DATA_DOUBLE_ESCAPED_DASH"] = 27] = "SCRIPT_DATA_DOUBLE_ESCAPED_DASH";
+    State[State["SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH"] = 28] = "SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH";
+    State[State["SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN"] = 29] = "SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN";
+    State[State["SCRIPT_DATA_DOUBLE_ESCAPE_END"] = 30] = "SCRIPT_DATA_DOUBLE_ESCAPE_END";
+    State[State["BEFORE_ATTRIBUTE_NAME"] = 31] = "BEFORE_ATTRIBUTE_NAME";
+    State[State["ATTRIBUTE_NAME"] = 32] = "ATTRIBUTE_NAME";
+    State[State["AFTER_ATTRIBUTE_NAME"] = 33] = "AFTER_ATTRIBUTE_NAME";
+    State[State["BEFORE_ATTRIBUTE_VALUE"] = 34] = "BEFORE_ATTRIBUTE_VALUE";
+    State[State["ATTRIBUTE_VALUE_DOUBLE_QUOTED"] = 35] = "ATTRIBUTE_VALUE_DOUBLE_QUOTED";
+    State[State["ATTRIBUTE_VALUE_SINGLE_QUOTED"] = 36] = "ATTRIBUTE_VALUE_SINGLE_QUOTED";
+    State[State["ATTRIBUTE_VALUE_UNQUOTED"] = 37] = "ATTRIBUTE_VALUE_UNQUOTED";
+    State[State["AFTER_ATTRIBUTE_VALUE_QUOTED"] = 38] = "AFTER_ATTRIBUTE_VALUE_QUOTED";
+    State[State["SELF_CLOSING_START_TAG"] = 39] = "SELF_CLOSING_START_TAG";
+    State[State["BOGUS_COMMENT"] = 40] = "BOGUS_COMMENT";
+    State[State["MARKUP_DECLARATION_OPEN"] = 41] = "MARKUP_DECLARATION_OPEN";
+    State[State["COMMENT_START"] = 42] = "COMMENT_START";
+    State[State["COMMENT_START_DASH"] = 43] = "COMMENT_START_DASH";
+    State[State["COMMENT"] = 44] = "COMMENT";
+    State[State["COMMENT_LESS_THAN_SIGN"] = 45] = "COMMENT_LESS_THAN_SIGN";
+    State[State["COMMENT_LESS_THAN_SIGN_BANG"] = 46] = "COMMENT_LESS_THAN_SIGN_BANG";
+    State[State["COMMENT_LESS_THAN_SIGN_BANG_DASH"] = 47] = "COMMENT_LESS_THAN_SIGN_BANG_DASH";
+    State[State["COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH"] = 48] = "COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH";
+    State[State["COMMENT_END_DASH"] = 49] = "COMMENT_END_DASH";
+    State[State["COMMENT_END"] = 50] = "COMMENT_END";
+    State[State["COMMENT_END_BANG"] = 51] = "COMMENT_END_BANG";
+    State[State["DOCTYPE"] = 52] = "DOCTYPE";
+    State[State["BEFORE_DOCTYPE_NAME"] = 53] = "BEFORE_DOCTYPE_NAME";
+    State[State["DOCTYPE_NAME"] = 54] = "DOCTYPE_NAME";
+    State[State["AFTER_DOCTYPE_NAME"] = 55] = "AFTER_DOCTYPE_NAME";
+    State[State["AFTER_DOCTYPE_PUBLIC_KEYWORD"] = 56] = "AFTER_DOCTYPE_PUBLIC_KEYWORD";
+    State[State["BEFORE_DOCTYPE_PUBLIC_IDENTIFIER"] = 57] = "BEFORE_DOCTYPE_PUBLIC_IDENTIFIER";
+    State[State["DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED"] = 58] = "DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED";
+    State[State["DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED"] = 59] = "DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED";
+    State[State["AFTER_DOCTYPE_PUBLIC_IDENTIFIER"] = 60] = "AFTER_DOCTYPE_PUBLIC_IDENTIFIER";
+    State[State["BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS"] = 61] = "BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS";
+    State[State["AFTER_DOCTYPE_SYSTEM_KEYWORD"] = 62] = "AFTER_DOCTYPE_SYSTEM_KEYWORD";
+    State[State["BEFORE_DOCTYPE_SYSTEM_IDENTIFIER"] = 63] = "BEFORE_DOCTYPE_SYSTEM_IDENTIFIER";
+    State[State["DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED"] = 64] = "DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED";
+    State[State["DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED"] = 65] = "DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED";
+    State[State["AFTER_DOCTYPE_SYSTEM_IDENTIFIER"] = 66] = "AFTER_DOCTYPE_SYSTEM_IDENTIFIER";
+    State[State["BOGUS_DOCTYPE"] = 67] = "BOGUS_DOCTYPE";
+    State[State["CDATA_SECTION"] = 68] = "CDATA_SECTION";
+    State[State["CDATA_SECTION_BRACKET"] = 69] = "CDATA_SECTION_BRACKET";
+    State[State["CDATA_SECTION_END"] = 70] = "CDATA_SECTION_END";
+    State[State["CHARACTER_REFERENCE"] = 71] = "CHARACTER_REFERENCE";
+    State[State["NAMED_CHARACTER_REFERENCE"] = 72] = "NAMED_CHARACTER_REFERENCE";
+    State[State["AMBIGUOUS_AMPERSAND"] = 73] = "AMBIGUOUS_AMPERSAND";
+    State[State["NUMERIC_CHARACTER_REFERENCE"] = 74] = "NUMERIC_CHARACTER_REFERENCE";
+    State[State["HEXADEMICAL_CHARACTER_REFERENCE_START"] = 75] = "HEXADEMICAL_CHARACTER_REFERENCE_START";
+    State[State["HEXADEMICAL_CHARACTER_REFERENCE"] = 76] = "HEXADEMICAL_CHARACTER_REFERENCE";
+    State[State["DECIMAL_CHARACTER_REFERENCE"] = 77] = "DECIMAL_CHARACTER_REFERENCE";
+    State[State["NUMERIC_CHARACTER_REFERENCE_END"] = 78] = "NUMERIC_CHARACTER_REFERENCE_END";
+})(State || (State = {}));
+//Tokenizer initial states for different modes
+exports.TokenizerMode = {
+    DATA: State.DATA,
+    RCDATA: State.RCDATA,
+    RAWTEXT: State.RAWTEXT,
+    SCRIPT_DATA: State.SCRIPT_DATA,
+    PLAINTEXT: State.PLAINTEXT,
+    CDATA_SECTION: State.CDATA_SECTION,
+};
+//Utils
+//OPTIMIZATION: these utility functions should not be moved out of this module. V8 Crankshaft will not inline
+//this functions if they will be situated in another module due to context switch.
+//Always perform inlining check before modifying this functions ('node --trace-inlining').
 function isAsciiDigit(cp) {
-    return cp >= $.DIGIT_0 && cp <= $.DIGIT_9;
+    return cp >= unicode_js_1.CODE_POINTS.DIGIT_0 && cp <= unicode_js_1.CODE_POINTS.DIGIT_9;
 }
-
 function isAsciiUpper(cp) {
-    return cp >= $.LATIN_CAPITAL_A && cp <= $.LATIN_CAPITAL_Z;
+    return cp >= unicode_js_1.CODE_POINTS.LATIN_CAPITAL_A && cp <= unicode_js_1.CODE_POINTS.LATIN_CAPITAL_Z;
 }
-
 function isAsciiLower(cp) {
-    return cp >= $.LATIN_SMALL_A && cp <= $.LATIN_SMALL_Z;
+    return cp >= unicode_js_1.CODE_POINTS.LATIN_SMALL_A && cp <= unicode_js_1.CODE_POINTS.LATIN_SMALL_Z;
 }
-
 function isAsciiLetter(cp) {
     return isAsciiLower(cp) || isAsciiUpper(cp);
 }
-
 function isAsciiAlphaNumeric(cp) {
     return isAsciiLetter(cp) || isAsciiDigit(cp);
 }
-
-function isDigit(cp, isHex) {
-    return isAsciiDigit(cp) || isHex && (cp >= $.LATIN_CAPITAL_A && cp <= $.LATIN_CAPITAL_F ||
-                                         cp >= $.LATIN_SMALL_A && cp <= $.LATIN_SMALL_F);
+function isAsciiUpperHexDigit(cp) {
+    return cp >= unicode_js_1.CODE_POINTS.LATIN_CAPITAL_A && cp <= unicode_js_1.CODE_POINTS.LATIN_CAPITAL_F;
 }
-
-function isReservedCodePoint(cp) {
-    return cp >= 0xD800 && cp <= 0xDFFF || cp > 0x10FFFF;
+function isAsciiLowerHexDigit(cp) {
+    return cp >= unicode_js_1.CODE_POINTS.LATIN_SMALL_A && cp <= unicode_js_1.CODE_POINTS.LATIN_SMALL_F;
 }
-
-function toAsciiLowerCodePoint(cp) {
-    return cp + 0x0020;
+function isAsciiHexDigit(cp) {
+    return isAsciiDigit(cp) || isAsciiUpperHexDigit(cp) || isAsciiLowerHexDigit(cp);
 }
-
-//NOTE: String.fromCharCode() function can handle only characters from BMP subset.
-//So, we need to workaround this manually.
-//(see: https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/String/fromCharCode#Getting_it_to_work_with_higher_values)
-function toChar(cp) {
-    if (cp <= 0xFFFF)
-        return String.fromCharCode(cp);
-
-    cp -= 0x10000;
-    return String.fromCharCode(cp >>> 10 & 0x3FF | 0xD800) + String.fromCharCode(0xDC00 | cp & 0x3FF);
+function toAsciiLower(cp) {
+    return cp + 32;
 }
-
-function toAsciiLowerChar(cp) {
-    return String.fromCharCode(toAsciiLowerCodePoint(cp));
+function isWhitespace(cp) {
+    return cp === unicode_js_1.CODE_POINTS.SPACE || cp === unicode_js_1.CODE_POINTS.LINE_FEED || cp === unicode_js_1.CODE_POINTS.TABULATION || cp === unicode_js_1.CODE_POINTS.FORM_FEED;
 }
-
-function findNamedEntityTreeBranch(nodeIx, cp) {
-    var branchCount = neTree[++nodeIx],
-        lo = ++nodeIx,
-        hi = lo + branchCount - 1;
-
-    while (lo <= hi) {
-        var mid = lo + hi >>> 1,
-            midCp = neTree[mid];
-
-        if (midCp < cp)
-            lo = mid + 1;
-
-        else if (midCp > cp)
-            hi = mid - 1;
-
-        else
-            return neTree[mid + branchCount];
-    }
-
-    return -1;
+function isEntityInAttributeInvalidEnd(nextCp) {
+    return nextCp === unicode_js_1.CODE_POINTS.EQUALS_SIGN || isAsciiAlphaNumeric(nextCp);
 }
-
-
+function isScriptDataDoubleEscapeSequenceEnd(cp) {
+    return isWhitespace(cp) || cp === unicode_js_1.CODE_POINTS.SOLIDUS || cp === unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN;
+}
 //Tokenizer
-var Tokenizer = module.exports = function () {
-    this.preprocessor = new Preprocessor();
-
-    this.tokenQueue = [];
-
-    this.allowCDATA = false;
-
-    this.state = DATA_STATE;
-    this.returnState = '';
-
-    this.tempBuff = [];
-    this.additionalAllowedCp = void 0;
-    this.lastStartTagName = '';
-
-    this.consumedAfterSnapshot = -1;
-    this.active = false;
-
-    this.currentCharacterToken = null;
-    this.currentToken = null;
-    this.currentAttr = null;
-};
-
-//Token types
-Tokenizer.CHARACTER_TOKEN = 'CHARACTER_TOKEN';
-Tokenizer.NULL_CHARACTER_TOKEN = 'NULL_CHARACTER_TOKEN';
-Tokenizer.WHITESPACE_CHARACTER_TOKEN = 'WHITESPACE_CHARACTER_TOKEN';
-Tokenizer.START_TAG_TOKEN = 'START_TAG_TOKEN';
-Tokenizer.END_TAG_TOKEN = 'END_TAG_TOKEN';
-Tokenizer.COMMENT_TOKEN = 'COMMENT_TOKEN';
-Tokenizer.DOCTYPE_TOKEN = 'DOCTYPE_TOKEN';
-Tokenizer.EOF_TOKEN = 'EOF_TOKEN';
-Tokenizer.HIBERNATION_TOKEN = 'HIBERNATION_TOKEN';
-
-//Tokenizer initial states for different modes
-Tokenizer.MODE = {
-    DATA: DATA_STATE,
-    RCDATA: RCDATA_STATE,
-    RAWTEXT: RAWTEXT_STATE,
-    SCRIPT_DATA: SCRIPT_DATA_STATE,
-    PLAINTEXT: PLAINTEXT_STATE
-};
-
-//Static
-Tokenizer.getTokenAttr = function (token, attrName) {
-    for (var i = token.attrs.length - 1; i >= 0; i--) {
-        if (token.attrs[i].name === attrName)
-            return token.attrs[i].value;
-    }
-
-    return null;
-};
-
-//API
-Tokenizer.prototype.getNextToken = function () {
-    while (!this.tokenQueue.length && this.active) {
-        this._hibernationSnapshot();
-
-        var cp = this._consume();
-
-        if (!this._ensureHibernation())
-            this[this.state](cp);
-    }
-
-    return this.tokenQueue.shift();
-};
-
-Tokenizer.prototype.write = function (chunk, isLastChunk) {
-    this.active = true;
-    this.preprocessor.write(chunk, isLastChunk);
-};
-
-Tokenizer.prototype.insertHtmlAtCurrentPos = function (chunk) {
-    this.active = true;
-    this.preprocessor.insertHtmlAtCurrentPos(chunk);
-};
-
-//Hibernation
-Tokenizer.prototype._hibernationSnapshot = function () {
-    this.consumedAfterSnapshot = 0;
-};
-
-Tokenizer.prototype._ensureHibernation = function () {
-    if (this.preprocessor.endOfChunkHit) {
-        for (; this.consumedAfterSnapshot > 0; this.consumedAfterSnapshot--)
-            this.preprocessor.retreat();
-
+class Tokenizer {
+    constructor(options, handler) {
+        this.options = options;
+        this.handler = handler;
+        this.paused = false;
+        /** Ensures that the parsing loop isn't run multiple times at once. */
+        this.inLoop = false;
+        /**
+         * Indicates that the current adjusted node exists, is not an element in the HTML namespace,
+         * and that it is not an integration point for either MathML or HTML.
+         *
+         * @see {@link https://html.spec.whatwg.org/multipage/parsing.html#tree-construction}
+         */
+        this.inForeignNode = false;
+        this.lastStartTagName = '';
         this.active = false;
-        this.tokenQueue.push({type: Tokenizer.HIBERNATION_TOKEN});
-
-        return true;
-    }
-
-    return false;
-};
-
-
-//Consumption
-Tokenizer.prototype._consume = function () {
-    this.consumedAfterSnapshot++;
-    return this.preprocessor.advance();
-};
-
-Tokenizer.prototype._unconsume = function () {
-    this.consumedAfterSnapshot--;
-    this.preprocessor.retreat();
-};
-
-Tokenizer.prototype._unconsumeSeveral = function (count) {
-    while (count--)
-        this._unconsume();
-};
-
-Tokenizer.prototype._reconsumeInState = function (state) {
-    this.state = state;
-    this._unconsume();
-};
-
-Tokenizer.prototype._consumeSubsequentIfMatch = function (pattern, startCp, caseSensitive) {
-    var consumedCount = 0,
-        isMatch = true,
-        patternLength = pattern.length,
-        patternPos = 0,
-        cp = startCp,
-        patternCp = void 0;
-
-    for (; patternPos < patternLength; patternPos++) {
-        if (patternPos > 0) {
-            cp = this._consume();
-            consumedCount++;
-        }
-
-        if (cp === $.EOF) {
-            isMatch = false;
-            break;
-        }
-
-        patternCp = pattern[patternPos];
-
-        if (cp !== patternCp && (caseSensitive || cp !== toAsciiLowerCodePoint(patternCp))) {
-            isMatch = false;
-            break;
-        }
-    }
-
-    if (!isMatch)
-        this._unconsumeSeveral(consumedCount);
-
-    return isMatch;
-};
-
-//Lookahead
-Tokenizer.prototype._lookahead = function () {
-    var cp = this._consume();
-
-    this._unconsume();
-
-    return cp;
-};
-
-//Temp buffer
-Tokenizer.prototype.isTempBufferEqualToScriptString = function () {
-    if (this.tempBuff.length !== $$.SCRIPT_STRING.length)
-        return false;
-
-    for (var i = 0; i < this.tempBuff.length; i++) {
-        if (this.tempBuff[i] !== $$.SCRIPT_STRING[i])
-            return false;
-    }
-
-    return true;
-};
-
-//Token creation
-Tokenizer.prototype._createStartTagToken = function () {
-    this.currentToken = {
-        type: Tokenizer.START_TAG_TOKEN,
-        tagName: '',
-        selfClosing: false,
-        attrs: []
-    };
-};
-
-Tokenizer.prototype._createEndTagToken = function () {
-    this.currentToken = {
-        type: Tokenizer.END_TAG_TOKEN,
-        tagName: '',
-        attrs: []
-    };
-};
-
-Tokenizer.prototype._createCommentToken = function () {
-    this.currentToken = {
-        type: Tokenizer.COMMENT_TOKEN,
-        data: ''
-    };
-};
-
-Tokenizer.prototype._createDoctypeToken = function (initialName) {
-    this.currentToken = {
-        type: Tokenizer.DOCTYPE_TOKEN,
-        name: initialName,
-        forceQuirks: false,
-        publicId: null,
-        systemId: null
-    };
-};
-
-Tokenizer.prototype._createCharacterToken = function (type, ch) {
-    this.currentCharacterToken = {
-        type: type,
-        chars: ch
-    };
-};
-
-//Tag attributes
-Tokenizer.prototype._createAttr = function (attrNameFirstCh) {
-    this.currentAttr = {
-        name: attrNameFirstCh,
-        value: ''
-    };
-};
-
-Tokenizer.prototype._isDuplicateAttr = function () {
-    return Tokenizer.getTokenAttr(this.currentToken, this.currentAttr.name) !== null;
-};
-
-Tokenizer.prototype._leaveAttrName = function (toState) {
-    this.state = toState;
-
-    if (!this._isDuplicateAttr())
-        this.currentToken.attrs.push(this.currentAttr);
-};
-
-Tokenizer.prototype._leaveAttrValue = function (toState) {
-    this.state = toState;
-};
-
-//Appropriate end tag token
-//(see: http://www.whatwg.org/specs/web-apps/current-work/multipage/tokenization.html#appropriate-end-tag-token)
-Tokenizer.prototype._isAppropriateEndTagToken = function () {
-    return this.lastStartTagName === this.currentToken.tagName;
-};
-
-//Token emission
-Tokenizer.prototype._emitCurrentToken = function () {
-    this._emitCurrentCharacterToken();
-
-    //NOTE: store emited start tag's tagName to determine is the following end tag token is appropriate.
-    if (this.currentToken.type === Tokenizer.START_TAG_TOKEN)
-        this.lastStartTagName = this.currentToken.tagName;
-
-    this.tokenQueue.push(this.currentToken);
-    this.currentToken = null;
-};
-
-Tokenizer.prototype._emitCurrentCharacterToken = function () {
-    if (this.currentCharacterToken) {
-        this.tokenQueue.push(this.currentCharacterToken);
+        this.state = State.DATA;
+        this.returnState = State.DATA;
+        this.charRefCode = -1;
+        this.consumedAfterSnapshot = -1;
         this.currentCharacterToken = null;
+        this.currentToken = null;
+        this.currentAttr = { name: '', value: '' };
+        this.preprocessor = new preprocessor_js_1.Preprocessor(handler);
+        this.currentLocation = this.getCurrentLocation(-1);
     }
-};
-
-Tokenizer.prototype._emitEOFToken = function () {
-    this._emitCurrentCharacterToken();
-    this.tokenQueue.push({type: Tokenizer.EOF_TOKEN});
-};
-
-//Characters emission
-
-//OPTIMIZATION: specification uses only one type of character tokens (one token per character).
-//This causes a huge memory overhead and a lot of unnecessary parser loops. parse5 uses 3 groups of characters.
-//If we have a sequence of characters that belong to the same group, parser can process it
-//as a single solid character token.
-//So, there are 3 types of character tokens in parse5:
-//1)NULL_CHARACTER_TOKEN - \u0000-character sequences (e.g. '\u0000\u0000\u0000')
-//2)WHITESPACE_CHARACTER_TOKEN - any whitespace/new-line character sequences (e.g. '\n  \r\t   \f')
-//3)CHARACTER_TOKEN - any character sequence which don't belong to groups 1 and 2 (e.g. 'abcdef1234@@#$%^')
-Tokenizer.prototype._appendCharToCurrentCharacterToken = function (type, ch) {
-    if (this.currentCharacterToken && this.currentCharacterToken.type !== type)
-        this._emitCurrentCharacterToken();
-
-    if (this.currentCharacterToken)
-        this.currentCharacterToken.chars += ch;
-
-    else
-        this._createCharacterToken(type, ch);
-};
-
-Tokenizer.prototype._emitCodePoint = function (cp) {
-    var type = Tokenizer.CHARACTER_TOKEN;
-
-    if (isWhitespace(cp))
-        type = Tokenizer.WHITESPACE_CHARACTER_TOKEN;
-
-    else if (cp === $.NULL)
-        type = Tokenizer.NULL_CHARACTER_TOKEN;
-
-    this._appendCharToCurrentCharacterToken(type, toChar(cp));
-};
-
-Tokenizer.prototype._emitSeveralCodePoints = function (codePoints) {
-    for (var i = 0; i < codePoints.length; i++)
-        this._emitCodePoint(codePoints[i]);
-};
-
-//NOTE: used then we emit character explicitly. This is always a non-whitespace and a non-null character.
-//So we can avoid additional checks here.
-Tokenizer.prototype._emitChar = function (ch) {
-    this._appendCharToCurrentCharacterToken(Tokenizer.CHARACTER_TOKEN, ch);
-};
-
-//Character reference tokenization
-Tokenizer.prototype._consumeNumericEntity = function (isHex) {
-    var digits = '',
-        nextCp = void 0;
-
-    do {
-        digits += toChar(this._consume());
-        nextCp = this._lookahead();
-    } while (nextCp !== $.EOF && isDigit(nextCp, isHex));
-
-    if (this._lookahead() === $.SEMICOLON)
-        this._consume();
-
-    var referencedCp = parseInt(digits, isHex ? 16 : 10),
-        replacement = NUMERIC_ENTITY_REPLACEMENTS[referencedCp];
-
-    if (replacement)
-        return replacement;
-
-    if (isReservedCodePoint(referencedCp))
-        return $.REPLACEMENT_CHARACTER;
-
-    return referencedCp;
-};
-
-// NOTE: for the details on this algorithm see
-// https://github.com/inikulin/parse5/tree/master/scripts/generate_named_entity_data/README.md
-Tokenizer.prototype._consumeNamedEntity = function (inAttr) {
-    var referencedCodePoints = null,
-        referenceSize = 0,
-        cp = null,
-        consumedCount = 0,
-        semicolonTerminated = false;
-
-    for (var i = 0; i > -1;) {
-        var current = neTree[i],
-            inNode = current < MAX_BRANCH_MARKER_VALUE,
-            nodeWithData = inNode && current & HAS_DATA_FLAG;
-
-        if (nodeWithData) {
-            referencedCodePoints = current & DATA_DUPLET_FLAG ? [neTree[++i], neTree[++i]] : [neTree[++i]];
-            referenceSize = consumedCount;
-
-            if (cp === $.SEMICOLON) {
-                semicolonTerminated = true;
-                break;
+    //Errors
+    _err(code) {
+        var _a, _b;
+        (_b = (_a = this.handler).onParseError) === null || _b === void 0 ? void 0 : _b.call(_a, this.preprocessor.getError(code));
+    }
+    // NOTE: `offset` may never run across line boundaries.
+    getCurrentLocation(offset) {
+        if (!this.options.sourceCodeLocationInfo) {
+            return null;
+        }
+        return {
+            startLine: this.preprocessor.line,
+            startCol: this.preprocessor.col - offset,
+            startOffset: this.preprocessor.offset - offset,
+            endLine: -1,
+            endCol: -1,
+            endOffset: -1,
+        };
+    }
+    _runParsingLoop() {
+        if (this.inLoop)
+            return;
+        this.inLoop = true;
+        while (this.active && !this.paused) {
+            this.consumedAfterSnapshot = 0;
+            const cp = this._consume();
+            if (!this._ensureHibernation()) {
+                this._callState(cp);
             }
         }
-
-        cp = this._consume();
-        consumedCount++;
-
-        if (cp === $.EOF)
-            break;
-
-        if (inNode)
-            i = current & HAS_BRANCHES_FLAG ? findNamedEntityTreeBranch(i, cp) : -1;
-
-        else
-            i = cp === current ? ++i : -1;
+        this.inLoop = false;
     }
-
-
-    if (referencedCodePoints) {
-        if (!semicolonTerminated) {
-            //NOTE: unconsume excess (e.g. 'it' in '&notit')
-            this._unconsumeSeveral(consumedCount - referenceSize);
-
-            //NOTE: If the character reference is being consumed as part of an attribute and the next character
-            //is either a U+003D EQUALS SIGN character (=) or an alphanumeric ASCII character, then, for historical
-            //reasons, all the characters that were matched after the U+0026 AMPERSAND character (&) must be
-            //unconsumed, and nothing is returned.
-            //However, if this next character is in fact a U+003D EQUALS SIGN character (=), then this is a
-            //parse error, because some legacy user agents will misinterpret the markup in those cases.
-            //(see: http://www.whatwg.org/specs/web-apps/current-work/multipage/tokenization.html#tokenizing-character-references)
-            if (inAttr) {
-                var nextCp = this._lookahead();
-
-                if (nextCp === $.EQUALS_SIGN || isAsciiAlphaNumeric(nextCp)) {
-                    this._unconsumeSeveral(referenceSize);
-                    return null;
+    //API
+    pause() {
+        this.paused = true;
+    }
+    resume(writeCallback) {
+        if (!this.paused) {
+            throw new Error('Parser was already resumed');
+        }
+        this.paused = false;
+        // Necessary for synchronous resume.
+        if (this.inLoop)
+            return;
+        this._runParsingLoop();
+        if (!this.paused) {
+            writeCallback === null || writeCallback === void 0 ? void 0 : writeCallback();
+        }
+    }
+    write(chunk, isLastChunk, writeCallback) {
+        this.active = true;
+        this.preprocessor.write(chunk, isLastChunk);
+        this._runParsingLoop();
+        if (!this.paused) {
+            writeCallback === null || writeCallback === void 0 ? void 0 : writeCallback();
+        }
+    }
+    insertHtmlAtCurrentPos(chunk) {
+        this.active = true;
+        this.preprocessor.insertHtmlAtCurrentPos(chunk);
+        this._runParsingLoop();
+    }
+    //Hibernation
+    _ensureHibernation() {
+        if (this.preprocessor.endOfChunkHit) {
+            this._unconsume(this.consumedAfterSnapshot);
+            this.active = false;
+            return true;
+        }
+        return false;
+    }
+    //Consumption
+    _consume() {
+        this.consumedAfterSnapshot++;
+        return this.preprocessor.advance();
+    }
+    _unconsume(count) {
+        this.consumedAfterSnapshot -= count;
+        this.preprocessor.retreat(count);
+    }
+    _reconsumeInState(state, cp) {
+        this.state = state;
+        this._callState(cp);
+    }
+    _advanceBy(count) {
+        this.consumedAfterSnapshot += count;
+        for (let i = 0; i < count; i++) {
+            this.preprocessor.advance();
+        }
+    }
+    _consumeSequenceIfMatch(pattern, caseSensitive) {
+        if (this.preprocessor.startsWith(pattern, caseSensitive)) {
+            // We will already have consumed one character before calling this method.
+            this._advanceBy(pattern.length - 1);
+            return true;
+        }
+        return false;
+    }
+    //Token creation
+    _createStartTagToken() {
+        this.currentToken = {
+            type: token_js_1.TokenType.START_TAG,
+            tagName: '',
+            tagID: html_js_1.TAG_ID.UNKNOWN,
+            selfClosing: false,
+            ackSelfClosing: false,
+            attrs: [],
+            location: this.getCurrentLocation(1),
+        };
+    }
+    _createEndTagToken() {
+        this.currentToken = {
+            type: token_js_1.TokenType.END_TAG,
+            tagName: '',
+            tagID: html_js_1.TAG_ID.UNKNOWN,
+            selfClosing: false,
+            ackSelfClosing: false,
+            attrs: [],
+            location: this.getCurrentLocation(2),
+        };
+    }
+    _createCommentToken(offset) {
+        this.currentToken = {
+            type: token_js_1.TokenType.COMMENT,
+            data: '',
+            location: this.getCurrentLocation(offset),
+        };
+    }
+    _createDoctypeToken(initialName) {
+        this.currentToken = {
+            type: token_js_1.TokenType.DOCTYPE,
+            name: initialName,
+            forceQuirks: false,
+            publicId: null,
+            systemId: null,
+            location: this.currentLocation,
+        };
+    }
+    _createCharacterToken(type, chars) {
+        this.currentCharacterToken = {
+            type,
+            chars,
+            location: this.currentLocation,
+        };
+    }
+    //Tag attributes
+    _createAttr(attrNameFirstCh) {
+        this.currentAttr = {
+            name: attrNameFirstCh,
+            value: '',
+        };
+        this.currentLocation = this.getCurrentLocation(0);
+    }
+    _leaveAttrName() {
+        var _a;
+        var _b;
+        const token = this.currentToken;
+        if ((0, token_js_1.getTokenAttr)(token, this.currentAttr.name) === null) {
+            token.attrs.push(this.currentAttr);
+            if (token.location && this.currentLocation) {
+                const attrLocations = ((_a = (_b = token.location).attrs) !== null && _a !== void 0 ? _a : (_b.attrs = Object.create(null)));
+                attrLocations[this.currentAttr.name] = this.currentLocation;
+                // Set end location
+                this._leaveAttrValue();
+            }
+        }
+        else {
+            this._err(error_codes_js_1.ERR.duplicateAttribute);
+        }
+    }
+    _leaveAttrValue() {
+        if (this.currentLocation) {
+            this.currentLocation.endLine = this.preprocessor.line;
+            this.currentLocation.endCol = this.preprocessor.col;
+            this.currentLocation.endOffset = this.preprocessor.offset;
+        }
+    }
+    //Token emission
+    prepareToken(ct) {
+        this._emitCurrentCharacterToken(ct.location);
+        this.currentToken = null;
+        if (ct.location) {
+            ct.location.endLine = this.preprocessor.line;
+            ct.location.endCol = this.preprocessor.col + 1;
+            ct.location.endOffset = this.preprocessor.offset + 1;
+        }
+        this.currentLocation = this.getCurrentLocation(-1);
+    }
+    emitCurrentTagToken() {
+        const ct = this.currentToken;
+        this.prepareToken(ct);
+        ct.tagID = (0, html_js_1.getTagID)(ct.tagName);
+        if (ct.type === token_js_1.TokenType.START_TAG) {
+            this.lastStartTagName = ct.tagName;
+            this.handler.onStartTag(ct);
+        }
+        else {
+            if (ct.attrs.length > 0) {
+                this._err(error_codes_js_1.ERR.endTagWithAttributes);
+            }
+            if (ct.selfClosing) {
+                this._err(error_codes_js_1.ERR.endTagWithTrailingSolidus);
+            }
+            this.handler.onEndTag(ct);
+        }
+        this.preprocessor.dropParsedChunk();
+    }
+    emitCurrentComment(ct) {
+        this.prepareToken(ct);
+        this.handler.onComment(ct);
+        this.preprocessor.dropParsedChunk();
+    }
+    emitCurrentDoctype(ct) {
+        this.prepareToken(ct);
+        this.handler.onDoctype(ct);
+        this.preprocessor.dropParsedChunk();
+    }
+    _emitCurrentCharacterToken(nextLocation) {
+        if (this.currentCharacterToken) {
+            //NOTE: if we have a pending character token, make it's end location equal to the
+            //current token's start location.
+            if (nextLocation && this.currentCharacterToken.location) {
+                this.currentCharacterToken.location.endLine = nextLocation.startLine;
+                this.currentCharacterToken.location.endCol = nextLocation.startCol;
+                this.currentCharacterToken.location.endOffset = nextLocation.startOffset;
+            }
+            switch (this.currentCharacterToken.type) {
+                case token_js_1.TokenType.CHARACTER: {
+                    this.handler.onCharacter(this.currentCharacterToken);
+                    break;
+                }
+                case token_js_1.TokenType.NULL_CHARACTER: {
+                    this.handler.onNullCharacter(this.currentCharacterToken);
+                    break;
+                }
+                case token_js_1.TokenType.WHITESPACE_CHARACTER: {
+                    this.handler.onWhitespaceCharacter(this.currentCharacterToken);
+                    break;
+                }
+            }
+            this.currentCharacterToken = null;
+        }
+    }
+    _emitEOFToken() {
+        const location = this.getCurrentLocation(0);
+        if (location) {
+            location.endLine = location.startLine;
+            location.endCol = location.startCol;
+            location.endOffset = location.startOffset;
+        }
+        this._emitCurrentCharacterToken(location);
+        this.handler.onEof({ type: token_js_1.TokenType.EOF, location });
+        this.active = false;
+    }
+    //Characters emission
+    //OPTIMIZATION: specification uses only one type of character tokens (one token per character).
+    //This causes a huge memory overhead and a lot of unnecessary parser loops. parse5 uses 3 groups of characters.
+    //If we have a sequence of characters that belong to the same group, the parser can process it
+    //as a single solid character token.
+    //So, there are 3 types of character tokens in parse5:
+    //1)TokenType.NULL_CHARACTER - \u0000-character sequences (e.g. '\u0000\u0000\u0000')
+    //2)TokenType.WHITESPACE_CHARACTER - any whitespace/new-line character sequences (e.g. '\n  \r\t   \f')
+    //3)TokenType.CHARACTER - any character sequence which don't belong to groups 1 and 2 (e.g. 'abcdef1234@@#$%^')
+    _appendCharToCurrentCharacterToken(type, ch) {
+        if (this.currentCharacterToken) {
+            if (this.currentCharacterToken.type !== type) {
+                this.currentLocation = this.getCurrentLocation(0);
+                this._emitCurrentCharacterToken(this.currentLocation);
+                this.preprocessor.dropParsedChunk();
+            }
+            else {
+                this.currentCharacterToken.chars += ch;
+                return;
+            }
+        }
+        this._createCharacterToken(type, ch);
+    }
+    _emitCodePoint(cp) {
+        const type = isWhitespace(cp)
+            ? token_js_1.TokenType.WHITESPACE_CHARACTER
+            : cp === unicode_js_1.CODE_POINTS.NULL
+                ? token_js_1.TokenType.NULL_CHARACTER
+                : token_js_1.TokenType.CHARACTER;
+        this._appendCharToCurrentCharacterToken(type, String.fromCodePoint(cp));
+    }
+    //NOTE: used when we emit characters explicitly.
+    //This is always for non-whitespace and non-null characters, which allows us to avoid additional checks.
+    _emitChars(ch) {
+        this._appendCharToCurrentCharacterToken(token_js_1.TokenType.CHARACTER, ch);
+    }
+    // Character reference helpers
+    _matchNamedCharacterReference(cp) {
+        let result = null;
+        let excess = 0;
+        let withoutSemicolon = false;
+        for (let i = 0, current = decode_js_1.htmlDecodeTree[0]; i >= 0; cp = this._consume()) {
+            i = (0, decode_js_1.determineBranch)(decode_js_1.htmlDecodeTree, current, i + 1, cp);
+            if (i < 0)
+                break;
+            excess += 1;
+            current = decode_js_1.htmlDecodeTree[i];
+            const masked = current & decode_js_1.BinTrieFlags.VALUE_LENGTH;
+            // If the branch is a value, store it and continue
+            if (masked) {
+                // The mask is the number of bytes of the value, including the current byte.
+                const valueLength = (masked >> 14) - 1;
+                // Attribute values that aren't terminated properly aren't parsed, and shouldn't lead to a parser error.
+                // See the example in https://html.spec.whatwg.org/multipage/parsing.html#named-character-reference-state
+                if (cp !== unicode_js_1.CODE_POINTS.SEMICOLON &&
+                    this._isCharacterReferenceInAttribute() &&
+                    isEntityInAttributeInvalidEnd(this.preprocessor.peek(1))) {
+                    //NOTE: we don't flush all consumed code points here, and instead switch back to the original state after
+                    //emitting an ampersand. This is fine, as alphanumeric characters won't be parsed differently in attributes.
+                    result = [unicode_js_1.CODE_POINTS.AMPERSAND];
+                    // Skip over the value.
+                    i += valueLength;
+                }
+                else {
+                    // If this is a surrogate pair, consume the next two bytes.
+                    result =
+                        valueLength === 0
+                            ? [decode_js_1.htmlDecodeTree[i] & ~decode_js_1.BinTrieFlags.VALUE_LENGTH]
+                            : valueLength === 1
+                                ? [decode_js_1.htmlDecodeTree[++i]]
+                                : [decode_js_1.htmlDecodeTree[++i], decode_js_1.htmlDecodeTree[++i]];
+                    excess = 0;
+                    withoutSemicolon = cp !== unicode_js_1.CODE_POINTS.SEMICOLON;
+                }
+                if (valueLength === 0) {
+                    // If the value is zero-length, we're done.
+                    this._consume();
+                    break;
                 }
             }
         }
-
-        return referencedCodePoints;
-    }
-
-    this._unconsumeSeveral(consumedCount);
-
-    return null;
-};
-
-Tokenizer.prototype._consumeCharacterReference = function (startCp, inAttr) {
-    if (isWhitespace(startCp) || startCp === $.GREATER_THAN_SIGN ||
-        startCp === $.AMPERSAND || startCp === this.additionalAllowedCp || startCp === $.EOF) {
-        //NOTE: not a character reference. No characters are consumed, and nothing is returned.
-        this._unconsume();
-        return null;
-    }
-
-    if (startCp === $.NUMBER_SIGN) {
-        //NOTE: we have a numeric entity candidate, now we should determine if it's hex or decimal
-        var isHex = false,
-            nextCp = this._lookahead();
-
-        if (nextCp === $.LATIN_SMALL_X || nextCp === $.LATIN_CAPITAL_X) {
-            this._consume();
-            isHex = true;
+        this._unconsume(excess);
+        if (withoutSemicolon && !this.preprocessor.endOfChunkHit) {
+            this._err(error_codes_js_1.ERR.missingSemicolonAfterCharacterReference);
         }
-
-        nextCp = this._lookahead();
-
-        //NOTE: if we have at least one digit this is a numeric entity for sure, so we consume it
-        if (nextCp !== $.EOF && isDigit(nextCp, isHex))
-            return [this._consumeNumericEntity(isHex)];
-
-        //NOTE: otherwise this is a bogus number entity and a parse error. Unconsume the number sign
-        //and the 'x'-character if appropriate.
-        this._unconsumeSeveral(isHex ? 2 : 1);
-        return null;
+        // We want to emit the error above on the code point after the entity.
+        // We always consume one code point too many in the loop, and we wait to
+        // unconsume it until after the error is emitted.
+        this._unconsume(1);
+        return result;
     }
-
-    this._unconsume();
-
-    return this._consumeNamedEntity(inAttr);
-};
-
-//State machine
-var _ = Tokenizer.prototype;
-
-//12.2.4.1 Data state
-//------------------------------------------------------------------
-_[DATA_STATE] = function dataState(cp) {
-    this.preprocessor.dropParsedChunk();
-
-    if (cp === $.AMPERSAND)
-        this.state = CHARACTER_REFERENCE_IN_DATA_STATE;
-
-    else if (cp === $.LESS_THAN_SIGN)
-        this.state = TAG_OPEN_STATE;
-
-    else if (cp === $.NULL)
-        this._emitCodePoint(cp);
-
-    else if (cp === $.EOF)
-        this._emitEOFToken();
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.2 Character reference in data state
-//------------------------------------------------------------------
-_[CHARACTER_REFERENCE_IN_DATA_STATE] = function characterReferenceInDataState(cp) {
-    this.additionalAllowedCp = void 0;
-
-    var referencedCodePoints = this._consumeCharacterReference(cp, false);
-
-    if (!this._ensureHibernation()) {
-        if (referencedCodePoints)
-            this._emitSeveralCodePoints(referencedCodePoints);
-
-        else
-            this._emitChar('&');
-
-        this.state = DATA_STATE;
+    _isCharacterReferenceInAttribute() {
+        return (this.returnState === State.ATTRIBUTE_VALUE_DOUBLE_QUOTED ||
+            this.returnState === State.ATTRIBUTE_VALUE_SINGLE_QUOTED ||
+            this.returnState === State.ATTRIBUTE_VALUE_UNQUOTED);
     }
-};
-
-
-//12.2.4.3 RCDATA state
-//------------------------------------------------------------------
-_[RCDATA_STATE] = function rcdataState(cp) {
-    this.preprocessor.dropParsedChunk();
-
-    if (cp === $.AMPERSAND)
-        this.state = CHARACTER_REFERENCE_IN_RCDATA_STATE;
-
-    else if (cp === $.LESS_THAN_SIGN)
-        this.state = RCDATA_LESS_THAN_SIGN_STATE;
-
-    else if (cp === $.NULL)
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-
-    else if (cp === $.EOF)
-        this._emitEOFToken();
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.4 Character reference in RCDATA state
-//------------------------------------------------------------------
-_[CHARACTER_REFERENCE_IN_RCDATA_STATE] = function characterReferenceInRcdataState(cp) {
-    this.additionalAllowedCp = void 0;
-
-    var referencedCodePoints = this._consumeCharacterReference(cp, false);
-
-    if (!this._ensureHibernation()) {
-        if (referencedCodePoints)
-            this._emitSeveralCodePoints(referencedCodePoints);
-
-        else
-            this._emitChar('&');
-
-        this.state = RCDATA_STATE;
-    }
-};
-
-
-//12.2.4.5 RAWTEXT state
-//------------------------------------------------------------------
-_[RAWTEXT_STATE] = function rawtextState(cp) {
-    this.preprocessor.dropParsedChunk();
-
-    if (cp === $.LESS_THAN_SIGN)
-        this.state = RAWTEXT_LESS_THAN_SIGN_STATE;
-
-    else if (cp === $.NULL)
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-
-    else if (cp === $.EOF)
-        this._emitEOFToken();
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.6 Script data state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_STATE] = function scriptDataState(cp) {
-    this.preprocessor.dropParsedChunk();
-
-    if (cp === $.LESS_THAN_SIGN)
-        this.state = SCRIPT_DATA_LESS_THAN_SIGN_STATE;
-
-    else if (cp === $.NULL)
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-
-    else if (cp === $.EOF)
-        this._emitEOFToken();
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.7 PLAINTEXT state
-//------------------------------------------------------------------
-_[PLAINTEXT_STATE] = function plaintextState(cp) {
-    this.preprocessor.dropParsedChunk();
-
-    if (cp === $.NULL)
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-
-    else if (cp === $.EOF)
-        this._emitEOFToken();
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.8 Tag open state
-//------------------------------------------------------------------
-_[TAG_OPEN_STATE] = function tagOpenState(cp) {
-    if (cp === $.EXCLAMATION_MARK)
-        this.state = MARKUP_DECLARATION_OPEN_STATE;
-
-    else if (cp === $.SOLIDUS)
-        this.state = END_TAG_OPEN_STATE;
-
-    else if (isAsciiLetter(cp)) {
-        this._createStartTagToken();
-        this._reconsumeInState(TAG_NAME_STATE);
-    }
-
-    else if (cp === $.QUESTION_MARK)
-        this._reconsumeInState(BOGUS_COMMENT_STATE);
-
-    else {
-        this._emitChar('<');
-        this._reconsumeInState(DATA_STATE);
-    }
-};
-
-
-//12.2.4.9 End tag open state
-//------------------------------------------------------------------
-_[END_TAG_OPEN_STATE] = function endTagOpenState(cp) {
-    if (isAsciiLetter(cp)) {
-        this._createEndTagToken();
-        this._reconsumeInState(TAG_NAME_STATE);
-    }
-
-    else if (cp === $.GREATER_THAN_SIGN)
-        this.state = DATA_STATE;
-
-    else if (cp === $.EOF) {
-        this._reconsumeInState(DATA_STATE);
-        this._emitChar('<');
-        this._emitChar('/');
-    }
-
-    else
-        this._reconsumeInState(BOGUS_COMMENT_STATE);
-};
-
-
-//12.2.4.10 Tag name state
-//------------------------------------------------------------------
-_[TAG_NAME_STATE] = function tagNameState(cp) {
-    if (isWhitespace(cp))
-        this.state = BEFORE_ATTRIBUTE_NAME_STATE;
-
-    else if (cp === $.SOLIDUS)
-        this.state = SELF_CLOSING_START_TAG_STATE;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (isAsciiUpper(cp))
-        this.currentToken.tagName += toAsciiLowerChar(cp);
-
-    else if (cp === $.NULL)
-        this.currentToken.tagName += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this.currentToken.tagName += toChar(cp);
-};
-
-
-//12.2.4.11 RCDATA less-than sign state
-//------------------------------------------------------------------
-_[RCDATA_LESS_THAN_SIGN_STATE] = function rcdataLessThanSignState(cp) {
-    if (cp === $.SOLIDUS) {
-        this.tempBuff = [];
-        this.state = RCDATA_END_TAG_OPEN_STATE;
-    }
-
-    else {
-        this._emitChar('<');
-        this._reconsumeInState(RCDATA_STATE);
-    }
-};
-
-
-//12.2.4.12 RCDATA end tag open state
-//------------------------------------------------------------------
-_[RCDATA_END_TAG_OPEN_STATE] = function rcdataEndTagOpenState(cp) {
-    if (isAsciiLetter(cp)) {
-        this._createEndTagToken();
-        this._reconsumeInState(RCDATA_END_TAG_NAME_STATE);
-    }
-
-    else {
-        this._emitChar('<');
-        this._emitChar('/');
-        this._reconsumeInState(RCDATA_STATE);
-    }
-};
-
-
-//12.2.4.13 RCDATA end tag name state
-//------------------------------------------------------------------
-_[RCDATA_END_TAG_NAME_STATE] = function rcdataEndTagNameState(cp) {
-    if (isAsciiUpper(cp)) {
-        this.currentToken.tagName += toAsciiLowerChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else if (isAsciiLower(cp)) {
-        this.currentToken.tagName += toChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else {
-        if (this._isAppropriateEndTagToken()) {
-            if (isWhitespace(cp)) {
-                this.state = BEFORE_ATTRIBUTE_NAME_STATE;
-                return;
-            }
-
-            if (cp === $.SOLIDUS) {
-                this.state = SELF_CLOSING_START_TAG_STATE;
-                return;
-            }
-
-            if (cp === $.GREATER_THAN_SIGN) {
-                this.state = DATA_STATE;
-                this._emitCurrentToken();
-                return;
-            }
+    _flushCodePointConsumedAsCharacterReference(cp) {
+        if (this._isCharacterReferenceInAttribute()) {
+            this.currentAttr.value += String.fromCodePoint(cp);
         }
-
-        this._emitChar('<');
-        this._emitChar('/');
-        this._emitSeveralCodePoints(this.tempBuff);
-        this._reconsumeInState(RCDATA_STATE);
-    }
-};
-
-
-//12.2.4.14 RAWTEXT less-than sign state
-//------------------------------------------------------------------
-_[RAWTEXT_LESS_THAN_SIGN_STATE] = function rawtextLessThanSignState(cp) {
-    if (cp === $.SOLIDUS) {
-        this.tempBuff = [];
-        this.state = RAWTEXT_END_TAG_OPEN_STATE;
-    }
-
-    else {
-        this._emitChar('<');
-        this._reconsumeInState(RAWTEXT_STATE);
-    }
-};
-
-
-//12.2.4.15 RAWTEXT end tag open state
-//------------------------------------------------------------------
-_[RAWTEXT_END_TAG_OPEN_STATE] = function rawtextEndTagOpenState(cp) {
-    if (isAsciiLetter(cp)) {
-        this._createEndTagToken();
-        this._reconsumeInState(RAWTEXT_END_TAG_NAME_STATE);
-    }
-
-    else {
-        this._emitChar('<');
-        this._emitChar('/');
-        this._reconsumeInState(RAWTEXT_STATE);
-    }
-};
-
-
-//12.2.4.16 RAWTEXT end tag name state
-//------------------------------------------------------------------
-_[RAWTEXT_END_TAG_NAME_STATE] = function rawtextEndTagNameState(cp) {
-    if (isAsciiUpper(cp)) {
-        this.currentToken.tagName += toAsciiLowerChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else if (isAsciiLower(cp)) {
-        this.currentToken.tagName += toChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else {
-        if (this._isAppropriateEndTagToken()) {
-            if (isWhitespace(cp)) {
-                this.state = BEFORE_ATTRIBUTE_NAME_STATE;
-                return;
-            }
-
-            if (cp === $.SOLIDUS) {
-                this.state = SELF_CLOSING_START_TAG_STATE;
-                return;
-            }
-
-            if (cp === $.GREATER_THAN_SIGN) {
-                this._emitCurrentToken();
-                this.state = DATA_STATE;
-                return;
-            }
-        }
-
-        this._emitChar('<');
-        this._emitChar('/');
-        this._emitSeveralCodePoints(this.tempBuff);
-        this._reconsumeInState(RAWTEXT_STATE);
-    }
-};
-
-
-//12.2.4.17 Script data less-than sign state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_LESS_THAN_SIGN_STATE] = function scriptDataLessThanSignState(cp) {
-    if (cp === $.SOLIDUS) {
-        this.tempBuff = [];
-        this.state = SCRIPT_DATA_END_TAG_OPEN_STATE;
-    }
-
-    else if (cp === $.EXCLAMATION_MARK) {
-        this.state = SCRIPT_DATA_ESCAPE_START_STATE;
-        this._emitChar('<');
-        this._emitChar('!');
-    }
-
-    else {
-        this._emitChar('<');
-        this._reconsumeInState(SCRIPT_DATA_STATE);
-    }
-};
-
-
-//12.2.4.18 Script data end tag open state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_END_TAG_OPEN_STATE] = function scriptDataEndTagOpenState(cp) {
-    if (isAsciiLetter(cp)) {
-        this._createEndTagToken();
-        this._reconsumeInState(SCRIPT_DATA_END_TAG_NAME_STATE);
-    }
-
-    else {
-        this._emitChar('<');
-        this._emitChar('/');
-        this._reconsumeInState(SCRIPT_DATA_STATE);
-    }
-};
-
-
-//12.2.4.19 Script data end tag name state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_END_TAG_NAME_STATE] = function scriptDataEndTagNameState(cp) {
-    if (isAsciiUpper(cp)) {
-        this.currentToken.tagName += toAsciiLowerChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else if (isAsciiLower(cp)) {
-        this.currentToken.tagName += toChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else {
-        if (this._isAppropriateEndTagToken()) {
-            if (isWhitespace(cp)) {
-                this.state = BEFORE_ATTRIBUTE_NAME_STATE;
-                return;
-            }
-
-            else if (cp === $.SOLIDUS) {
-                this.state = SELF_CLOSING_START_TAG_STATE;
-                return;
-            }
-
-            else if (cp === $.GREATER_THAN_SIGN) {
-                this._emitCurrentToken();
-                this.state = DATA_STATE;
-                return;
-            }
-        }
-
-        this._emitChar('<');
-        this._emitChar('/');
-        this._emitSeveralCodePoints(this.tempBuff);
-        this._reconsumeInState(SCRIPT_DATA_STATE);
-    }
-};
-
-
-//12.2.4.20 Script data escape start state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPE_START_STATE] = function scriptDataEscapeStartState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.state = SCRIPT_DATA_ESCAPE_START_DASH_STATE;
-        this._emitChar('-');
-    }
-
-    else
-        this._reconsumeInState(SCRIPT_DATA_STATE);
-};
-
-
-//12.2.4.21 Script data escape start dash state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPE_START_DASH_STATE] = function scriptDataEscapeStartDashState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.state = SCRIPT_DATA_ESCAPED_DASH_DASH_STATE;
-        this._emitChar('-');
-    }
-
-    else
-        this._reconsumeInState(SCRIPT_DATA_STATE);
-};
-
-
-//12.2.4.22 Script data escaped state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPED_STATE] = function scriptDataEscapedState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.state = SCRIPT_DATA_ESCAPED_DASH_STATE;
-        this._emitChar('-');
-    }
-
-    else if (cp === $.LESS_THAN_SIGN)
-        this.state = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
-
-    else if (cp === $.NULL)
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.23 Script data escaped dash state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPED_DASH_STATE] = function scriptDataEscapedDashState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.state = SCRIPT_DATA_ESCAPED_DASH_DASH_STATE;
-        this._emitChar('-');
-    }
-
-    else if (cp === $.LESS_THAN_SIGN)
-        this.state = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
-
-    else if (cp === $.NULL) {
-        this.state = SCRIPT_DATA_ESCAPED_STATE;
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else {
-        this.state = SCRIPT_DATA_ESCAPED_STATE;
-        this._emitCodePoint(cp);
-    }
-};
-
-
-//12.2.4.24 Script data escaped dash dash state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPED_DASH_DASH_STATE] = function scriptDataEscapedDashDashState(cp) {
-    if (cp === $.HYPHEN_MINUS)
-        this._emitChar('-');
-
-    else if (cp === $.LESS_THAN_SIGN)
-        this.state = SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = SCRIPT_DATA_STATE;
-        this._emitChar('>');
-    }
-
-    else if (cp === $.NULL) {
-        this.state = SCRIPT_DATA_ESCAPED_STATE;
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else {
-        this.state = SCRIPT_DATA_ESCAPED_STATE;
-        this._emitCodePoint(cp);
-    }
-};
-
-
-//12.2.4.25 Script data escaped less-than sign state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN_STATE] = function scriptDataEscapedLessThanSignState(cp) {
-    if (cp === $.SOLIDUS) {
-        this.tempBuff = [];
-        this.state = SCRIPT_DATA_ESCAPED_END_TAG_OPEN_STATE;
-    }
-
-    else if (isAsciiLetter(cp)) {
-        this.tempBuff = [];
-        this._emitChar('<');
-        this._reconsumeInState(SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE);
-    }
-
-    else {
-        this._emitChar('<');
-        this._reconsumeInState(SCRIPT_DATA_ESCAPED_STATE);
-    }
-};
-
-
-//12.2.4.26 Script data escaped end tag open state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPED_END_TAG_OPEN_STATE] = function scriptDataEscapedEndTagOpenState(cp) {
-    if (isAsciiLetter(cp)) {
-        this._createEndTagToken();
-        this._reconsumeInState(SCRIPT_DATA_ESCAPED_END_TAG_NAME_STATE);
-    }
-
-    else {
-        this._emitChar('<');
-        this._emitChar('/');
-        this._reconsumeInState(SCRIPT_DATA_ESCAPED_STATE);
-    }
-};
-
-
-//12.2.4.27 Script data escaped end tag name state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_ESCAPED_END_TAG_NAME_STATE] = function scriptDataEscapedEndTagNameState(cp) {
-    if (isAsciiUpper(cp)) {
-        this.currentToken.tagName += toAsciiLowerChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else if (isAsciiLower(cp)) {
-        this.currentToken.tagName += toChar(cp);
-        this.tempBuff.push(cp);
-    }
-
-    else {
-        if (this._isAppropriateEndTagToken()) {
-            if (isWhitespace(cp)) {
-                this.state = BEFORE_ATTRIBUTE_NAME_STATE;
-                return;
-            }
-
-            if (cp === $.SOLIDUS) {
-                this.state = SELF_CLOSING_START_TAG_STATE;
-                return;
-            }
-
-            if (cp === $.GREATER_THAN_SIGN) {
-                this._emitCurrentToken();
-                this.state = DATA_STATE;
-                return;
-            }
-        }
-
-        this._emitChar('<');
-        this._emitChar('/');
-        this._emitSeveralCodePoints(this.tempBuff);
-        this._reconsumeInState(SCRIPT_DATA_ESCAPED_STATE);
-    }
-};
-
-
-//12.2.4.28 Script data double escape start state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_DOUBLE_ESCAPE_START_STATE] = function scriptDataDoubleEscapeStartState(cp) {
-    if (isWhitespace(cp) || cp === $.SOLIDUS || cp === $.GREATER_THAN_SIGN) {
-        this.state = this.isTempBufferEqualToScriptString() ? SCRIPT_DATA_DOUBLE_ESCAPED_STATE : SCRIPT_DATA_ESCAPED_STATE;
-        this._emitCodePoint(cp);
-    }
-
-    else if (isAsciiUpper(cp)) {
-        this.tempBuff.push(toAsciiLowerCodePoint(cp));
-        this._emitCodePoint(cp);
-    }
-
-    else if (isAsciiLower(cp)) {
-        this.tempBuff.push(cp);
-        this._emitCodePoint(cp);
-    }
-
-    else
-        this._reconsumeInState(SCRIPT_DATA_ESCAPED_STATE);
-};
-
-
-//12.2.4.29 Script data double escaped state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_DOUBLE_ESCAPED_STATE] = function scriptDataDoubleEscapedState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE;
-        this._emitChar('-');
-    }
-
-    else if (cp === $.LESS_THAN_SIGN) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
-        this._emitChar('<');
-    }
-
-    else if (cp === $.NULL)
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this._emitCodePoint(cp);
-};
-
-
-//12.2.4.30 Script data double escaped dash state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_STATE] = function scriptDataDoubleEscapedDashState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE;
-        this._emitChar('-');
-    }
-
-    else if (cp === $.LESS_THAN_SIGN) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
-        this._emitChar('<');
-    }
-
-    else if (cp === $.NULL) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
-        this._emitCodePoint(cp);
-    }
-};
-
-
-//12.2.4.31 Script data double escaped dash dash state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH_STATE] = function scriptDataDoubleEscapedDashDashState(cp) {
-    if (cp === $.HYPHEN_MINUS)
-        this._emitChar('-');
-
-    else if (cp === $.LESS_THAN_SIGN) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE;
-        this._emitChar('<');
-    }
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = SCRIPT_DATA_STATE;
-        this._emitChar('>');
-    }
-
-    else if (cp === $.NULL) {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
-        this._emitChar(UNICODE.REPLACEMENT_CHARACTER);
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else {
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
-        this._emitCodePoint(cp);
-    }
-};
-
-
-//12.2.4.32 Script data double escaped less-than sign state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN_STATE] = function scriptDataDoubleEscapedLessThanSignState(cp) {
-    if (cp === $.SOLIDUS) {
-        this.tempBuff = [];
-        this.state = SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE;
-        this._emitChar('/');
-    }
-
-    else
-        this._reconsumeInState(SCRIPT_DATA_DOUBLE_ESCAPED_STATE);
-};
-
-
-//12.2.4.33 Script data double escape end state
-//------------------------------------------------------------------
-_[SCRIPT_DATA_DOUBLE_ESCAPE_END_STATE] = function scriptDataDoubleEscapeEndState(cp) {
-    if (isWhitespace(cp) || cp === $.SOLIDUS || cp === $.GREATER_THAN_SIGN) {
-        this.state = this.isTempBufferEqualToScriptString() ? SCRIPT_DATA_ESCAPED_STATE : SCRIPT_DATA_DOUBLE_ESCAPED_STATE;
-
-        this._emitCodePoint(cp);
-    }
-
-    else if (isAsciiUpper(cp)) {
-        this.tempBuff.push(toAsciiLowerCodePoint(cp));
-        this._emitCodePoint(cp);
-    }
-
-    else if (isAsciiLower(cp)) {
-        this.tempBuff.push(cp);
-        this._emitCodePoint(cp);
-    }
-
-    else
-        this._reconsumeInState(SCRIPT_DATA_DOUBLE_ESCAPED_STATE);
-};
-
-
-//12.2.4.34 Before attribute name state
-//------------------------------------------------------------------
-_[BEFORE_ATTRIBUTE_NAME_STATE] = function beforeAttributeNameState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.SOLIDUS || cp === $.GREATER_THAN_SIGN || cp === $.EOF)
-        this._reconsumeInState(AFTER_ATTRIBUTE_NAME_STATE);
-
-    else if (cp === $.EQUALS_SIGN) {
-        this._createAttr('=');
-        this.state = ATTRIBUTE_NAME_STATE;
-    }
-
-    else {
-        this._createAttr('');
-        this._reconsumeInState(ATTRIBUTE_NAME_STATE);
-    }
-};
-
-
-//12.2.4.35 Attribute name state
-//------------------------------------------------------------------
-_[ATTRIBUTE_NAME_STATE] = function attributeNameState(cp) {
-    if (isWhitespace(cp) || cp === $.SOLIDUS || cp === $.GREATER_THAN_SIGN || cp === $.EOF) {
-        this._leaveAttrName(AFTER_ATTRIBUTE_NAME_STATE);
-        this._unconsume();
-    }
-
-    else if (cp === $.EQUALS_SIGN)
-        this._leaveAttrName(BEFORE_ATTRIBUTE_VALUE_STATE);
-
-    else if (isAsciiUpper(cp))
-        this.currentAttr.name += toAsciiLowerChar(cp);
-
-    else if (cp === $.QUOTATION_MARK || cp === $.APOSTROPHE || cp === $.LESS_THAN_SIGN)
-        this.currentAttr.name += toChar(cp);
-
-    else if (cp === $.NULL)
-        this.currentAttr.name += UNICODE.REPLACEMENT_CHARACTER;
-
-    else
-        this.currentAttr.name += toChar(cp);
-};
-
-
-//12.2.4.36 After attribute name state
-//------------------------------------------------------------------
-_[AFTER_ATTRIBUTE_NAME_STATE] = function afterAttributeNameState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.SOLIDUS)
-        this.state = SELF_CLOSING_START_TAG_STATE;
-
-    else if (cp === $.EQUALS_SIGN)
-        this.state = BEFORE_ATTRIBUTE_VALUE_STATE;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else {
-        this._createAttr('');
-        this._reconsumeInState(ATTRIBUTE_NAME_STATE);
-    }
-};
-
-
-//12.2.4.37 Before attribute value state
-//------------------------------------------------------------------
-_[BEFORE_ATTRIBUTE_VALUE_STATE] = function beforeAttributeValueState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.QUOTATION_MARK)
-        this.state = ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE;
-
-    else if (cp === $.APOSTROPHE)
-        this.state = ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE;
-
-    else
-        this._reconsumeInState(ATTRIBUTE_VALUE_UNQUOTED_STATE);
-};
-
-
-//12.2.4.38 Attribute value (double-quoted) state
-//------------------------------------------------------------------
-_[ATTRIBUTE_VALUE_DOUBLE_QUOTED_STATE] = function attributeValueDoubleQuotedState(cp) {
-    if (cp === $.QUOTATION_MARK)
-        this.state = AFTER_ATTRIBUTE_VALUE_QUOTED_STATE;
-
-    else if (cp === $.AMPERSAND) {
-        this.additionalAllowedCp = $.QUOTATION_MARK;
-        this.returnState = this.state;
-        this.state = CHARACTER_REFERENCE_IN_ATTRIBUTE_VALUE_STATE;
-    }
-
-    else if (cp === $.NULL)
-        this.currentAttr.value += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this.currentAttr.value += toChar(cp);
-};
-
-
-//12.2.4.39 Attribute value (single-quoted) state
-//------------------------------------------------------------------
-_[ATTRIBUTE_VALUE_SINGLE_QUOTED_STATE] = function attributeValueSingleQuotedState(cp) {
-    if (cp === $.APOSTROPHE)
-        this.state = AFTER_ATTRIBUTE_VALUE_QUOTED_STATE;
-
-    else if (cp === $.AMPERSAND) {
-        this.additionalAllowedCp = $.APOSTROPHE;
-        this.returnState = this.state;
-        this.state = CHARACTER_REFERENCE_IN_ATTRIBUTE_VALUE_STATE;
-    }
-
-    else if (cp === $.NULL)
-        this.currentAttr.value += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this.currentAttr.value += toChar(cp);
-};
-
-
-//12.2.4.40 Attribute value (unquoted) state
-//------------------------------------------------------------------
-_[ATTRIBUTE_VALUE_UNQUOTED_STATE] = function attributeValueUnquotedState(cp) {
-    if (isWhitespace(cp))
-        this._leaveAttrValue(BEFORE_ATTRIBUTE_NAME_STATE);
-
-    else if (cp === $.AMPERSAND) {
-        this.additionalAllowedCp = $.GREATER_THAN_SIGN;
-        this.returnState = this.state;
-        this.state = CHARACTER_REFERENCE_IN_ATTRIBUTE_VALUE_STATE;
-    }
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this._leaveAttrValue(DATA_STATE);
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.NULL)
-        this.currentAttr.value += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.QUOTATION_MARK || cp === $.APOSTROPHE || cp === $.LESS_THAN_SIGN ||
-             cp === $.EQUALS_SIGN || cp === $.GRAVE_ACCENT)
-        this.currentAttr.value += toChar(cp);
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this.currentAttr.value += toChar(cp);
-};
-
-
-//12.2.4.41 Character reference in attribute value state
-//------------------------------------------------------------------
-_[CHARACTER_REFERENCE_IN_ATTRIBUTE_VALUE_STATE] = function characterReferenceInAttributeValueState(cp) {
-    var referencedCodePoints = this._consumeCharacterReference(cp, true);
-
-    if (!this._ensureHibernation()) {
-        if (referencedCodePoints) {
-            for (var i = 0; i < referencedCodePoints.length; i++)
-                this.currentAttr.value += toChar(referencedCodePoints[i]);
-        }
-        else
-            this.currentAttr.value += '&';
-
-        this.state = this.returnState;
-    }
-};
-
-
-//12.2.4.42 After attribute value (quoted) state
-//------------------------------------------------------------------
-_[AFTER_ATTRIBUTE_VALUE_QUOTED_STATE] = function afterAttributeValueQuotedState(cp) {
-    if (isWhitespace(cp))
-        this._leaveAttrValue(BEFORE_ATTRIBUTE_NAME_STATE);
-
-    else if (cp === $.SOLIDUS)
-        this._leaveAttrValue(SELF_CLOSING_START_TAG_STATE);
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this._leaveAttrValue(DATA_STATE);
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this._reconsumeInState(BEFORE_ATTRIBUTE_NAME_STATE);
-};
-
-
-//12.2.4.43 Self-closing start tag state
-//------------------------------------------------------------------
-_[SELF_CLOSING_START_TAG_STATE] = function selfClosingStartTagState(cp) {
-    if (cp === $.GREATER_THAN_SIGN) {
-        this.currentToken.selfClosing = true;
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.EOF)
-        this._reconsumeInState(DATA_STATE);
-
-    else
-        this._reconsumeInState(BEFORE_ATTRIBUTE_NAME_STATE);
-};
-
-
-//12.2.4.44 Bogus comment state
-//------------------------------------------------------------------
-_[BOGUS_COMMENT_STATE] = function bogusCommentState() {
-    this._createCommentToken();
-    this._reconsumeInState(BOGUS_COMMENT_STATE_CONTINUATION);
-};
-
-//HACK: to support streaming and make BOGUS_COMMENT_STATE reentrant we've
-//introduced BOGUS_COMMENT_STATE_CONTINUATION state which will not produce
-//comment token on each call.
-_[BOGUS_COMMENT_STATE_CONTINUATION] = function bogusCommentStateContinuation(cp) {
-    while (true) {
-        if (cp === $.GREATER_THAN_SIGN) {
-            this.state = DATA_STATE;
-            break;
-        }
-
-        else if (cp === $.EOF) {
-            this._reconsumeInState(DATA_STATE);
-            break;
-        }
-
         else {
-            this.currentToken.data += cp === $.NULL ? UNICODE.REPLACEMENT_CHARACTER : toChar(cp);
-
-            this._hibernationSnapshot();
-            cp = this._consume();
-
-            if (this._ensureHibernation())
-                return;
-        }
-    }
-
-    this._emitCurrentToken();
-};
-
-//12.2.4.45 Markup declaration open state
-//------------------------------------------------------------------
-_[MARKUP_DECLARATION_OPEN_STATE] = function markupDeclarationOpenState(cp) {
-    var dashDashMatch = this._consumeSubsequentIfMatch($$.DASH_DASH_STRING, cp, true),
-        doctypeMatch = !dashDashMatch && this._consumeSubsequentIfMatch($$.DOCTYPE_STRING, cp, false),
-        cdataMatch = !dashDashMatch && !doctypeMatch &&
-                     this.allowCDATA &&
-                     this._consumeSubsequentIfMatch($$.CDATA_START_STRING, cp, true);
-
-    if (!this._ensureHibernation()) {
-        if (dashDashMatch) {
-            this._createCommentToken();
-            this.state = COMMENT_START_STATE;
-        }
-
-        else if (doctypeMatch)
-            this.state = DOCTYPE_STATE;
-
-        else if (cdataMatch)
-            this.state = CDATA_SECTION_STATE;
-
-        else
-            this._reconsumeInState(BOGUS_COMMENT_STATE);
-    }
-};
-
-
-//12.2.4.46 Comment start state
-//------------------------------------------------------------------
-_[COMMENT_START_STATE] = function commentStartState(cp) {
-    if (cp === $.HYPHEN_MINUS)
-        this.state = COMMENT_START_DASH_STATE;
-
-    else if (cp === $.NULL) {
-        this.currentToken.data += UNICODE.REPLACEMENT_CHARACTER;
-        this.state = COMMENT_STATE;
-    }
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.EOF) {
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else {
-        this.currentToken.data += toChar(cp);
-        this.state = COMMENT_STATE;
-    }
-};
-
-
-//12.2.4.47 Comment start dash state
-//------------------------------------------------------------------
-_[COMMENT_START_DASH_STATE] = function commentStartDashState(cp) {
-    if (cp === $.HYPHEN_MINUS)
-        this.state = COMMENT_END_STATE;
-
-    else if (cp === $.NULL) {
-        this.currentToken.data += '-';
-        this.currentToken.data += UNICODE.REPLACEMENT_CHARACTER;
-        this.state = COMMENT_STATE;
-    }
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.EOF) {
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else {
-        this.currentToken.data += '-';
-        this.currentToken.data += toChar(cp);
-        this.state = COMMENT_STATE;
-    }
-};
-
-
-//12.2.4.48 Comment state
-//------------------------------------------------------------------
-_[COMMENT_STATE] = function commentState(cp) {
-    if (cp === $.HYPHEN_MINUS)
-        this.state = COMMENT_END_DASH_STATE;
-
-    else if (cp === $.NULL)
-        this.currentToken.data += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.EOF) {
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else
-        this.currentToken.data += toChar(cp);
-};
-
-
-//12.2.4.49 Comment end dash state
-//------------------------------------------------------------------
-_[COMMENT_END_DASH_STATE] = function commentEndDashState(cp) {
-    if (cp === $.HYPHEN_MINUS)
-        this.state = COMMENT_END_STATE;
-
-    else if (cp === $.NULL) {
-        this.currentToken.data += '-';
-        this.currentToken.data += UNICODE.REPLACEMENT_CHARACTER;
-        this.state = COMMENT_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else {
-        this.currentToken.data += '-';
-        this.currentToken.data += toChar(cp);
-        this.state = COMMENT_STATE;
-    }
-};
-
-
-//12.2.4.50 Comment end state
-//------------------------------------------------------------------
-_[COMMENT_END_STATE] = function commentEndState(cp) {
-    if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.EXCLAMATION_MARK)
-        this.state = COMMENT_END_BANG_STATE;
-
-    else if (cp === $.HYPHEN_MINUS)
-        this.currentToken.data += '-';
-
-    else if (cp === $.NULL) {
-        this.currentToken.data += '--';
-        this.currentToken.data += UNICODE.REPLACEMENT_CHARACTER;
-        this.state = COMMENT_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this._reconsumeInState(DATA_STATE);
-        this._emitCurrentToken();
-    }
-
-    else {
-        this.currentToken.data += '--';
-        this.currentToken.data += toChar(cp);
-        this.state = COMMENT_STATE;
-    }
-};
-
-
-//12.2.4.51 Comment end bang state
-//------------------------------------------------------------------
-_[COMMENT_END_BANG_STATE] = function commentEndBangState(cp) {
-    if (cp === $.HYPHEN_MINUS) {
-        this.currentToken.data += '--!';
-        this.state = COMMENT_END_DASH_STATE;
-    }
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else if (cp === $.NULL) {
-        this.currentToken.data += '--!';
-        this.currentToken.data += UNICODE.REPLACEMENT_CHARACTER;
-        this.state = COMMENT_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else {
-        this.currentToken.data += '--!';
-        this.currentToken.data += toChar(cp);
-        this.state = COMMENT_STATE;
-    }
-};
-
-
-//12.2.4.52 DOCTYPE state
-//------------------------------------------------------------------
-_[DOCTYPE_STATE] = function doctypeState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this._createDoctypeToken(null);
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this._createDoctypeToken(null);
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-    else {
-        this._createDoctypeToken('');
-        this._reconsumeInState(DOCTYPE_NAME_STATE);
-    }
-};
-
-
-//12.2.4.54 DOCTYPE name state
-//------------------------------------------------------------------
-_[DOCTYPE_NAME_STATE] = function doctypeNameState(cp) {
-    if (isWhitespace(cp) || cp === $.GREATER_THAN_SIGN || cp === $.EOF)
-        this._reconsumeInState(AFTER_DOCTYPE_NAME_STATE);
-
-    else if (isAsciiUpper(cp))
-        this.currentToken.name += toAsciiLowerChar(cp);
-
-    else if (cp === $.NULL)
-        this.currentToken.name += UNICODE.REPLACEMENT_CHARACTER;
-
-    else
-        this.currentToken.name += toChar(cp);
-};
-
-
-//12.2.4.55 After DOCTYPE name state
-//------------------------------------------------------------------
-_[AFTER_DOCTYPE_NAME_STATE] = function afterDoctypeNameState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.GREATER_THAN_SIGN) {
-        this.state = DATA_STATE;
-        this._emitCurrentToken();
-    }
-
-    else {
-        var publicMatch = this._consumeSubsequentIfMatch($$.PUBLIC_STRING, cp, false),
-            systemMatch = !publicMatch && this._consumeSubsequentIfMatch($$.SYSTEM_STRING, cp, false);
-
-        if (!this._ensureHibernation()) {
-            if (publicMatch)
-                this.state = BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE;
-
-            else if (systemMatch)
-                this.state = BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
-
-            else {
-                this.currentToken.forceQuirks = true;
-                this.state = BOGUS_DOCTYPE_STATE;
-            }
-        }
-    }
-};
-
-
-//12.2.4.57 Before DOCTYPE public identifier state
-//------------------------------------------------------------------
-_[BEFORE_DOCTYPE_PUBLIC_IDENTIFIER_STATE] = function beforeDoctypePublicIdentifierState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.QUOTATION_MARK) {
-        this.currentToken.publicId = '';
-        this.state = DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE;
-    }
-
-    else if (cp === $.APOSTROPHE) {
-        this.currentToken.publicId = '';
-        this.state = DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE;
-    }
-
-    else {
-        this.currentToken.forceQuirks = true;
-        this._reconsumeInState(BOGUS_DOCTYPE_STATE);
-    }
-};
-
-
-//12.2.4.58 DOCTYPE public identifier (double-quoted) state
-//------------------------------------------------------------------
-_[DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED_STATE] = function doctypePublicIdentifierDoubleQuotedState(cp) {
-    if (cp === $.QUOTATION_MARK)
-        this.state = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS_STATE;
-
-    else if (cp === $.NULL)
-        this.currentToken.publicId += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else
-        this.currentToken.publicId += toChar(cp);
-};
-
-
-//12.2.4.59 DOCTYPE public identifier (single-quoted) state
-//------------------------------------------------------------------
-_[DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED_STATE] = function doctypePublicIdentifierSingleQuotedState(cp) {
-    if (cp === $.APOSTROPHE)
-        this.state = BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS_STATE;
-
-    else if (cp === $.NULL)
-        this.currentToken.publicId += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else
-        this.currentToken.publicId += toChar(cp);
-};
-
-
-//12.2.4.61 Between DOCTYPE public and system identifiers state
-//------------------------------------------------------------------
-_[BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS_STATE] = function betweenDoctypePublicAndSystemIdentifiersState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.GREATER_THAN_SIGN) {
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.QUOTATION_MARK) {
-        this.currentToken.systemId = '';
-        this.state = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE;
-    }
-
-
-    else if (cp === $.APOSTROPHE) {
-        this.currentToken.systemId = '';
-        this.state = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE;
-    }
-
-    else {
-        this.currentToken.forceQuirks = true;
-        this._reconsumeInState(BOGUS_DOCTYPE_STATE);
-    }
-};
-
-
-//12.2.4.63 Before DOCTYPE system identifier state
-//------------------------------------------------------------------
-_[BEFORE_DOCTYPE_SYSTEM_IDENTIFIER_STATE] = function beforeDoctypeSystemIdentifierState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.QUOTATION_MARK) {
-        this.currentToken.systemId = '';
-        this.state = DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE;
-    }
-
-    else if (cp === $.APOSTROPHE) {
-        this.currentToken.systemId = '';
-        this.state = DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE;
-    }
-
-    else {
-        this.currentToken.forceQuirks = true;
-        this._reconsumeInState(BOGUS_DOCTYPE_STATE);
-    }
-};
-
-
-//12.2.4.64 DOCTYPE system identifier (double-quoted) state
-//------------------------------------------------------------------
-_[DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED_STATE] = function doctypeSystemIdentifierDoubleQuotedState(cp) {
-    if (cp === $.QUOTATION_MARK)
-        this.state = AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.NULL)
-        this.currentToken.systemId += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.EOF) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else
-        this.currentToken.systemId += toChar(cp);
-};
-
-
-//12.2.4.65 DOCTYPE system identifier (single-quoted) state
-//------------------------------------------------------------------
-_[DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED_STATE] = function doctypeSystemIdentifierSingleQuotedState(cp) {
-    if (cp === $.APOSTROPHE)
-        this.state = AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE;
-
-    else if (cp === $.GREATER_THAN_SIGN) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.NULL)
-        this.currentToken.systemId += UNICODE.REPLACEMENT_CHARACTER;
-
-    else if (cp === $.EOF) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else
-        this.currentToken.systemId += toChar(cp);
-};
-
-
-//12.2.4.66 After DOCTYPE system identifier state
-//------------------------------------------------------------------
-_[AFTER_DOCTYPE_SYSTEM_IDENTIFIER_STATE] = function afterDoctypeSystemIdentifierState(cp) {
-    if (isWhitespace(cp))
-        return;
-
-    if (cp === $.GREATER_THAN_SIGN) {
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this.currentToken.forceQuirks = true;
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-
-    else
-        this.state = BOGUS_DOCTYPE_STATE;
-};
-
-
-//12.2.4.67 Bogus DOCTYPE state
-//------------------------------------------------------------------
-_[BOGUS_DOCTYPE_STATE] = function bogusDoctypeState(cp) {
-    if (cp === $.GREATER_THAN_SIGN) {
-        this._emitCurrentToken();
-        this.state = DATA_STATE;
-    }
-
-    else if (cp === $.EOF) {
-        this._emitCurrentToken();
-        this._reconsumeInState(DATA_STATE);
-    }
-};
-
-
-//12.2.4.68 CDATA section state
-//------------------------------------------------------------------
-_[CDATA_SECTION_STATE] = function cdataSectionState(cp) {
-    while (true) {
-        if (cp === $.EOF) {
-            this._reconsumeInState(DATA_STATE);
-            break;
-        }
-
-        else {
-            var cdataEndMatch = this._consumeSubsequentIfMatch($$.CDATA_END_STRING, cp, true);
-
-            if (this._ensureHibernation())
-                break;
-
-            if (cdataEndMatch) {
-                this.state = DATA_STATE;
-                break;
-            }
-
             this._emitCodePoint(cp);
-
-            this._hibernationSnapshot();
-            cp = this._consume();
-
-            if (this._ensureHibernation())
+        }
+    }
+    // Calling states this way turns out to be much faster than any other approach.
+    _callState(cp) {
+        switch (this.state) {
+            case State.DATA: {
+                this._stateData(cp);
                 break;
+            }
+            case State.RCDATA: {
+                this._stateRcdata(cp);
+                break;
+            }
+            case State.RAWTEXT: {
+                this._stateRawtext(cp);
+                break;
+            }
+            case State.SCRIPT_DATA: {
+                this._stateScriptData(cp);
+                break;
+            }
+            case State.PLAINTEXT: {
+                this._statePlaintext(cp);
+                break;
+            }
+            case State.TAG_OPEN: {
+                this._stateTagOpen(cp);
+                break;
+            }
+            case State.END_TAG_OPEN: {
+                this._stateEndTagOpen(cp);
+                break;
+            }
+            case State.TAG_NAME: {
+                this._stateTagName(cp);
+                break;
+            }
+            case State.RCDATA_LESS_THAN_SIGN: {
+                this._stateRcdataLessThanSign(cp);
+                break;
+            }
+            case State.RCDATA_END_TAG_OPEN: {
+                this._stateRcdataEndTagOpen(cp);
+                break;
+            }
+            case State.RCDATA_END_TAG_NAME: {
+                this._stateRcdataEndTagName(cp);
+                break;
+            }
+            case State.RAWTEXT_LESS_THAN_SIGN: {
+                this._stateRawtextLessThanSign(cp);
+                break;
+            }
+            case State.RAWTEXT_END_TAG_OPEN: {
+                this._stateRawtextEndTagOpen(cp);
+                break;
+            }
+            case State.RAWTEXT_END_TAG_NAME: {
+                this._stateRawtextEndTagName(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_LESS_THAN_SIGN: {
+                this._stateScriptDataLessThanSign(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_END_TAG_OPEN: {
+                this._stateScriptDataEndTagOpen(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_END_TAG_NAME: {
+                this._stateScriptDataEndTagName(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPE_START: {
+                this._stateScriptDataEscapeStart(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPE_START_DASH: {
+                this._stateScriptDataEscapeStartDash(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPED: {
+                this._stateScriptDataEscaped(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPED_DASH: {
+                this._stateScriptDataEscapedDash(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPED_DASH_DASH: {
+                this._stateScriptDataEscapedDashDash(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN: {
+                this._stateScriptDataEscapedLessThanSign(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPED_END_TAG_OPEN: {
+                this._stateScriptDataEscapedEndTagOpen(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_ESCAPED_END_TAG_NAME: {
+                this._stateScriptDataEscapedEndTagName(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_DOUBLE_ESCAPE_START: {
+                this._stateScriptDataDoubleEscapeStart(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_DOUBLE_ESCAPED: {
+                this._stateScriptDataDoubleEscaped(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_DOUBLE_ESCAPED_DASH: {
+                this._stateScriptDataDoubleEscapedDash(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH: {
+                this._stateScriptDataDoubleEscapedDashDash(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN: {
+                this._stateScriptDataDoubleEscapedLessThanSign(cp);
+                break;
+            }
+            case State.SCRIPT_DATA_DOUBLE_ESCAPE_END: {
+                this._stateScriptDataDoubleEscapeEnd(cp);
+                break;
+            }
+            case State.BEFORE_ATTRIBUTE_NAME: {
+                this._stateBeforeAttributeName(cp);
+                break;
+            }
+            case State.ATTRIBUTE_NAME: {
+                this._stateAttributeName(cp);
+                break;
+            }
+            case State.AFTER_ATTRIBUTE_NAME: {
+                this._stateAfterAttributeName(cp);
+                break;
+            }
+            case State.BEFORE_ATTRIBUTE_VALUE: {
+                this._stateBeforeAttributeValue(cp);
+                break;
+            }
+            case State.ATTRIBUTE_VALUE_DOUBLE_QUOTED: {
+                this._stateAttributeValueDoubleQuoted(cp);
+                break;
+            }
+            case State.ATTRIBUTE_VALUE_SINGLE_QUOTED: {
+                this._stateAttributeValueSingleQuoted(cp);
+                break;
+            }
+            case State.ATTRIBUTE_VALUE_UNQUOTED: {
+                this._stateAttributeValueUnquoted(cp);
+                break;
+            }
+            case State.AFTER_ATTRIBUTE_VALUE_QUOTED: {
+                this._stateAfterAttributeValueQuoted(cp);
+                break;
+            }
+            case State.SELF_CLOSING_START_TAG: {
+                this._stateSelfClosingStartTag(cp);
+                break;
+            }
+            case State.BOGUS_COMMENT: {
+                this._stateBogusComment(cp);
+                break;
+            }
+            case State.MARKUP_DECLARATION_OPEN: {
+                this._stateMarkupDeclarationOpen(cp);
+                break;
+            }
+            case State.COMMENT_START: {
+                this._stateCommentStart(cp);
+                break;
+            }
+            case State.COMMENT_START_DASH: {
+                this._stateCommentStartDash(cp);
+                break;
+            }
+            case State.COMMENT: {
+                this._stateComment(cp);
+                break;
+            }
+            case State.COMMENT_LESS_THAN_SIGN: {
+                this._stateCommentLessThanSign(cp);
+                break;
+            }
+            case State.COMMENT_LESS_THAN_SIGN_BANG: {
+                this._stateCommentLessThanSignBang(cp);
+                break;
+            }
+            case State.COMMENT_LESS_THAN_SIGN_BANG_DASH: {
+                this._stateCommentLessThanSignBangDash(cp);
+                break;
+            }
+            case State.COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH: {
+                this._stateCommentLessThanSignBangDashDash(cp);
+                break;
+            }
+            case State.COMMENT_END_DASH: {
+                this._stateCommentEndDash(cp);
+                break;
+            }
+            case State.COMMENT_END: {
+                this._stateCommentEnd(cp);
+                break;
+            }
+            case State.COMMENT_END_BANG: {
+                this._stateCommentEndBang(cp);
+                break;
+            }
+            case State.DOCTYPE: {
+                this._stateDoctype(cp);
+                break;
+            }
+            case State.BEFORE_DOCTYPE_NAME: {
+                this._stateBeforeDoctypeName(cp);
+                break;
+            }
+            case State.DOCTYPE_NAME: {
+                this._stateDoctypeName(cp);
+                break;
+            }
+            case State.AFTER_DOCTYPE_NAME: {
+                this._stateAfterDoctypeName(cp);
+                break;
+            }
+            case State.AFTER_DOCTYPE_PUBLIC_KEYWORD: {
+                this._stateAfterDoctypePublicKeyword(cp);
+                break;
+            }
+            case State.BEFORE_DOCTYPE_PUBLIC_IDENTIFIER: {
+                this._stateBeforeDoctypePublicIdentifier(cp);
+                break;
+            }
+            case State.DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED: {
+                this._stateDoctypePublicIdentifierDoubleQuoted(cp);
+                break;
+            }
+            case State.DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED: {
+                this._stateDoctypePublicIdentifierSingleQuoted(cp);
+                break;
+            }
+            case State.AFTER_DOCTYPE_PUBLIC_IDENTIFIER: {
+                this._stateAfterDoctypePublicIdentifier(cp);
+                break;
+            }
+            case State.BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS: {
+                this._stateBetweenDoctypePublicAndSystemIdentifiers(cp);
+                break;
+            }
+            case State.AFTER_DOCTYPE_SYSTEM_KEYWORD: {
+                this._stateAfterDoctypeSystemKeyword(cp);
+                break;
+            }
+            case State.BEFORE_DOCTYPE_SYSTEM_IDENTIFIER: {
+                this._stateBeforeDoctypeSystemIdentifier(cp);
+                break;
+            }
+            case State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED: {
+                this._stateDoctypeSystemIdentifierDoubleQuoted(cp);
+                break;
+            }
+            case State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED: {
+                this._stateDoctypeSystemIdentifierSingleQuoted(cp);
+                break;
+            }
+            case State.AFTER_DOCTYPE_SYSTEM_IDENTIFIER: {
+                this._stateAfterDoctypeSystemIdentifier(cp);
+                break;
+            }
+            case State.BOGUS_DOCTYPE: {
+                this._stateBogusDoctype(cp);
+                break;
+            }
+            case State.CDATA_SECTION: {
+                this._stateCdataSection(cp);
+                break;
+            }
+            case State.CDATA_SECTION_BRACKET: {
+                this._stateCdataSectionBracket(cp);
+                break;
+            }
+            case State.CDATA_SECTION_END: {
+                this._stateCdataSectionEnd(cp);
+                break;
+            }
+            case State.CHARACTER_REFERENCE: {
+                this._stateCharacterReference(cp);
+                break;
+            }
+            case State.NAMED_CHARACTER_REFERENCE: {
+                this._stateNamedCharacterReference(cp);
+                break;
+            }
+            case State.AMBIGUOUS_AMPERSAND: {
+                this._stateAmbiguousAmpersand(cp);
+                break;
+            }
+            case State.NUMERIC_CHARACTER_REFERENCE: {
+                this._stateNumericCharacterReference(cp);
+                break;
+            }
+            case State.HEXADEMICAL_CHARACTER_REFERENCE_START: {
+                this._stateHexademicalCharacterReferenceStart(cp);
+                break;
+            }
+            case State.HEXADEMICAL_CHARACTER_REFERENCE: {
+                this._stateHexademicalCharacterReference(cp);
+                break;
+            }
+            case State.DECIMAL_CHARACTER_REFERENCE: {
+                this._stateDecimalCharacterReference(cp);
+                break;
+            }
+            case State.NUMERIC_CHARACTER_REFERENCE_END: {
+                this._stateNumericCharacterReferenceEnd(cp);
+                break;
+            }
+            default: {
+                throw new Error('Unknown state');
+            }
+        }
+    }
+    // State machine
+    // Data state
+    //------------------------------------------------------------------
+    _stateData(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.TAG_OPEN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.AMPERSAND: {
+                this.returnState = State.DATA;
+                this.state = State.CHARACTER_REFERENCE;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitCodePoint(cp);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    //  RCDATA state
+    //------------------------------------------------------------------
+    _stateRcdata(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.AMPERSAND: {
+                this.returnState = State.RCDATA;
+                this.state = State.CHARACTER_REFERENCE;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.RCDATA_LESS_THAN_SIGN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    // RAWTEXT state
+    //------------------------------------------------------------------
+    _stateRawtext(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.RAWTEXT_LESS_THAN_SIGN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    // Script data state
+    //------------------------------------------------------------------
+    _stateScriptData(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA_LESS_THAN_SIGN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    // PLAINTEXT state
+    //------------------------------------------------------------------
+    _statePlaintext(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    // Tag open state
+    //------------------------------------------------------------------
+    _stateTagOpen(cp) {
+        if (isAsciiLetter(cp)) {
+            this._createStartTagToken();
+            this.state = State.TAG_NAME;
+            this._stateTagName(cp);
+        }
+        else
+            switch (cp) {
+                case unicode_js_1.CODE_POINTS.EXCLAMATION_MARK: {
+                    this.state = State.MARKUP_DECLARATION_OPEN;
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.SOLIDUS: {
+                    this.state = State.END_TAG_OPEN;
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.QUESTION_MARK: {
+                    this._err(error_codes_js_1.ERR.unexpectedQuestionMarkInsteadOfTagName);
+                    this._createCommentToken(1);
+                    this.state = State.BOGUS_COMMENT;
+                    this._stateBogusComment(cp);
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.EOF: {
+                    this._err(error_codes_js_1.ERR.eofBeforeTagName);
+                    this._emitChars('<');
+                    this._emitEOFToken();
+                    break;
+                }
+                default: {
+                    this._err(error_codes_js_1.ERR.invalidFirstCharacterOfTagName);
+                    this._emitChars('<');
+                    this.state = State.DATA;
+                    this._stateData(cp);
+                }
+            }
+    }
+    // End tag open state
+    //------------------------------------------------------------------
+    _stateEndTagOpen(cp) {
+        if (isAsciiLetter(cp)) {
+            this._createEndTagToken();
+            this.state = State.TAG_NAME;
+            this._stateTagName(cp);
+        }
+        else
+            switch (cp) {
+                case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                    this._err(error_codes_js_1.ERR.missingEndTagName);
+                    this.state = State.DATA;
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.EOF: {
+                    this._err(error_codes_js_1.ERR.eofBeforeTagName);
+                    this._emitChars('</');
+                    this._emitEOFToken();
+                    break;
+                }
+                default: {
+                    this._err(error_codes_js_1.ERR.invalidFirstCharacterOfTagName);
+                    this._createCommentToken(2);
+                    this.state = State.BOGUS_COMMENT;
+                    this._stateBogusComment(cp);
+                }
+            }
+    }
+    // Tag name state
+    //------------------------------------------------------------------
+    _stateTagName(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this.state = State.BEFORE_ATTRIBUTE_NAME;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.SOLIDUS: {
+                this.state = State.SELF_CLOSING_START_TAG;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                this.emitCurrentTagToken();
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.tagName += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInTag);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.tagName += String.fromCodePoint(isAsciiUpper(cp) ? toAsciiLower(cp) : cp);
+            }
+        }
+    }
+    // RCDATA less-than sign state
+    //------------------------------------------------------------------
+    _stateRcdataLessThanSign(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.SOLIDUS) {
+            this.state = State.RCDATA_END_TAG_OPEN;
+        }
+        else {
+            this._emitChars('<');
+            this.state = State.RCDATA;
+            this._stateRcdata(cp);
+        }
+    }
+    // RCDATA end tag open state
+    //------------------------------------------------------------------
+    _stateRcdataEndTagOpen(cp) {
+        if (isAsciiLetter(cp)) {
+            this.state = State.RCDATA_END_TAG_NAME;
+            this._stateRcdataEndTagName(cp);
+        }
+        else {
+            this._emitChars('</');
+            this.state = State.RCDATA;
+            this._stateRcdata(cp);
+        }
+    }
+    handleSpecialEndTag(_cp) {
+        if (!this.preprocessor.startsWith(this.lastStartTagName, false)) {
+            return !this._ensureHibernation();
+        }
+        this._createEndTagToken();
+        const token = this.currentToken;
+        token.tagName = this.lastStartTagName;
+        const cp = this.preprocessor.peek(this.lastStartTagName.length);
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this._advanceBy(this.lastStartTagName.length);
+                this.state = State.BEFORE_ATTRIBUTE_NAME;
+                return false;
+            }
+            case unicode_js_1.CODE_POINTS.SOLIDUS: {
+                this._advanceBy(this.lastStartTagName.length);
+                this.state = State.SELF_CLOSING_START_TAG;
+                return false;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._advanceBy(this.lastStartTagName.length);
+                this.emitCurrentTagToken();
+                this.state = State.DATA;
+                return false;
+            }
+            default: {
+                return !this._ensureHibernation();
+            }
+        }
+    }
+    // RCDATA end tag name state
+    //------------------------------------------------------------------
+    _stateRcdataEndTagName(cp) {
+        if (this.handleSpecialEndTag(cp)) {
+            this._emitChars('</');
+            this.state = State.RCDATA;
+            this._stateRcdata(cp);
+        }
+    }
+    // RAWTEXT less-than sign state
+    //------------------------------------------------------------------
+    _stateRawtextLessThanSign(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.SOLIDUS) {
+            this.state = State.RAWTEXT_END_TAG_OPEN;
+        }
+        else {
+            this._emitChars('<');
+            this.state = State.RAWTEXT;
+            this._stateRawtext(cp);
+        }
+    }
+    // RAWTEXT end tag open state
+    //------------------------------------------------------------------
+    _stateRawtextEndTagOpen(cp) {
+        if (isAsciiLetter(cp)) {
+            this.state = State.RAWTEXT_END_TAG_NAME;
+            this._stateRawtextEndTagName(cp);
+        }
+        else {
+            this._emitChars('</');
+            this.state = State.RAWTEXT;
+            this._stateRawtext(cp);
+        }
+    }
+    // RAWTEXT end tag name state
+    //------------------------------------------------------------------
+    _stateRawtextEndTagName(cp) {
+        if (this.handleSpecialEndTag(cp)) {
+            this._emitChars('</');
+            this.state = State.RAWTEXT;
+            this._stateRawtext(cp);
+        }
+    }
+    // Script data less-than sign state
+    //------------------------------------------------------------------
+    _stateScriptDataLessThanSign(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SOLIDUS: {
+                this.state = State.SCRIPT_DATA_END_TAG_OPEN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EXCLAMATION_MARK: {
+                this.state = State.SCRIPT_DATA_ESCAPE_START;
+                this._emitChars('<!');
+                break;
+            }
+            default: {
+                this._emitChars('<');
+                this.state = State.SCRIPT_DATA;
+                this._stateScriptData(cp);
+            }
         }
     }
 };
@@ -45136,75 +46678,66 @@ Preprocessor.prototype._processHighRangeCodePoint = function (cp) {
             this._addGap();
         }
     }
-
-    // NOTE: we've hit the end of chunk, stop processing at this point
-    else if (!this.lastChunkWritten) {
-        this.endOfChunkHit = true;
-        return $.EOF;
+    // Script data end tag name state
+    //------------------------------------------------------------------
+    _stateScriptDataEndTagName(cp) {
+        if (this.handleSpecialEndTag(cp)) {
+            this._emitChars('</');
+            this.state = State.SCRIPT_DATA;
+            this._stateScriptData(cp);
+        }
     }
-
-    return cp;
-};
-
-Preprocessor.prototype.write = function (chunk, isLastChunk) {
-    if (this.html)
-        this.html += chunk;
-
-    else
-        this.html = chunk;
-
-    this.lastCharPos = this.html.length - 1;
-    this.endOfChunkHit = false;
-    this.lastChunkWritten = isLastChunk;
-};
-
-Preprocessor.prototype.insertHtmlAtCurrentPos = function (chunk) {
-    this.html = this.html.substring(0, this.pos + 1) +
-                chunk +
-                this.html.substring(this.pos + 1, this.html.length);
-
-    this.lastCharPos = this.html.length - 1;
-    this.endOfChunkHit = false;
-};
-
-
-Preprocessor.prototype.advance = function () {
-    this.pos++;
-
-    if (this.pos > this.lastCharPos) {
-        if (!this.lastChunkWritten)
-            this.endOfChunkHit = true;
-
-        return $.EOF;
+    // Script data escape start state
+    //------------------------------------------------------------------
+    _stateScriptDataEscapeStart(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.HYPHEN_MINUS) {
+            this.state = State.SCRIPT_DATA_ESCAPE_START_DASH;
+            this._emitChars('-');
+        }
+        else {
+            this.state = State.SCRIPT_DATA;
+            this._stateScriptData(cp);
+        }
     }
-
-    var cp = this.html.charCodeAt(this.pos);
-
-    //NOTE: any U+000A LINE FEED (LF) characters that immediately follow a U+000D CARRIAGE RETURN (CR) character
-    //must be ignored.
-    if (this.skipNextNewLine && cp === $.LINE_FEED) {
-        this.skipNextNewLine = false;
-        this._addGap();
-        return this.advance();
+    // Script data escape start dash state
+    //------------------------------------------------------------------
+    _stateScriptDataEscapeStartDash(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.HYPHEN_MINUS) {
+            this.state = State.SCRIPT_DATA_ESCAPED_DASH_DASH;
+            this._emitChars('-');
+        }
+        else {
+            this.state = State.SCRIPT_DATA;
+            this._stateScriptData(cp);
+        }
     }
-
-    //NOTE: all U+000D CARRIAGE RETURN (CR) characters must be converted to U+000A LINE FEED (LF) characters
-    if (cp === $.CARRIAGE_RETURN) {
-        this.skipNextNewLine = true;
-        return $.LINE_FEED;
-    }
-
-    this.skipNextNewLine = false;
-
-    //OPTIMIZATION: first perform check if the code point in the allowed range that covers most common
-    //HTML input (e.g. ASCII codes) to avoid performance-cost operations for high-range code points.
-    return cp >= 0xD800 ? this._processHighRangeCodePoint(cp) : cp;
-};
-
-Preprocessor.prototype.retreat = function () {
-    if (this.pos === this.lastGapPos) {
-        this.lastGapPos = this.gapStack.pop();
-        this.pos--;
+    // Script data escaped state
+    //------------------------------------------------------------------
+    _stateScriptDataEscaped(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.SCRIPT_DATA_ESCAPED_DASH;
+                this._emitChars('-');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInScriptHtmlCommentLikeText);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
     }
 
     this.pos--;
@@ -45290,71 +46823,69 @@ exports.setDocumentType = function (document, name, publicId, systemId) {
             break;
         }
     }
-
-    if (doctypeNode) {
-        doctypeNode.name = name;
-        doctypeNode.publicId = publicId;
-        doctypeNode.systemId = systemId;
-    }
-
-    else {
-        appendChild(document, {
-            nodeName: '#documentType',
-            name: name,
-            publicId: publicId,
-            systemId: systemId
-        });
-    }
-};
-
-exports.setDocumentMode = function (document, mode) {
-    document.mode = mode;
-};
-
-exports.getDocumentMode = function (document) {
-    return document.mode;
-};
-
-exports.detachNode = function (node) {
-    if (node.parentNode) {
-        var idx = node.parentNode.childNodes.indexOf(node);
-
-        node.parentNode.childNodes.splice(idx, 1);
-        node.parentNode = null;
-    }
-};
-
-exports.insertText = function (parentNode, text) {
-    if (parentNode.childNodes.length) {
-        var prevNode = parentNode.childNodes[parentNode.childNodes.length - 1];
-
-        if (prevNode.nodeName === '#text') {
-            prevNode.value += text;
-            return;
+    // Script data escaped dash dash state
+    //------------------------------------------------------------------
+    _stateScriptDataEscapedDashDash(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this._emitChars('-');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA_ESCAPED_LESS_THAN_SIGN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA;
+                this._emitChars('>');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this.state = State.SCRIPT_DATA_ESCAPED;
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInScriptHtmlCommentLikeText);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this.state = State.SCRIPT_DATA_ESCAPED;
+                this._emitCodePoint(cp);
+            }
         }
     }
-
-    appendChild(parentNode, createTextNode(text));
-};
-
-exports.insertTextBefore = function (parentNode, text, referenceNode) {
-    var prevNode = parentNode.childNodes[parentNode.childNodes.indexOf(referenceNode) - 1];
-
-    if (prevNode && prevNode.nodeName === '#text')
-        prevNode.value += text;
-    else
-        insertBefore(parentNode, createTextNode(text), referenceNode);
-};
-
-exports.adoptAttributes = function (recipient, attrs) {
-    var recipientAttrsMap = [];
-
-    for (var i = 0; i < recipient.attrs.length; i++)
-        recipientAttrsMap.push(recipient.attrs[i].name);
-
-    for (var j = 0; j < attrs.length; j++) {
-        if (recipientAttrsMap.indexOf(attrs[j].name) === -1)
-            recipient.attrs.push(attrs[j]);
+    // Script data escaped less-than sign state
+    //------------------------------------------------------------------
+    _stateScriptDataEscapedLessThanSign(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.SOLIDUS) {
+            this.state = State.SCRIPT_DATA_ESCAPED_END_TAG_OPEN;
+        }
+        else if (isAsciiLetter(cp)) {
+            this._emitChars('<');
+            this.state = State.SCRIPT_DATA_DOUBLE_ESCAPE_START;
+            this._stateScriptDataDoubleEscapeStart(cp);
+        }
+        else {
+            this._emitChars('<');
+            this.state = State.SCRIPT_DATA_ESCAPED;
+            this._stateScriptDataEscaped(cp);
+        }
+    }
+    // Script data escaped end tag open state
+    //------------------------------------------------------------------
+    _stateScriptDataEscapedEndTagOpen(cp) {
+        if (isAsciiLetter(cp)) {
+            this.state = State.SCRIPT_DATA_ESCAPED_END_TAG_NAME;
+            this._stateScriptDataEscapedEndTagName(cp);
+        }
+        else {
+            this._emitChars('</');
+            this.state = State.SCRIPT_DATA_ESCAPED;
+            this._stateScriptDataEscaped(cp);
+        }
     }
 };
 
@@ -45452,263 +46983,280 @@ var Node = function (props) {
         if (props.hasOwnProperty(key))
             this[key] = props[key];
     }
-};
-
-Node.prototype = {
-    get firstChild() {
-        var children = this.children;
-
-        return children && children[0] || null;
-    },
-
-    get lastChild() {
-        var children = this.children;
-
-        return children && children[children.length - 1] || null;
-    },
-
-    get nodeType() {
-        return nodeTypes[this.type] || nodeTypes.element;
-    }
-};
-
-Object.keys(nodePropertyShorthands).forEach(function (key) {
-    var shorthand = nodePropertyShorthands[key];
-
-    Object.defineProperty(Node.prototype, key, {
-        get: function () {
-            return this[shorthand] || null;
-        },
-        set: function (val) {
-            this[shorthand] = val;
-            return val;
+    // Script data double escape start state
+    //------------------------------------------------------------------
+    _stateScriptDataDoubleEscapeStart(cp) {
+        if (this.preprocessor.startsWith(unicode_js_1.SEQUENCES.SCRIPT, false) &&
+            isScriptDataDoubleEscapeSequenceEnd(this.preprocessor.peek(unicode_js_1.SEQUENCES.SCRIPT.length))) {
+            this._emitCodePoint(cp);
+            for (let i = 0; i < unicode_js_1.SEQUENCES.SCRIPT.length; i++) {
+                this._emitCodePoint(this._consume());
+            }
+            this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
         }
-    });
-});
-
-
-//Node construction
-exports.createDocument = function () {
-    return new Node({
-        type: 'root',
-        name: 'root',
-        parent: null,
-        prev: null,
-        next: null,
-        children: [],
-        'x-mode': DOCUMENT_MODE.NO_QUIRKS
-    });
-};
-
-exports.createDocumentFragment = function () {
-    return new Node({
-        type: 'root',
-        name: 'root',
-        parent: null,
-        prev: null,
-        next: null,
-        children: []
-    });
-};
-
-exports.createElement = function (tagName, namespaceURI, attrs) {
-    var attribs = Object.create(null),
-        attribsNamespace = Object.create(null),
-        attribsPrefix = Object.create(null);
-
-    for (var i = 0; i < attrs.length; i++) {
-        var attrName = attrs[i].name;
-
-        attribs[attrName] = attrs[i].value;
-        attribsNamespace[attrName] = attrs[i].namespace;
-        attribsPrefix[attrName] = attrs[i].prefix;
-    }
-
-    return new Node({
-        type: tagName === 'script' || tagName === 'style' ? tagName : 'tag',
-        name: tagName,
-        namespace: namespaceURI,
-        attribs: attribs,
-        'x-attribsNamespace': attribsNamespace,
-        'x-attribsPrefix': attribsPrefix,
-        children: [],
-        parent: null,
-        prev: null,
-        next: null
-    });
-};
-
-exports.createCommentNode = function (data) {
-    return new Node({
-        type: 'comment',
-        data: data,
-        parent: null,
-        prev: null,
-        next: null
-    });
-};
-
-var createTextNode = function (value) {
-    return new Node({
-        type: 'text',
-        data: value,
-        parent: null,
-        prev: null,
-        next: null
-    });
-};
-
-
-//Tree mutation
-var appendChild = exports.appendChild = function (parentNode, newNode) {
-    var prev = parentNode.children[parentNode.children.length - 1];
-
-    if (prev) {
-        prev.next = newNode;
-        newNode.prev = prev;
-    }
-
-    parentNode.children.push(newNode);
-    newNode.parent = parentNode;
-};
-
-var insertBefore = exports.insertBefore = function (parentNode, newNode, referenceNode) {
-    var insertionIdx = parentNode.children.indexOf(referenceNode),
-        prev = referenceNode.prev;
-
-    if (prev) {
-        prev.next = newNode;
-        newNode.prev = prev;
-    }
-
-    referenceNode.prev = newNode;
-    newNode.next = referenceNode;
-
-    parentNode.children.splice(insertionIdx, 0, newNode);
-    newNode.parent = parentNode;
-};
-
-exports.setTemplateContent = function (templateElement, contentElement) {
-    appendChild(templateElement, contentElement);
-};
-
-exports.getTemplateContent = function (templateElement) {
-    return templateElement.children[0];
-};
-
-exports.setDocumentType = function (document, name, publicId, systemId) {
-    var data = doctype.serializeContent(name, publicId, systemId),
-        doctypeNode = null;
-
-    for (var i = 0; i < document.children.length; i++) {
-        if (document.children[i].type === 'directive' && document.children[i].name === '!doctype') {
-            doctypeNode = document.children[i];
-            break;
+        else if (!this._ensureHibernation()) {
+            this.state = State.SCRIPT_DATA_ESCAPED;
+            this._stateScriptDataEscaped(cp);
         }
     }
-
-    if (doctypeNode) {
-        doctypeNode.data = data;
-        doctypeNode['x-name'] = name;
-        doctypeNode['x-publicId'] = publicId;
-        doctypeNode['x-systemId'] = systemId;
-    }
-
-    else {
-        appendChild(document, new Node({
-            type: 'directive',
-            name: '!doctype',
-            data: data,
-            'x-name': name,
-            'x-publicId': publicId,
-            'x-systemId': systemId
-        }));
-    }
-
-};
-
-exports.setDocumentMode = function (document, mode) {
-    document['x-mode'] = mode;
-};
-
-exports.getDocumentMode = function (document) {
-    return document['x-mode'];
-};
-
-exports.detachNode = function (node) {
-    if (node.parent) {
-        var idx = node.parent.children.indexOf(node),
-            prev = node.prev,
-            next = node.next;
-
-        node.prev = null;
-        node.next = null;
-
-        if (prev)
-            prev.next = next;
-
-        if (next)
-            next.prev = prev;
-
-        node.parent.children.splice(idx, 1);
-        node.parent = null;
-    }
-};
-
-exports.insertText = function (parentNode, text) {
-    var lastChild = parentNode.children[parentNode.children.length - 1];
-
-    if (lastChild && lastChild.type === 'text')
-        lastChild.data += text;
-    else
-        appendChild(parentNode, createTextNode(text));
-};
-
-exports.insertTextBefore = function (parentNode, text, referenceNode) {
-    var prevNode = parentNode.children[parentNode.children.indexOf(referenceNode) - 1];
-
-    if (prevNode && prevNode.type === 'text')
-        prevNode.data += text;
-    else
-        insertBefore(parentNode, createTextNode(text), referenceNode);
-};
-
-exports.adoptAttributes = function (recipient, attrs) {
-    for (var i = 0; i < attrs.length; i++) {
-        var attrName = attrs[i].name;
-
-        if (typeof recipient.attribs[attrName] === 'undefined') {
-            recipient.attribs[attrName] = attrs[i].value;
-            recipient['x-attribsNamespace'][attrName] = attrs[i].namespace;
-            recipient['x-attribsPrefix'][attrName] = attrs[i].prefix;
+    // Script data double escaped state
+    //------------------------------------------------------------------
+    _stateScriptDataDoubleEscaped(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED_DASH;
+                this._emitChars('-');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
+                this._emitChars('<');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInScriptHtmlCommentLikeText);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
         }
     }
-};
-
-
-//Tree traversing
-exports.getFirstChild = function (node) {
-    return node.children[0];
-};
-
-exports.getChildNodes = function (node) {
-    return node.children;
-};
-
-exports.getParentNode = function (node) {
-    return node.parent;
-};
-
-exports.getAttrList = function (element) {
-    var attrList = [];
-
-    for (var name in element.attribs) {
-        attrList.push({
-            name: name,
-            value: element.attribs[name],
-            namespace: element['x-attribsNamespace'][name],
-            prefix: element['x-attribsPrefix'][name]
-        });
+    // Script data double escaped dash state
+    //------------------------------------------------------------------
+    _stateScriptDataDoubleEscapedDash(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED_DASH_DASH;
+                this._emitChars('-');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
+                this._emitChars('<');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInScriptHtmlCommentLikeText);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    // Script data double escaped dash dash state
+    //------------------------------------------------------------------
+    _stateScriptDataDoubleEscapedDashDash(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this._emitChars('-');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED_LESS_THAN_SIGN;
+                this._emitChars('<');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.SCRIPT_DATA;
+                this._emitChars('>');
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
+                this._emitChars(unicode_js_1.REPLACEMENT_CHARACTER);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInScriptHtmlCommentLikeText);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
+                this._emitCodePoint(cp);
+            }
+        }
+    }
+    // Script data double escaped less-than sign state
+    //------------------------------------------------------------------
+    _stateScriptDataDoubleEscapedLessThanSign(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.SOLIDUS) {
+            this.state = State.SCRIPT_DATA_DOUBLE_ESCAPE_END;
+            this._emitChars('/');
+        }
+        else {
+            this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
+            this._stateScriptDataDoubleEscaped(cp);
+        }
+    }
+    // Script data double escape end state
+    //------------------------------------------------------------------
+    _stateScriptDataDoubleEscapeEnd(cp) {
+        if (this.preprocessor.startsWith(unicode_js_1.SEQUENCES.SCRIPT, false) &&
+            isScriptDataDoubleEscapeSequenceEnd(this.preprocessor.peek(unicode_js_1.SEQUENCES.SCRIPT.length))) {
+            this._emitCodePoint(cp);
+            for (let i = 0; i < unicode_js_1.SEQUENCES.SCRIPT.length; i++) {
+                this._emitCodePoint(this._consume());
+            }
+            this.state = State.SCRIPT_DATA_ESCAPED;
+        }
+        else if (!this._ensureHibernation()) {
+            this.state = State.SCRIPT_DATA_DOUBLE_ESCAPED;
+            this._stateScriptDataDoubleEscaped(cp);
+        }
+    }
+    // Before attribute name state
+    //------------------------------------------------------------------
+    _stateBeforeAttributeName(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                // Ignore whitespace
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.SOLIDUS:
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN:
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this.state = State.AFTER_ATTRIBUTE_NAME;
+                this._stateAfterAttributeName(cp);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EQUALS_SIGN: {
+                this._err(error_codes_js_1.ERR.unexpectedEqualsSignBeforeAttributeName);
+                this._createAttr('=');
+                this.state = State.ATTRIBUTE_NAME;
+                break;
+            }
+            default: {
+                this._createAttr('');
+                this.state = State.ATTRIBUTE_NAME;
+                this._stateAttributeName(cp);
+            }
+        }
+    }
+    // Attribute name state
+    //------------------------------------------------------------------
+    _stateAttributeName(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED:
+            case unicode_js_1.CODE_POINTS.SOLIDUS:
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN:
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._leaveAttrName();
+                this.state = State.AFTER_ATTRIBUTE_NAME;
+                this._stateAfterAttributeName(cp);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EQUALS_SIGN: {
+                this._leaveAttrName();
+                this.state = State.BEFORE_ATTRIBUTE_VALUE;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK:
+            case unicode_js_1.CODE_POINTS.APOSTROPHE:
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.unexpectedCharacterInAttributeName);
+                this.currentAttr.name += String.fromCodePoint(cp);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this.currentAttr.name += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            default: {
+                this.currentAttr.name += String.fromCodePoint(isAsciiUpper(cp) ? toAsciiLower(cp) : cp);
+            }
+        }
+    }
+    // After attribute name state
+    //------------------------------------------------------------------
+    _stateAfterAttributeName(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                // Ignore whitespace
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.SOLIDUS: {
+                this.state = State.SELF_CLOSING_START_TAG;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EQUALS_SIGN: {
+                this.state = State.BEFORE_ATTRIBUTE_VALUE;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                this.emitCurrentTagToken();
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInTag);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._createAttr('');
+                this.state = State.ATTRIBUTE_NAME;
+                this._stateAttributeName(cp);
+            }
+        }
+    }
+    // Before attribute value state
+    //------------------------------------------------------------------
+    _stateBeforeAttributeValue(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                // Ignore whitespace
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                this.state = State.ATTRIBUTE_VALUE_DOUBLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                this.state = State.ATTRIBUTE_VALUE_SINGLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.missingAttributeValue);
+                this.state = State.DATA;
+                this.emitCurrentTagToken();
+                break;
+            }
+            default: {
+                this.state = State.ATTRIBUTE_VALUE_UNQUOTED;
+                this._stateAttributeValueUnquoted(cp);
+            }
+        }
     }
 
     return attrList;
@@ -45822,125 +47370,380 @@ function defaultClearTimeout () {
         } else {
             cachedSetTimeout = defaultSetTimout;
         }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
     }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
+    // Attribute value (unquoted) state
+    //------------------------------------------------------------------
+    _stateAttributeValueUnquoted(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this._leaveAttrValue();
+                this.state = State.BEFORE_ATTRIBUTE_NAME;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.AMPERSAND: {
+                this.returnState = State.ATTRIBUTE_VALUE_UNQUOTED;
+                this.state = State.CHARACTER_REFERENCE;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._leaveAttrValue();
+                this.state = State.DATA;
+                this.emitCurrentTagToken();
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                this.currentAttr.value += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK:
+            case unicode_js_1.CODE_POINTS.APOSTROPHE:
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN:
+            case unicode_js_1.CODE_POINTS.EQUALS_SIGN:
+            case unicode_js_1.CODE_POINTS.GRAVE_ACCENT: {
+                this._err(error_codes_js_1.ERR.unexpectedCharacterInUnquotedAttributeValue);
+                this.currentAttr.value += String.fromCodePoint(cp);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInTag);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this.currentAttr.value += String.fromCodePoint(cp);
             }
         }
-        queueIndex = -1;
-        len = queue.length;
     }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
+    // After attribute value (quoted) state
+    //------------------------------------------------------------------
+    _stateAfterAttributeValueQuoted(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this._leaveAttrValue();
+                this.state = State.BEFORE_ATTRIBUTE_NAME;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.SOLIDUS: {
+                this._leaveAttrValue();
+                this.state = State.SELF_CLOSING_START_TAG;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._leaveAttrValue();
+                this.state = State.DATA;
+                this.emitCurrentTagToken();
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInTag);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceBetweenAttributes);
+                this.state = State.BEFORE_ATTRIBUTE_NAME;
+                this._stateBeforeAttributeName(cp);
+            }
         }
     }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
+    // Self-closing start tag state
+    //------------------------------------------------------------------
+    _stateSelfClosingStartTag(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                const token = this.currentToken;
+                token.selfClosing = true;
+                this.state = State.DATA;
+                this.emitCurrentTagToken();
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInTag);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.unexpectedSolidusInTag);
+                this.state = State.BEFORE_ATTRIBUTE_NAME;
+                this._stateBeforeAttributeName(cp);
+            }
+        }
+    }
+    // Bogus comment state
+    //------------------------------------------------------------------
+    _stateBogusComment(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                this.emitCurrentComment(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this.emitCurrentComment(token);
+                this._emitEOFToken();
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.data += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            default: {
+                token.data += String.fromCodePoint(cp);
+            }
+        }
+    }
+    // Markup declaration open state
+    //------------------------------------------------------------------
+    _stateMarkupDeclarationOpen(cp) {
+        if (this._consumeSequenceIfMatch(unicode_js_1.SEQUENCES.DASH_DASH, true)) {
+            this._createCommentToken(unicode_js_1.SEQUENCES.DASH_DASH.length + 1);
+            this.state = State.COMMENT_START;
+        }
+        else if (this._consumeSequenceIfMatch(unicode_js_1.SEQUENCES.DOCTYPE, false)) {
+            // NOTE: Doctypes tokens are created without fixed offsets. We keep track of the moment a doctype *might* start here.
+            this.currentLocation = this.getCurrentLocation(unicode_js_1.SEQUENCES.DOCTYPE.length + 1);
+            this.state = State.DOCTYPE;
+        }
+        else if (this._consumeSequenceIfMatch(unicode_js_1.SEQUENCES.CDATA_START, true)) {
+            if (this.inForeignNode) {
+                this.state = State.CDATA_SECTION;
+            }
+            else {
+                this._err(error_codes_js_1.ERR.cdataInHtmlContent);
+                this._createCommentToken(unicode_js_1.SEQUENCES.CDATA_START.length + 1);
+                this.currentToken.data = '[CDATA[';
+                this.state = State.BOGUS_COMMENT;
+            }
+        }
+        //NOTE: Sequence lookups can be abrupted by hibernation. In that case, lookup
+        //results are no longer valid and we will need to start over.
+        else if (!this._ensureHibernation()) {
+            this._err(error_codes_js_1.ERR.incorrectlyOpenedComment);
+            this._createCommentToken(2);
+            this.state = State.BOGUS_COMMENT;
+            this._stateBogusComment(cp);
+        }
+    }
+    // Comment start state
+    //------------------------------------------------------------------
+    _stateCommentStart(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.COMMENT_START_DASH;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.abruptClosingOfEmptyComment);
+                this.state = State.DATA;
+                const token = this.currentToken;
+                this.emitCurrentComment(token);
+                break;
+            }
+            default: {
+                this.state = State.COMMENT;
+                this._stateComment(cp);
+            }
+        }
+    }
+    // Comment start dash state
+    //------------------------------------------------------------------
+    _stateCommentStartDash(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.COMMENT_END;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.abruptClosingOfEmptyComment);
+                this.state = State.DATA;
+                this.emitCurrentComment(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInComment);
+                this.emitCurrentComment(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.data += '-';
+                this.state = State.COMMENT;
+                this._stateComment(cp);
+            }
+        }
+    }
+    // Comment state
+    //------------------------------------------------------------------
+    _stateComment(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.COMMENT_END_DASH;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                token.data += '<';
+                this.state = State.COMMENT_LESS_THAN_SIGN;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.data += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInComment);
+                this.emitCurrentComment(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.data += String.fromCodePoint(cp);
+            }
+        }
+    }
+    // Comment less-than sign state
+    //------------------------------------------------------------------
+    _stateCommentLessThanSign(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.EXCLAMATION_MARK: {
+                token.data += '!';
+                this.state = State.COMMENT_LESS_THAN_SIGN_BANG;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.LESS_THAN_SIGN: {
+                token.data += '<';
+                break;
+            }
+            default: {
+                this.state = State.COMMENT;
+                this._stateComment(cp);
+            }
+        }
+    }
+    // Comment less-than sign bang state
+    //------------------------------------------------------------------
+    _stateCommentLessThanSignBang(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.HYPHEN_MINUS) {
+            this.state = State.COMMENT_LESS_THAN_SIGN_BANG_DASH;
+        }
+        else {
+            this.state = State.COMMENT;
+            this._stateComment(cp);
+        }
+    }
+    // Comment less-than sign bang dash state
+    //------------------------------------------------------------------
+    _stateCommentLessThanSignBangDash(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.HYPHEN_MINUS) {
+            this.state = State.COMMENT_LESS_THAN_SIGN_BANG_DASH_DASH;
+        }
+        else {
+            this.state = State.COMMENT_END_DASH;
+            this._stateCommentEndDash(cp);
+        }
+    }
+    // Comment less-than sign bang dash dash state
+    //------------------------------------------------------------------
+    _stateCommentLessThanSignBangDashDash(cp) {
+        if (cp !== unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN && cp !== unicode_js_1.CODE_POINTS.EOF) {
+            this._err(error_codes_js_1.ERR.nestedComment);
+        }
+        this.state = State.COMMENT_END;
+        this._stateCommentEnd(cp);
+    }
+    // Comment end dash state
+    //------------------------------------------------------------------
+    _stateCommentEndDash(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                this.state = State.COMMENT_END;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInComment);
+                this.emitCurrentComment(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.data += '-';
+                this.state = State.COMMENT;
+                this._stateComment(cp);
+            }
+        }
+    }
+    // Comment end state
+    //------------------------------------------------------------------
+    _stateCommentEnd(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                this.emitCurrentComment(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EXCLAMATION_MARK: {
+                this.state = State.COMMENT_END_BANG;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                token.data += '-';
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInComment);
+                this.emitCurrentComment(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.data += '--';
+                this.state = State.COMMENT;
+                this._stateComment(cp);
+            }
+        }
+    }
+    // Comment end bang state
+    //------------------------------------------------------------------
+    _stateCommentEndBang(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.HYPHEN_MINUS: {
+                token.data += '--!';
+                this.state = State.COMMENT_END_DASH;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.incorrectlyClosedComment);
+                this.state = State.DATA;
+                this.emitCurrentComment(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInComment);
+                this.emitCurrentComment(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.data += '--!';
+                this.state = State.COMMENT;
+                this._stateComment(cp);
+            }
+        }
     }
 };
 
@@ -46451,39 +48254,85 @@ function createErrorType(code, message, Base) {
     } else {
       return message(arg1, arg2, arg3);
     }
-  }
-
-  var NodeError =
-  /*#__PURE__*/
-  function (_Base) {
-    _inheritsLoose(NodeError, _Base);
-
-    function NodeError(arg1, arg2, arg3) {
-      return _Base.call(this, getMessage(arg1, arg2, arg3)) || this;
+    // Before DOCTYPE name state
+    //------------------------------------------------------------------
+    _stateBeforeDoctypeName(cp) {
+        if (isAsciiUpper(cp)) {
+            this._createDoctypeToken(String.fromCharCode(toAsciiLower(cp)));
+            this.state = State.DOCTYPE_NAME;
+        }
+        else
+            switch (cp) {
+                case unicode_js_1.CODE_POINTS.SPACE:
+                case unicode_js_1.CODE_POINTS.LINE_FEED:
+                case unicode_js_1.CODE_POINTS.TABULATION:
+                case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                    // Ignore whitespace
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.NULL: {
+                    this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                    this._createDoctypeToken(unicode_js_1.REPLACEMENT_CHARACTER);
+                    this.state = State.DOCTYPE_NAME;
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                    this._err(error_codes_js_1.ERR.missingDoctypeName);
+                    this._createDoctypeToken(null);
+                    const token = this.currentToken;
+                    token.forceQuirks = true;
+                    this.emitCurrentDoctype(token);
+                    this.state = State.DATA;
+                    break;
+                }
+                case unicode_js_1.CODE_POINTS.EOF: {
+                    this._err(error_codes_js_1.ERR.eofInDoctype);
+                    this._createDoctypeToken(null);
+                    const token = this.currentToken;
+                    token.forceQuirks = true;
+                    this.emitCurrentDoctype(token);
+                    this._emitEOFToken();
+                    break;
+                }
+                default: {
+                    this._createDoctypeToken(String.fromCodePoint(cp));
+                    this.state = State.DOCTYPE_NAME;
+                }
+            }
     }
-
-    return NodeError;
-  }(Base);
-
-  NodeError.prototype.name = Base.name;
-  NodeError.prototype.code = code;
-  codes[code] = NodeError;
-} // https://github.com/nodejs/node/blob/v10.8.0/lib/internal/errors.js
-
-
-function oneOf(expected, thing) {
-  if (Array.isArray(expected)) {
-    var len = expected.length;
-    expected = expected.map(function (i) {
-      return String(i);
-    });
-
-    if (len > 2) {
-      return "one of ".concat(thing, " ").concat(expected.slice(0, len - 1).join(', '), ", or ") + expected[len - 1];
-    } else if (len === 2) {
-      return "one of ".concat(thing, " ").concat(expected[0], " or ").concat(expected[1]);
-    } else {
-      return "of ".concat(thing, " ").concat(expected[0]);
+    // DOCTYPE name state
+    //------------------------------------------------------------------
+    _stateDoctypeName(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this.state = State.AFTER_DOCTYPE_NAME;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                this.emitCurrentDoctype(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.name += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.name += String.fromCodePoint(isAsciiUpper(cp) ? toAsciiLower(cp) : cp);
+            }
+        }
     }
   } else {
     return "of ".concat(thing, " ").concat(String(expected));
@@ -46635,57 +48484,51 @@ function Duplex(options) {
       this.allowHalfOpen = false;
       this.once('end', onend);
     }
-  }
-}
-
-Object.defineProperty(Duplex.prototype, 'writableHighWaterMark', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._writableState.highWaterMark;
-  }
-});
-Object.defineProperty(Duplex.prototype, 'writableBuffer', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._writableState && this._writableState.getBuffer();
-  }
-});
-Object.defineProperty(Duplex.prototype, 'writableLength', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._writableState.length;
-  }
-}); // the no-half-open enforcer
-
-function onend() {
-  // If the writable side ended, then we're ok.
-  if (this._writableState.ended) return; // no more data can be written.
-  // But allow more writes to happen in this tick.
-
-  process.nextTick(onEndNT, this);
-}
-
-function onEndNT(self) {
-  self.end();
-}
-
-Object.defineProperty(Duplex.prototype, 'destroyed', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    if (this._readableState === undefined || this._writableState === undefined) {
-      return false;
+    // After DOCTYPE public keyword state
+    //------------------------------------------------------------------
+    _stateAfterDoctypePublicKeyword(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this.state = State.BEFORE_DOCTYPE_PUBLIC_IDENTIFIER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceAfterDoctypePublicKeyword);
+                token.publicId = '';
+                this.state = State.DOCTYPE_PUBLIC_IDENTIFIER_DOUBLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceAfterDoctypePublicKeyword);
+                token.publicId = '';
+                this.state = State.DOCTYPE_PUBLIC_IDENTIFIER_SINGLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.missingDoctypePublicIdentifier);
+                token.forceQuirks = true;
+                this.state = State.DATA;
+                this.emitCurrentDoctype(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.missingQuoteBeforeDoctypePublicIdentifier);
+                token.forceQuirks = true;
+                this.state = State.BOGUS_DOCTYPE;
+                this._stateBogusDoctype(cp);
+            }
+        }
     }
 
     return this._readableState.destroyed && this._writableState.destroyed;
@@ -46941,922 +48784,451 @@ Object.defineProperty(Readable.prototype, 'destroyed', {
     if (this._readableState === undefined) {
       return false;
     }
-
-    return this._readableState.destroyed;
-  },
-  set: function set(value) {
-    // we ignore the value if the stream
-    // has not been initialized yet
-    if (!this._readableState) {
-      return;
-    } // backward compatibility, the user is explicitly
-    // managing destroyed
-
-
-    this._readableState.destroyed = value;
-  }
-});
-Readable.prototype.destroy = destroyImpl.destroy;
-Readable.prototype._undestroy = destroyImpl.undestroy;
-
-Readable.prototype._destroy = function (err, cb) {
-  cb(err);
-}; // Manually shove something into the read() buffer.
-// This returns true if the highWaterMark has not been hit yet,
-// similar to how Writable.write() returns true if you should
-// write() some more.
-
-
-Readable.prototype.push = function (chunk, encoding) {
-  var state = this._readableState;
-  var skipChunkCheck;
-
-  if (!state.objectMode) {
-    if (typeof chunk === 'string') {
-      encoding = encoding || state.defaultEncoding;
-
-      if (encoding !== state.encoding) {
-        chunk = Buffer.from(chunk, encoding);
-        encoding = '';
-      }
-
-      skipChunkCheck = true;
-    }
-  } else {
-    skipChunkCheck = true;
-  }
-
-  return readableAddChunk(this, chunk, encoding, false, skipChunkCheck);
-}; // Unshift should *always* be something directly out of read()
-
-
-Readable.prototype.unshift = function (chunk) {
-  return readableAddChunk(this, chunk, null, true, false);
-};
-
-function readableAddChunk(stream, chunk, encoding, addToFront, skipChunkCheck) {
-  debug('readableAddChunk', chunk);
-  var state = stream._readableState;
-
-  if (chunk === null) {
-    state.reading = false;
-    onEofChunk(stream, state);
-  } else {
-    var er;
-    if (!skipChunkCheck) er = chunkInvalid(state, chunk);
-
-    if (er) {
-      errorOrDestroy(stream, er);
-    } else if (state.objectMode || chunk && chunk.length > 0) {
-      if (typeof chunk !== 'string' && !state.objectMode && Object.getPrototypeOf(chunk) !== Buffer.prototype) {
-        chunk = _uint8ArrayToBuffer(chunk);
-      }
-
-      if (addToFront) {
-        if (state.endEmitted) errorOrDestroy(stream, new ERR_STREAM_UNSHIFT_AFTER_END_EVENT());else addChunk(stream, state, chunk, true);
-      } else if (state.ended) {
-        errorOrDestroy(stream, new ERR_STREAM_PUSH_AFTER_EOF());
-      } else if (state.destroyed) {
-        return false;
-      } else {
-        state.reading = false;
-
-        if (state.decoder && !encoding) {
-          chunk = state.decoder.write(chunk);
-          if (state.objectMode || chunk.length !== 0) addChunk(stream, state, chunk, false);else maybeReadMore(stream, state);
-        } else {
-          addChunk(stream, state, chunk, false);
+    // DOCTYPE public identifier (double-quoted) state
+    //------------------------------------------------------------------
+    _stateDoctypePublicIdentifierDoubleQuoted(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                this.state = State.AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.publicId += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.abruptDoctypePublicIdentifier);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.publicId += String.fromCodePoint(cp);
+            }
         }
-      }
-    } else if (!addToFront) {
-      state.reading = false;
-      maybeReadMore(stream, state);
     }
-  } // We can push more data if we are below the highWaterMark.
-  // Also, if we have no data yet, we can stand some more bytes.
-  // This is to work around cases where hwm=0, such as the repl.
-
-
-  return !state.ended && (state.length < state.highWaterMark || state.length === 0);
-}
-
-function addChunk(stream, state, chunk, addToFront) {
-  if (state.flowing && state.length === 0 && !state.sync) {
-    state.awaitDrain = 0;
-    stream.emit('data', chunk);
-  } else {
-    // update the buffer info.
-    state.length += state.objectMode ? 1 : chunk.length;
-    if (addToFront) state.buffer.unshift(chunk);else state.buffer.push(chunk);
-    if (state.needReadable) emitReadable(stream);
-  }
-
-  maybeReadMore(stream, state);
-}
-
-function chunkInvalid(state, chunk) {
-  var er;
-
-  if (!_isUint8Array(chunk) && typeof chunk !== 'string' && chunk !== undefined && !state.objectMode) {
-    er = new ERR_INVALID_ARG_TYPE('chunk', ['string', 'Buffer', 'Uint8Array'], chunk);
-  }
-
-  return er;
-}
-
-Readable.prototype.isPaused = function () {
-  return this._readableState.flowing === false;
-}; // backwards compatibility.
-
-
-Readable.prototype.setEncoding = function (enc) {
-  if (!StringDecoder) StringDecoder = require('string_decoder/').StringDecoder;
-  var decoder = new StringDecoder(enc);
-  this._readableState.decoder = decoder; // If setEncoding(null), decoder.encoding equals utf8
-
-  this._readableState.encoding = this._readableState.decoder.encoding; // Iterate over current buffer to convert already stored Buffers:
-
-  var p = this._readableState.buffer.head;
-  var content = '';
-
-  while (p !== null) {
-    content += decoder.write(p.data);
-    p = p.next;
-  }
-
-  this._readableState.buffer.clear();
-
-  if (content !== '') this._readableState.buffer.push(content);
-  this._readableState.length = content.length;
-  return this;
-}; // Don't raise the hwm > 1GB
-
-
-var MAX_HWM = 0x40000000;
-
-function computeNewHighWaterMark(n) {
-  if (n >= MAX_HWM) {
-    // TODO(ronag): Throw ERR_VALUE_OUT_OF_RANGE.
-    n = MAX_HWM;
-  } else {
-    // Get the next highest power of 2 to prevent increasing hwm excessively in
-    // tiny amounts
-    n--;
-    n |= n >>> 1;
-    n |= n >>> 2;
-    n |= n >>> 4;
-    n |= n >>> 8;
-    n |= n >>> 16;
-    n++;
-  }
-
-  return n;
-} // This function is designed to be inlinable, so please take care when making
-// changes to the function body.
-
-
-function howMuchToRead(n, state) {
-  if (n <= 0 || state.length === 0 && state.ended) return 0;
-  if (state.objectMode) return 1;
-
-  if (n !== n) {
-    // Only flow one buffer at a time
-    if (state.flowing && state.length) return state.buffer.head.data.length;else return state.length;
-  } // If we're asking for more than the current hwm, then raise the hwm.
-
-
-  if (n > state.highWaterMark) state.highWaterMark = computeNewHighWaterMark(n);
-  if (n <= state.length) return n; // Don't have enough
-
-  if (!state.ended) {
-    state.needReadable = true;
-    return 0;
-  }
-
-  return state.length;
-} // you can override either this method, or the async _read(n) below.
-
-
-Readable.prototype.read = function (n) {
-  debug('read', n);
-  n = parseInt(n, 10);
-  var state = this._readableState;
-  var nOrig = n;
-  if (n !== 0) state.emittedReadable = false; // if we're doing read(0) to trigger a readable event, but we
-  // already have a bunch of data in the buffer, then just trigger
-  // the 'readable' event and move on.
-
-  if (n === 0 && state.needReadable && ((state.highWaterMark !== 0 ? state.length >= state.highWaterMark : state.length > 0) || state.ended)) {
-    debug('read: emitReadable', state.length, state.ended);
-    if (state.length === 0 && state.ended) endReadable(this);else emitReadable(this);
-    return null;
-  }
-
-  n = howMuchToRead(n, state); // if we've ended, and we're now clear, then finish it up.
-
-  if (n === 0 && state.ended) {
-    if (state.length === 0) endReadable(this);
-    return null;
-  } // All the actual chunk generation logic needs to be
-  // *below* the call to _read.  The reason is that in certain
-  // synthetic stream cases, such as passthrough streams, _read
-  // may be a completely synchronous operation which may change
-  // the state of the read buffer, providing enough data when
-  // before there was *not* enough.
-  //
-  // So, the steps are:
-  // 1. Figure out what the state of things will be after we do
-  // a read from the buffer.
-  //
-  // 2. If that resulting state will trigger a _read, then call _read.
-  // Note that this may be asynchronous, or synchronous.  Yes, it is
-  // deeply ugly to write APIs this way, but that still doesn't mean
-  // that the Readable class should behave improperly, as streams are
-  // designed to be sync/async agnostic.
-  // Take note if the _read call is sync or async (ie, if the read call
-  // has returned yet), so that we know whether or not it's safe to emit
-  // 'readable' etc.
-  //
-  // 3. Actually pull the requested chunks out of the buffer and return.
-  // if we need a readable event, then we need to do some reading.
-
-
-  var doRead = state.needReadable;
-  debug('need readable', doRead); // if we currently have less than the highWaterMark, then also read some
-
-  if (state.length === 0 || state.length - n < state.highWaterMark) {
-    doRead = true;
-    debug('length less than watermark', doRead);
-  } // however, if we've ended, then there's no point, and if we're already
-  // reading, then it's unnecessary.
-
-
-  if (state.ended || state.reading) {
-    doRead = false;
-    debug('reading or ended', doRead);
-  } else if (doRead) {
-    debug('do read');
-    state.reading = true;
-    state.sync = true; // if the length is currently zero, then we *need* a readable event.
-
-    if (state.length === 0) state.needReadable = true; // call internal read method
-
-    this._read(state.highWaterMark);
-
-    state.sync = false; // If _read pushed data synchronously, then `reading` will be false,
-    // and we need to re-evaluate how much data we can return to the user.
-
-    if (!state.reading) n = howMuchToRead(nOrig, state);
-  }
-
-  var ret;
-  if (n > 0) ret = fromList(n, state);else ret = null;
-
-  if (ret === null) {
-    state.needReadable = state.length <= state.highWaterMark;
-    n = 0;
-  } else {
-    state.length -= n;
-    state.awaitDrain = 0;
-  }
-
-  if (state.length === 0) {
-    // If we have nothing in the buffer, then we want to know
-    // as soon as we *do* get something into the buffer.
-    if (!state.ended) state.needReadable = true; // If we tried to read() past the EOF, then emit end on the next tick.
-
-    if (nOrig !== n && state.ended) endReadable(this);
-  }
-
-  if (ret !== null) this.emit('data', ret);
-  return ret;
-};
-
-function onEofChunk(stream, state) {
-  debug('onEofChunk');
-  if (state.ended) return;
-
-  if (state.decoder) {
-    var chunk = state.decoder.end();
-
-    if (chunk && chunk.length) {
-      state.buffer.push(chunk);
-      state.length += state.objectMode ? 1 : chunk.length;
+    // DOCTYPE public identifier (single-quoted) state
+    //------------------------------------------------------------------
+    _stateDoctypePublicIdentifierSingleQuoted(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                this.state = State.AFTER_DOCTYPE_PUBLIC_IDENTIFIER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.publicId += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.abruptDoctypePublicIdentifier);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.publicId += String.fromCodePoint(cp);
+            }
+        }
     }
-  }
-
-  state.ended = true;
-
-  if (state.sync) {
-    // if we are sync, wait until next tick to emit the data.
-    // Otherwise we risk emitting data in the flow()
-    // the readable code triggers during a read() call
-    emitReadable(stream);
-  } else {
-    // emit 'readable' now to make sure it gets picked up.
-    state.needReadable = false;
-
-    if (!state.emittedReadable) {
-      state.emittedReadable = true;
-      emitReadable_(stream);
+    // After DOCTYPE public identifier state
+    //------------------------------------------------------------------
+    _stateAfterDoctypePublicIdentifier(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this.state = State.BETWEEN_DOCTYPE_PUBLIC_AND_SYSTEM_IDENTIFIERS;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                this.emitCurrentDoctype(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceBetweenDoctypePublicAndSystemIdentifiers);
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceBetweenDoctypePublicAndSystemIdentifiers);
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.missingQuoteBeforeDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.state = State.BOGUS_DOCTYPE;
+                this._stateBogusDoctype(cp);
+            }
+        }
     }
-  }
-} // Don't emit readable right away in sync mode, because this can trigger
-// another read() call => stack overflow.  This way, it might trigger
-// a nextTick recursion warning, but that's not so bad.
-
-
-function emitReadable(stream) {
-  var state = stream._readableState;
-  debug('emitReadable', state.needReadable, state.emittedReadable);
-  state.needReadable = false;
-
-  if (!state.emittedReadable) {
-    debug('emitReadable', state.flowing);
-    state.emittedReadable = true;
-    process.nextTick(emitReadable_, stream);
-  }
-}
-
-function emitReadable_(stream) {
-  var state = stream._readableState;
-  debug('emitReadable_', state.destroyed, state.length, state.ended);
-
-  if (!state.destroyed && (state.length || state.ended)) {
-    stream.emit('readable');
-    state.emittedReadable = false;
-  } // The stream needs another readable event if
-  // 1. It is not flowing, as the flow mechanism will take
-  //    care of it.
-  // 2. It is not ended.
-  // 3. It is below the highWaterMark, so we can schedule
-  //    another readable later.
-
-
-  state.needReadable = !state.flowing && !state.ended && state.length <= state.highWaterMark;
-  flow(stream);
-} // at this point, the user has presumably seen the 'readable' event,
-// and called read() to consume some data.  that may have triggered
-// in turn another _read(n) call, in which case reading = true if
-// it's in progress.
-// However, if we're not ended, or reading, and the length < hwm,
-// then go ahead and try to read some more preemptively.
-
-
-function maybeReadMore(stream, state) {
-  if (!state.readingMore) {
-    state.readingMore = true;
-    process.nextTick(maybeReadMore_, stream, state);
-  }
-}
-
-function maybeReadMore_(stream, state) {
-  // Attempt to read more data if we should.
-  //
-  // The conditions for reading more data are (one of):
-  // - Not enough data buffered (state.length < state.highWaterMark). The loop
-  //   is responsible for filling the buffer with enough data if such data
-  //   is available. If highWaterMark is 0 and we are not in the flowing mode
-  //   we should _not_ attempt to buffer any extra data. We'll get more data
-  //   when the stream consumer calls read() instead.
-  // - No data in the buffer, and the stream is in flowing mode. In this mode
-  //   the loop below is responsible for ensuring read() is called. Failing to
-  //   call read here would abort the flow and there's no other mechanism for
-  //   continuing the flow if the stream consumer has just subscribed to the
-  //   'data' event.
-  //
-  // In addition to the above conditions to keep reading data, the following
-  // conditions prevent the data from being read:
-  // - The stream has ended (state.ended).
-  // - There is already a pending 'read' operation (state.reading). This is a
-  //   case where the the stream has called the implementation defined _read()
-  //   method, but they are processing the call asynchronously and have _not_
-  //   called push() with new data. In this case we skip performing more
-  //   read()s. The execution ends in this method again after the _read() ends
-  //   up calling push() with more data.
-  while (!state.reading && !state.ended && (state.length < state.highWaterMark || state.flowing && state.length === 0)) {
-    var len = state.length;
-    debug('maybeReadMore read 0');
-    stream.read(0);
-    if (len === state.length) // didn't get any data, stop spinning.
-      break;
-  }
-
-  state.readingMore = false;
-} // abstract method.  to be overridden in specific implementation classes.
-// call cb(er, data) where data is <= n in length.
-// for virtual (non-string, non-buffer) streams, "length" is somewhat
-// arbitrary, and perhaps not very meaningful.
-
-
-Readable.prototype._read = function (n) {
-  errorOrDestroy(this, new ERR_METHOD_NOT_IMPLEMENTED('_read()'));
-};
-
-Readable.prototype.pipe = function (dest, pipeOpts) {
-  var src = this;
-  var state = this._readableState;
-
-  switch (state.pipesCount) {
-    case 0:
-      state.pipes = dest;
-      break;
-
-    case 1:
-      state.pipes = [state.pipes, dest];
-      break;
-
-    default:
-      state.pipes.push(dest);
-      break;
-  }
-
-  state.pipesCount += 1;
-  debug('pipe count=%d opts=%j', state.pipesCount, pipeOpts);
-  var doEnd = (!pipeOpts || pipeOpts.end !== false) && dest !== process.stdout && dest !== process.stderr;
-  var endFn = doEnd ? onend : unpipe;
-  if (state.endEmitted) process.nextTick(endFn);else src.once('end', endFn);
-  dest.on('unpipe', onunpipe);
-
-  function onunpipe(readable, unpipeInfo) {
-    debug('onunpipe');
-
-    if (readable === src) {
-      if (unpipeInfo && unpipeInfo.hasUnpiped === false) {
-        unpipeInfo.hasUnpiped = true;
-        cleanup();
-      }
+    // Between DOCTYPE public and system identifiers state
+    //------------------------------------------------------------------
+    _stateBetweenDoctypePublicAndSystemIdentifiers(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                // Ignore whitespace
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.missingQuoteBeforeDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.state = State.BOGUS_DOCTYPE;
+                this._stateBogusDoctype(cp);
+            }
+        }
     }
-  }
-
-  function onend() {
-    debug('onend');
-    dest.end();
-  } // when the dest drains, it reduces the awaitDrain counter
-  // on the source.  This would be more elegant with a .once()
-  // handler in flow(), but adding and removing repeatedly is
-  // too slow.
-
-
-  var ondrain = pipeOnDrain(src);
-  dest.on('drain', ondrain);
-  var cleanedUp = false;
-
-  function cleanup() {
-    debug('cleanup'); // cleanup event handlers once the pipe is broken
-
-    dest.removeListener('close', onclose);
-    dest.removeListener('finish', onfinish);
-    dest.removeListener('drain', ondrain);
-    dest.removeListener('error', onerror);
-    dest.removeListener('unpipe', onunpipe);
-    src.removeListener('end', onend);
-    src.removeListener('end', unpipe);
-    src.removeListener('data', ondata);
-    cleanedUp = true; // if the reader is waiting for a drain event from this
-    // specific writer, then it would cause it to never start
-    // flowing again.
-    // So, if this is awaiting a drain, then we just call it now.
-    // If we don't know, then assume that we are waiting for one.
-
-    if (state.awaitDrain && (!dest._writableState || dest._writableState.needDrain)) ondrain();
-  }
-
-  src.on('data', ondata);
-
-  function ondata(chunk) {
-    debug('ondata');
-    var ret = dest.write(chunk);
-    debug('dest.write', ret);
-
-    if (ret === false) {
-      // If the user unpiped during `dest.write()`, it is possible
-      // to get stuck in a permanently paused state if that write
-      // also returned false.
-      // => Check whether `dest` is still a piping destination.
-      if ((state.pipesCount === 1 && state.pipes === dest || state.pipesCount > 1 && indexOf(state.pipes, dest) !== -1) && !cleanedUp) {
-        debug('false write response, pause', state.awaitDrain);
-        state.awaitDrain++;
-      }
-
-      src.pause();
+    // After DOCTYPE system keyword state
+    //------------------------------------------------------------------
+    _stateAfterDoctypeSystemKeyword(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                this.state = State.BEFORE_DOCTYPE_SYSTEM_IDENTIFIER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceAfterDoctypeSystemKeyword);
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                this._err(error_codes_js_1.ERR.missingWhitespaceAfterDoctypeSystemKeyword);
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.missingDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.state = State.DATA;
+                this.emitCurrentDoctype(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.missingQuoteBeforeDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.state = State.BOGUS_DOCTYPE;
+                this._stateBogusDoctype(cp);
+            }
+        }
     }
-  } // if the dest has an error, then stop piping into it.
-  // however, don't suppress the throwing behavior for this.
-
-
-  function onerror(er) {
-    debug('onerror', er);
-    unpipe();
-    dest.removeListener('error', onerror);
-    if (EElistenerCount(dest, 'error') === 0) errorOrDestroy(dest, er);
-  } // Make sure our error handler is attached before userland ones.
-
-
-  prependListener(dest, 'error', onerror); // Both close and finish should trigger unpipe, but only once.
-
-  function onclose() {
-    dest.removeListener('finish', onfinish);
-    unpipe();
-  }
-
-  dest.once('close', onclose);
-
-  function onfinish() {
-    debug('onfinish');
-    dest.removeListener('close', onclose);
-    unpipe();
-  }
-
-  dest.once('finish', onfinish);
-
-  function unpipe() {
-    debug('unpipe');
-    src.unpipe(dest);
-  } // tell the dest that it's being piped to
-
-
-  dest.emit('pipe', src); // start the flow if it hasn't been started already.
-
-  if (!state.flowing) {
-    debug('pipe resume');
-    src.resume();
-  }
-
-  return dest;
-};
-
-function pipeOnDrain(src) {
-  return function pipeOnDrainFunctionResult() {
-    var state = src._readableState;
-    debug('pipeOnDrain', state.awaitDrain);
-    if (state.awaitDrain) state.awaitDrain--;
-
-    if (state.awaitDrain === 0 && EElistenerCount(src, 'data')) {
-      state.flowing = true;
-      flow(src);
+    // Before DOCTYPE system identifier state
+    //------------------------------------------------------------------
+    _stateBeforeDoctypeSystemIdentifier(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                // Ignore whitespace
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_DOUBLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                token.systemId = '';
+                this.state = State.DOCTYPE_SYSTEM_IDENTIFIER_SINGLE_QUOTED;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.missingDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.state = State.DATA;
+                this.emitCurrentDoctype(token);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.missingQuoteBeforeDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.state = State.BOGUS_DOCTYPE;
+                this._stateBogusDoctype(cp);
+            }
+        }
     }
-  };
-}
-
-Readable.prototype.unpipe = function (dest) {
-  var state = this._readableState;
-  var unpipeInfo = {
-    hasUnpiped: false
-  }; // if we're not piping anywhere, then do nothing.
-
-  if (state.pipesCount === 0) return this; // just one destination.  most common case.
-
-  if (state.pipesCount === 1) {
-    // passed in one, but it's not the right one.
-    if (dest && dest !== state.pipes) return this;
-    if (!dest) dest = state.pipes; // got a match.
-
-    state.pipes = null;
-    state.pipesCount = 0;
-    state.flowing = false;
-    if (dest) dest.emit('unpipe', this, unpipeInfo);
-    return this;
-  } // slow case. multiple pipe destinations.
-
-
-  if (!dest) {
-    // remove all.
-    var dests = state.pipes;
-    var len = state.pipesCount;
-    state.pipes = null;
-    state.pipesCount = 0;
-    state.flowing = false;
-
-    for (var i = 0; i < len; i++) {
-      dests[i].emit('unpipe', this, {
-        hasUnpiped: false
-      });
+    // DOCTYPE system identifier (double-quoted) state
+    //------------------------------------------------------------------
+    _stateDoctypeSystemIdentifierDoubleQuoted(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.QUOTATION_MARK: {
+                this.state = State.AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.systemId += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.abruptDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.systemId += String.fromCodePoint(cp);
+            }
+        }
     }
-
-    return this;
-  } // try to find the right one.
-
-
-  var index = indexOf(state.pipes, dest);
-  if (index === -1) return this;
-  state.pipes.splice(index, 1);
-  state.pipesCount -= 1;
-  if (state.pipesCount === 1) state.pipes = state.pipes[0];
-  dest.emit('unpipe', this, unpipeInfo);
-  return this;
-}; // set up data events if they are asked for
-// Ensure readable listeners eventually get something
-
-
-Readable.prototype.on = function (ev, fn) {
-  var res = Stream.prototype.on.call(this, ev, fn);
-  var state = this._readableState;
-
-  if (ev === 'data') {
-    // update readableListening so that resume() may be a no-op
-    // a few lines down. This is needed to support once('readable').
-    state.readableListening = this.listenerCount('readable') > 0; // Try start flowing on next tick if stream isn't explicitly paused
-
-    if (state.flowing !== false) this.resume();
-  } else if (ev === 'readable') {
-    if (!state.endEmitted && !state.readableListening) {
-      state.readableListening = state.needReadable = true;
-      state.flowing = false;
-      state.emittedReadable = false;
-      debug('on readable', state.length, state.reading);
-
-      if (state.length) {
-        emitReadable(this);
-      } else if (!state.reading) {
-        process.nextTick(nReadingNextTick, this);
-      }
+    // DOCTYPE system identifier (single-quoted) state
+    //------------------------------------------------------------------
+    _stateDoctypeSystemIdentifierSingleQuoted(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.APOSTROPHE: {
+                this.state = State.AFTER_DOCTYPE_SYSTEM_IDENTIFIER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                token.systemId += unicode_js_1.REPLACEMENT_CHARACTER;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this._err(error_codes_js_1.ERR.abruptDoctypeSystemIdentifier);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                token.systemId += String.fromCodePoint(cp);
+            }
+        }
     }
-  }
-
-  return res;
-};
-
-Readable.prototype.addListener = Readable.prototype.on;
-
-Readable.prototype.removeListener = function (ev, fn) {
-  var res = Stream.prototype.removeListener.call(this, ev, fn);
-
-  if (ev === 'readable') {
-    // We need to check if there is someone still listening to
-    // readable and reset the state. However this needs to happen
-    // after readable has been emitted but before I/O (nextTick) to
-    // support once('readable', fn) cycles. This means that calling
-    // resume within the same tick will have no
-    // effect.
-    process.nextTick(updateReadableListening, this);
-  }
-
-  return res;
-};
-
-Readable.prototype.removeAllListeners = function (ev) {
-  var res = Stream.prototype.removeAllListeners.apply(this, arguments);
-
-  if (ev === 'readable' || ev === undefined) {
-    // We need to check if there is someone still listening to
-    // readable and reset the state. However this needs to happen
-    // after readable has been emitted but before I/O (nextTick) to
-    // support once('readable', fn) cycles. This means that calling
-    // resume within the same tick will have no
-    // effect.
-    process.nextTick(updateReadableListening, this);
-  }
-
-  return res;
-};
-
-function updateReadableListening(self) {
-  var state = self._readableState;
-  state.readableListening = self.listenerCount('readable') > 0;
-
-  if (state.resumeScheduled && !state.paused) {
-    // flowing needs to be set to true now, otherwise
-    // the upcoming resume will not flow.
-    state.flowing = true; // crude way to check if we should resume
-  } else if (self.listenerCount('data') > 0) {
-    self.resume();
-  }
-}
-
-function nReadingNextTick(self) {
-  debug('readable nexttick read 0');
-  self.read(0);
-} // pause() and resume() are remnants of the legacy readable stream API
-// If the user uses them, then switch into old mode.
-
-
-Readable.prototype.resume = function () {
-  var state = this._readableState;
-
-  if (!state.flowing) {
-    debug('resume'); // we flow only if there is no one listening
-    // for readable, but we still have to call
-    // resume()
-
-    state.flowing = !state.readableListening;
-    resume(this, state);
-  }
-
-  state.paused = false;
-  return this;
-};
-
-function resume(stream, state) {
-  if (!state.resumeScheduled) {
-    state.resumeScheduled = true;
-    process.nextTick(resume_, stream, state);
-  }
-}
-
-function resume_(stream, state) {
-  debug('resume', state.reading);
-
-  if (!state.reading) {
-    stream.read(0);
-  }
-
-  state.resumeScheduled = false;
-  stream.emit('resume');
-  flow(stream);
-  if (state.flowing && !state.reading) stream.read(0);
-}
-
-Readable.prototype.pause = function () {
-  debug('call pause flowing=%j', this._readableState.flowing);
-
-  if (this._readableState.flowing !== false) {
-    debug('pause');
-    this._readableState.flowing = false;
-    this.emit('pause');
-  }
-
-  this._readableState.paused = true;
-  return this;
-};
-
-function flow(stream) {
-  var state = stream._readableState;
-  debug('flow', state.flowing);
-
-  while (state.flowing && stream.read() !== null) {
-    ;
-  }
-} // wrap an old-style stream as the async data source.
-// This is *not* part of the readable stream interface.
-// It is an ugly unfortunate mess of history.
-
-
-Readable.prototype.wrap = function (stream) {
-  var _this = this;
-
-  var state = this._readableState;
-  var paused = false;
-  stream.on('end', function () {
-    debug('wrapped end');
-
-    if (state.decoder && !state.ended) {
-      var chunk = state.decoder.end();
-      if (chunk && chunk.length) _this.push(chunk);
+    // After DOCTYPE system identifier state
+    //------------------------------------------------------------------
+    _stateAfterDoctypeSystemIdentifier(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.SPACE:
+            case unicode_js_1.CODE_POINTS.LINE_FEED:
+            case unicode_js_1.CODE_POINTS.TABULATION:
+            case unicode_js_1.CODE_POINTS.FORM_FEED: {
+                // Ignore whitespace
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInDoctype);
+                token.forceQuirks = true;
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._err(error_codes_js_1.ERR.unexpectedCharacterAfterDoctypeSystemIdentifier);
+                this.state = State.BOGUS_DOCTYPE;
+                this._stateBogusDoctype(cp);
+            }
+        }
     }
-
-    _this.push(null);
-  });
-  stream.on('data', function (chunk) {
-    debug('wrapped data');
-    if (state.decoder) chunk = state.decoder.write(chunk); // don't skip over falsy values in objectMode
-
-    if (state.objectMode && (chunk === null || chunk === undefined)) return;else if (!state.objectMode && (!chunk || !chunk.length)) return;
-
-    var ret = _this.push(chunk);
-
-    if (!ret) {
-      paused = true;
-      stream.pause();
+    // Bogus DOCTYPE state
+    //------------------------------------------------------------------
+    _stateBogusDoctype(cp) {
+        const token = this.currentToken;
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.emitCurrentDoctype(token);
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.NULL: {
+                this._err(error_codes_js_1.ERR.unexpectedNullCharacter);
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this.emitCurrentDoctype(token);
+                this._emitEOFToken();
+                break;
+            }
+            default:
+            // Do nothing
+        }
     }
-  }); // proxy all the other methods.
-  // important when wrapping filters and duplexes.
-
-  for (var i in stream) {
-    if (this[i] === undefined && typeof stream[i] === 'function') {
-      this[i] = function methodWrap(method) {
-        return function methodWrapReturnFunction() {
-          return stream[method].apply(stream, arguments);
-        };
-      }(i);
+    // CDATA section state
+    //------------------------------------------------------------------
+    _stateCdataSection(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.RIGHT_SQUARE_BRACKET: {
+                this.state = State.CDATA_SECTION_BRACKET;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.EOF: {
+                this._err(error_codes_js_1.ERR.eofInCdata);
+                this._emitEOFToken();
+                break;
+            }
+            default: {
+                this._emitCodePoint(cp);
+            }
+        }
     }
-  } // proxy certain important events.
-
-
-  for (var n = 0; n < kProxyEvents.length; n++) {
-    stream.on(kProxyEvents[n], this.emit.bind(this, kProxyEvents[n]));
-  } // when we try to consume some more bytes, simply unpause the
-  // underlying stream.
-
-
-  this._read = function (n) {
-    debug('wrapped _read', n);
-
-    if (paused) {
-      paused = false;
-      stream.resume();
+    // CDATA section bracket state
+    //------------------------------------------------------------------
+    _stateCdataSectionBracket(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.RIGHT_SQUARE_BRACKET) {
+            this.state = State.CDATA_SECTION_END;
+        }
+        else {
+            this._emitChars(']');
+            this.state = State.CDATA_SECTION;
+            this._stateCdataSection(cp);
+        }
     }
-  };
-
-  return this;
-};
-
-if (typeof Symbol === 'function') {
-  Readable.prototype[Symbol.asyncIterator] = function () {
-    if (createReadableStreamAsyncIterator === undefined) {
-      createReadableStreamAsyncIterator = require('./internal/streams/async_iterator');
+    // CDATA section end state
+    //------------------------------------------------------------------
+    _stateCdataSectionEnd(cp) {
+        switch (cp) {
+            case unicode_js_1.CODE_POINTS.GREATER_THAN_SIGN: {
+                this.state = State.DATA;
+                break;
+            }
+            case unicode_js_1.CODE_POINTS.RIGHT_SQUARE_BRACKET: {
+                this._emitChars(']');
+                break;
+            }
+            default: {
+                this._emitChars(']]');
+                this.state = State.CDATA_SECTION;
+                this._stateCdataSection(cp);
+            }
+        }
     }
-
-    return createReadableStreamAsyncIterator(this);
-  };
-}
-
-Object.defineProperty(Readable.prototype, 'readableHighWaterMark', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._readableState.highWaterMark;
-  }
-});
-Object.defineProperty(Readable.prototype, 'readableBuffer', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._readableState && this._readableState.buffer;
-  }
-});
-Object.defineProperty(Readable.prototype, 'readableFlowing', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._readableState.flowing;
-  },
-  set: function set(state) {
-    if (this._readableState) {
-      this._readableState.flowing = state;
+    // Character reference state
+    //------------------------------------------------------------------
+    _stateCharacterReference(cp) {
+        if (cp === unicode_js_1.CODE_POINTS.NUMBER_SIGN) {
+            this.state = State.NUMERIC_CHARACTER_REFERENCE;
+        }
+        else if (isAsciiAlphaNumeric(cp)) {
+            this.state = State.NAMED_CHARACTER_REFERENCE;
+            this._stateNamedCharacterReference(cp);
+        }
+        else {
+            this._flushCodePointConsumedAsCharacterReference(unicode_js_1.CODE_POINTS.AMPERSAND);
+            this._reconsumeInState(this.returnState, cp);
+        }
     }
-  }
-}); // exposed for testing purposes only.
-
-Readable._fromList = fromList;
-Object.defineProperty(Readable.prototype, 'readableLength', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._readableState.length;
-  }
-}); // Pluck off n bytes from an array of buffers.
-// Length is the combined lengths of all the buffers in the list.
-// This function is designed to be inlinable, so please take care when making
-// changes to the function body.
-
-function fromList(n, state) {
-  // nothing buffered
-  if (state.length === 0) return null;
-  var ret;
-  if (state.objectMode) ret = state.buffer.shift();else if (!n || n >= state.length) {
-    // read it all, truncate the list
-    if (state.decoder) ret = state.buffer.join('');else if (state.buffer.length === 1) ret = state.buffer.first();else ret = state.buffer.concat(state.length);
-    state.buffer.clear();
-  } else {
-    // read part of list
-    ret = state.buffer.consume(n, state.decoder);
-  }
-  return ret;
-}
-
-function endReadable(stream) {
-  var state = stream._readableState;
-  debug('endReadable', state.endEmitted);
-
-  if (!state.endEmitted) {
-    state.ended = true;
-    process.nextTick(endReadableNT, state, stream);
-  }
-}
-
-function endReadableNT(state, stream) {
-  debug('endReadableNT', state.endEmitted, state.length); // Check that we didn't get one last unshift.
-
-  if (!state.endEmitted && state.length === 0) {
-    state.endEmitted = true;
-    stream.readable = false;
-    stream.emit('end');
-
-    if (state.autoDestroy) {
-      // In case of duplex streams we need a way to detect
-      // if the writable side is ready for autoDestroy as well
-      var wState = stream._writableState;
-
-      if (!wState || wState.autoDestroy && wState.finished) {
-        stream.destroy();
-      }
-    }
-  }
-}
-
-if (typeof Symbol === 'function') {
-  Readable.from = function (iterable, opts) {
-    if (from === undefined) {
-      from = require('./internal/streams/from');
+    // Named character reference state
+    //------------------------------------------------------------------
+    _stateNamedCharacterReference(cp) {
+        const matchResult = this._matchNamedCharacterReference(cp);
+        //NOTE: Matching can be abrupted by hibernation. In that case, match
+        //results are no longer valid and we will need to start over.
+        if (this._ensureHibernation()) {
+            // Stay in the state, try again.
+        }
+        else if (matchResult) {
+            for (let i = 0; i < matchResult.length; i++) {
+                this._flushCodePointConsumedAsCharacterReference(matchResult[i]);
+            }
+            this.state = this.returnState;
+        }
+        else {
+            this._flushCodePointConsumedAsCharacterReference(unicode_js_1.CODE_POINTS.AMPERSAND);
+            this.state = State.AMBIGUOUS_AMPERSAND;
+        }
     }
 
     return from(Readable, iterable, opts);
@@ -48296,481 +49668,483 @@ if (typeof Symbol === 'function' && Symbol.hasInstance && typeof Function.protot
       if (this !== Writable) return false;
       return object && object._writableState instanceof WritableState;
     }
-  });
-} else {
-  realHasInstance = function realHasInstance(object) {
-    return object instanceof this;
-  };
-}
-
-function Writable(options) {
-  Duplex = Duplex || require('./_stream_duplex'); // Writable ctor is applied to Duplexes, too.
-  // `realHasInstance` is necessary because using plain `instanceof`
-  // would return false, as no `_writableState` property is attached.
-  // Trying to use the custom `instanceof` for Writable here will also break the
-  // Node.js LazyTransform implementation, which has a non-trivial getter for
-  // `_writableState` that would lead to infinite recursion.
-  // Checking for a Stream.Duplex instance is faster here instead of inside
-  // the WritableState constructor, at least with V8 6.5
-
-  var isDuplex = this instanceof Duplex;
-  if (!isDuplex && !realHasInstance.call(Writable, this)) return new Writable(options);
-  this._writableState = new WritableState(options, this, isDuplex); // legacy.
-
-  this.writable = true;
-
-  if (options) {
-    if (typeof options.write === 'function') this._write = options.write;
-    if (typeof options.writev === 'function') this._writev = options.writev;
-    if (typeof options.destroy === 'function') this._destroy = options.destroy;
-    if (typeof options.final === 'function') this._final = options.final;
-  }
-
-  Stream.call(this);
-} // Otherwise people can pipe Writable streams, which is just wrong.
-
-
-Writable.prototype.pipe = function () {
-  errorOrDestroy(this, new ERR_STREAM_CANNOT_PIPE());
-};
-
-function writeAfterEnd(stream, cb) {
-  var er = new ERR_STREAM_WRITE_AFTER_END(); // TODO: defer error events consistently everywhere, not just the cb
-
-  errorOrDestroy(stream, er);
-  process.nextTick(cb, er);
-} // Checks that a user-supplied chunk is valid, especially for the particular
-// mode the stream is in. Currently this means that `null` is never accepted
-// and undefined/non-string values are only allowed in object mode.
-
-
-function validChunk(stream, state, chunk, cb) {
-  var er;
-
-  if (chunk === null) {
-    er = new ERR_STREAM_NULL_VALUES();
-  } else if (typeof chunk !== 'string' && !state.objectMode) {
-    er = new ERR_INVALID_ARG_TYPE('chunk', ['string', 'Buffer'], chunk);
-  }
-
-  if (er) {
-    errorOrDestroy(stream, er);
-    process.nextTick(cb, er);
-    return false;
-  }
-
-  return true;
-}
-
-Writable.prototype.write = function (chunk, encoding, cb) {
-  var state = this._writableState;
-  var ret = false;
-
-  var isBuf = !state.objectMode && _isUint8Array(chunk);
-
-  if (isBuf && !Buffer.isBuffer(chunk)) {
-    chunk = _uint8ArrayToBuffer(chunk);
-  }
-
-  if (typeof encoding === 'function') {
-    cb = encoding;
-    encoding = null;
-  }
-
-  if (isBuf) encoding = 'buffer';else if (!encoding) encoding = state.defaultEncoding;
-  if (typeof cb !== 'function') cb = nop;
-  if (state.ending) writeAfterEnd(this, cb);else if (isBuf || validChunk(this, state, chunk, cb)) {
-    state.pendingcb++;
-    ret = writeOrBuffer(this, state, isBuf, chunk, encoding, cb);
-  }
-  return ret;
-};
-
-Writable.prototype.cork = function () {
-  this._writableState.corked++;
-};
-
-Writable.prototype.uncork = function () {
-  var state = this._writableState;
-
-  if (state.corked) {
-    state.corked--;
-    if (!state.writing && !state.corked && !state.bufferProcessing && state.bufferedRequest) clearBuffer(this, state);
-  }
-};
-
-Writable.prototype.setDefaultEncoding = function setDefaultEncoding(encoding) {
-  // node::ParseEncoding() requires lower case.
-  if (typeof encoding === 'string') encoding = encoding.toLowerCase();
-  if (!(['hex', 'utf8', 'utf-8', 'ascii', 'binary', 'base64', 'ucs2', 'ucs-2', 'utf16le', 'utf-16le', 'raw'].indexOf((encoding + '').toLowerCase()) > -1)) throw new ERR_UNKNOWN_ENCODING(encoding);
-  this._writableState.defaultEncoding = encoding;
-  return this;
-};
-
-Object.defineProperty(Writable.prototype, 'writableBuffer', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._writableState && this._writableState.getBuffer();
-  }
-});
-
-function decodeChunk(state, chunk, encoding) {
-  if (!state.objectMode && state.decodeStrings !== false && typeof chunk === 'string') {
-    chunk = Buffer.from(chunk, encoding);
-  }
-
-  return chunk;
-}
-
-Object.defineProperty(Writable.prototype, 'writableHighWaterMark', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._writableState.highWaterMark;
-  }
-}); // if we're already writing something, then just put this
-// in the queue, and wait our turn.  Otherwise, call _write
-// If we return false, then we need a drain event, so set that flag.
-
-function writeOrBuffer(stream, state, isBuf, chunk, encoding, cb) {
-  if (!isBuf) {
-    var newChunk = decodeChunk(state, chunk, encoding);
-
-    if (chunk !== newChunk) {
-      isBuf = true;
-      encoding = 'buffer';
-      chunk = newChunk;
-    }
-  }
-
-  var len = state.objectMode ? 1 : chunk.length;
-  state.length += len;
-  var ret = state.length < state.highWaterMark; // we must ensure that previous needDrain will not be reset to false.
-
-  if (!ret) state.needDrain = true;
-
-  if (state.writing || state.corked) {
-    var last = state.lastBufferedRequest;
-    state.lastBufferedRequest = {
-      chunk: chunk,
-      encoding: encoding,
-      isBuf: isBuf,
-      callback: cb,
-      next: null
-    };
-
-    if (last) {
-      last.next = state.lastBufferedRequest;
-    } else {
-      state.bufferedRequest = state.lastBufferedRequest;
-    }
-
-    state.bufferedRequestCount += 1;
-  } else {
-    doWrite(stream, state, false, len, chunk, encoding, cb);
-  }
-
-  return ret;
-}
-
-function doWrite(stream, state, writev, len, chunk, encoding, cb) {
-  state.writelen = len;
-  state.writecb = cb;
-  state.writing = true;
-  state.sync = true;
-  if (state.destroyed) state.onwrite(new ERR_STREAM_DESTROYED('write'));else if (writev) stream._writev(chunk, state.onwrite);else stream._write(chunk, encoding, state.onwrite);
-  state.sync = false;
-}
-
-function onwriteError(stream, state, sync, er, cb) {
-  --state.pendingcb;
-
-  if (sync) {
-    // defer the callback if we are being called synchronously
-    // to avoid piling up things on the stack
-    process.nextTick(cb, er); // this can emit finish, and it will always happen
-    // after error
-
-    process.nextTick(finishMaybe, stream, state);
-    stream._writableState.errorEmitted = true;
-    errorOrDestroy(stream, er);
-  } else {
-    // the caller expect this to happen before if
-    // it is async
-    cb(er);
-    stream._writableState.errorEmitted = true;
-    errorOrDestroy(stream, er); // this can emit finish, but finish must
-    // always follow error
-
-    finishMaybe(stream, state);
-  }
-}
-
-function onwriteStateUpdate(state) {
-  state.writing = false;
-  state.writecb = null;
-  state.length -= state.writelen;
-  state.writelen = 0;
-}
-
-function onwrite(stream, er) {
-  var state = stream._writableState;
-  var sync = state.sync;
-  var cb = state.writecb;
-  if (typeof cb !== 'function') throw new ERR_MULTIPLE_CALLBACK();
-  onwriteStateUpdate(state);
-  if (er) onwriteError(stream, state, sync, er, cb);else {
-    // Check if we're actually ready to finish, but don't emit yet
-    var finished = needFinish(state) || stream.destroyed;
-
-    if (!finished && !state.corked && !state.bufferProcessing && state.bufferedRequest) {
-      clearBuffer(stream, state);
-    }
-
-    if (sync) {
-      process.nextTick(afterWrite, stream, state, finished, cb);
-    } else {
-      afterWrite(stream, state, finished, cb);
-    }
-  }
-}
-
-function afterWrite(stream, state, finished, cb) {
-  if (!finished) onwriteDrain(stream, state);
-  state.pendingcb--;
-  cb();
-  finishMaybe(stream, state);
-} // Must force callback to be called on nextTick, so that we don't
-// emit 'drain' before the write() consumer gets the 'false' return
-// value, and has a chance to attach a 'drain' listener.
-
-
-function onwriteDrain(stream, state) {
-  if (state.length === 0 && state.needDrain) {
-    state.needDrain = false;
-    stream.emit('drain');
-  }
-} // if there's something in the buffer waiting, then process it
-
-
-function clearBuffer(stream, state) {
-  state.bufferProcessing = true;
-  var entry = state.bufferedRequest;
-
-  if (stream._writev && entry && entry.next) {
-    // Fast case, write everything using _writev()
-    var l = state.bufferedRequestCount;
-    var buffer = new Array(l);
-    var holder = state.corkedRequestsFree;
-    holder.entry = entry;
-    var count = 0;
-    var allBuffers = true;
-
-    while (entry) {
-      buffer[count] = entry;
-      if (!entry.isBuf) allBuffers = false;
-      entry = entry.next;
-      count += 1;
-    }
-
-    buffer.allBuffers = allBuffers;
-    doWrite(stream, state, true, state.length, buffer, '', holder.finish); // doWrite is almost always async, defer these to save a bit of time
-    // as the hot path ends with doWrite
-
-    state.pendingcb++;
-    state.lastBufferedRequest = null;
-
-    if (holder.next) {
-      state.corkedRequestsFree = holder.next;
-      holder.next = null;
-    } else {
-      state.corkedRequestsFree = new CorkedRequest(state);
-    }
-
-    state.bufferedRequestCount = 0;
-  } else {
-    // Slow case, write chunks one-by-one
-    while (entry) {
-      var chunk = entry.chunk;
-      var encoding = entry.encoding;
-      var cb = entry.callback;
-      var len = state.objectMode ? 1 : chunk.length;
-      doWrite(stream, state, false, len, chunk, encoding, cb);
-      entry = entry.next;
-      state.bufferedRequestCount--; // if we didn't call the onwrite immediately, then
-      // it means that we need to wait until it does.
-      // also, that means that the chunk and cb are currently
-      // being processed, so move the buffer counter past them.
-
-      if (state.writing) {
-        break;
-      }
-    }
-
-    if (entry === null) state.lastBufferedRequest = null;
-  }
-
-  state.bufferedRequest = entry;
-  state.bufferProcessing = false;
-}
-
-Writable.prototype._write = function (chunk, encoding, cb) {
-  cb(new ERR_METHOD_NOT_IMPLEMENTED('_write()'));
-};
-
-Writable.prototype._writev = null;
-
-Writable.prototype.end = function (chunk, encoding, cb) {
-  var state = this._writableState;
-
-  if (typeof chunk === 'function') {
-    cb = chunk;
-    chunk = null;
-    encoding = null;
-  } else if (typeof encoding === 'function') {
-    cb = encoding;
-    encoding = null;
-  }
-
-  if (chunk !== null && chunk !== undefined) this.write(chunk, encoding); // .end() fully uncorks
-
-  if (state.corked) {
-    state.corked = 1;
-    this.uncork();
-  } // ignore unnecessary end() calls.
-
-
-  if (!state.ending) endWritable(this, state, cb);
-  return this;
-};
-
-Object.defineProperty(Writable.prototype, 'writableLength', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    return this._writableState.length;
-  }
-});
-
-function needFinish(state) {
-  return state.ending && state.length === 0 && state.bufferedRequest === null && !state.finished && !state.writing;
-}
-
-function callFinal(stream, state) {
-  stream._final(function (err) {
-    state.pendingcb--;
-
-    if (err) {
-      errorOrDestroy(stream, err);
-    }
-
-    state.prefinished = true;
-    stream.emit('prefinish');
-    finishMaybe(stream, state);
-  });
-}
-
-function prefinish(stream, state) {
-  if (!state.prefinished && !state.finalCalled) {
-    if (typeof stream._final === 'function' && !state.destroyed) {
-      state.pendingcb++;
-      state.finalCalled = true;
-      process.nextTick(callFinal, stream, state);
-    } else {
-      state.prefinished = true;
-      stream.emit('prefinish');
-    }
-  }
-}
-
-function finishMaybe(stream, state) {
-  var need = needFinish(state);
-
-  if (need) {
-    prefinish(stream, state);
-
-    if (state.pendingcb === 0) {
-      state.finished = true;
-      stream.emit('finish');
-
-      if (state.autoDestroy) {
-        // In case of duplex streams we need a way to detect
-        // if the readable side is ready for autoDestroy as well
-        var rState = stream._readableState;
-
-        if (!rState || rState.autoDestroy && rState.endEmitted) {
-          stream.destroy();
+    // Numeric character reference state
+    //------------------------------------------------------------------
+    _stateNumericCharacterReference(cp) {
+        this.charRefCode = 0;
+        if (cp === unicode_js_1.CODE_POINTS.LATIN_SMALL_X || cp === unicode_js_1.CODE_POINTS.LATIN_CAPITAL_X) {
+            this.state = State.HEXADEMICAL_CHARACTER_REFERENCE_START;
         }
-      }
+        // Inlined decimal character reference start state
+        else if (isAsciiDigit(cp)) {
+            this.state = State.DECIMAL_CHARACTER_REFERENCE;
+            this._stateDecimalCharacterReference(cp);
+        }
+        else {
+            this._err(error_codes_js_1.ERR.absenceOfDigitsInNumericCharacterReference);
+            this._flushCodePointConsumedAsCharacterReference(unicode_js_1.CODE_POINTS.AMPERSAND);
+            this._flushCodePointConsumedAsCharacterReference(unicode_js_1.CODE_POINTS.NUMBER_SIGN);
+            this._reconsumeInState(this.returnState, cp);
+        }
     }
-  }
-
-  return need;
-}
-
-function endWritable(stream, state, cb) {
-  state.ending = true;
-  finishMaybe(stream, state);
-
-  if (cb) {
-    if (state.finished) process.nextTick(cb);else stream.once('finish', cb);
-  }
-
-  state.ended = true;
-  stream.writable = false;
-}
-
-function onCorkedFinish(corkReq, state, err) {
-  var entry = corkReq.entry;
-  corkReq.entry = null;
-
-  while (entry) {
-    var cb = entry.callback;
-    state.pendingcb--;
-    cb(err);
-    entry = entry.next;
-  } // reuse the free corkReq.
-
-
-  state.corkedRequestsFree.next = corkReq;
-}
-
-Object.defineProperty(Writable.prototype, 'destroyed', {
-  // making it explicit this property is not enumerable
-  // because otherwise some prototype manipulation in
-  // userland will fail
-  enumerable: false,
-  get: function get() {
-    if (this._writableState === undefined) {
-      return false;
+    // Hexademical character reference start state
+    //------------------------------------------------------------------
+    _stateHexademicalCharacterReferenceStart(cp) {
+        if (isAsciiHexDigit(cp)) {
+            this.state = State.HEXADEMICAL_CHARACTER_REFERENCE;
+            this._stateHexademicalCharacterReference(cp);
+        }
+        else {
+            this._err(error_codes_js_1.ERR.absenceOfDigitsInNumericCharacterReference);
+            this._flushCodePointConsumedAsCharacterReference(unicode_js_1.CODE_POINTS.AMPERSAND);
+            this._flushCodePointConsumedAsCharacterReference(unicode_js_1.CODE_POINTS.NUMBER_SIGN);
+            this._unconsume(2);
+            this.state = this.returnState;
+        }
     }
+    // Hexademical character reference state
+    //------------------------------------------------------------------
+    _stateHexademicalCharacterReference(cp) {
+        if (isAsciiUpperHexDigit(cp)) {
+            this.charRefCode = this.charRefCode * 16 + cp - 0x37;
+        }
+        else if (isAsciiLowerHexDigit(cp)) {
+            this.charRefCode = this.charRefCode * 16 + cp - 0x57;
+        }
+        else if (isAsciiDigit(cp)) {
+            this.charRefCode = this.charRefCode * 16 + cp - 0x30;
+        }
+        else if (cp === unicode_js_1.CODE_POINTS.SEMICOLON) {
+            this.state = State.NUMERIC_CHARACTER_REFERENCE_END;
+        }
+        else {
+            this._err(error_codes_js_1.ERR.missingSemicolonAfterCharacterReference);
+            this.state = State.NUMERIC_CHARACTER_REFERENCE_END;
+            this._stateNumericCharacterReferenceEnd(cp);
+        }
+    }
+    // Decimal character reference state
+    //------------------------------------------------------------------
+    _stateDecimalCharacterReference(cp) {
+        if (isAsciiDigit(cp)) {
+            this.charRefCode = this.charRefCode * 10 + cp - 0x30;
+        }
+        else if (cp === unicode_js_1.CODE_POINTS.SEMICOLON) {
+            this.state = State.NUMERIC_CHARACTER_REFERENCE_END;
+        }
+        else {
+            this._err(error_codes_js_1.ERR.missingSemicolonAfterCharacterReference);
+            this.state = State.NUMERIC_CHARACTER_REFERENCE_END;
+            this._stateNumericCharacterReferenceEnd(cp);
+        }
+    }
+    // Numeric character reference end state
+    //------------------------------------------------------------------
+    _stateNumericCharacterReferenceEnd(cp) {
+        if (this.charRefCode === unicode_js_1.CODE_POINTS.NULL) {
+            this._err(error_codes_js_1.ERR.nullCharacterReference);
+            this.charRefCode = unicode_js_1.CODE_POINTS.REPLACEMENT_CHARACTER;
+        }
+        else if (this.charRefCode > 1114111) {
+            this._err(error_codes_js_1.ERR.characterReferenceOutsideUnicodeRange);
+            this.charRefCode = unicode_js_1.CODE_POINTS.REPLACEMENT_CHARACTER;
+        }
+        else if ((0, unicode_js_1.isSurrogate)(this.charRefCode)) {
+            this._err(error_codes_js_1.ERR.surrogateCharacterReference);
+            this.charRefCode = unicode_js_1.CODE_POINTS.REPLACEMENT_CHARACTER;
+        }
+        else if ((0, unicode_js_1.isUndefinedCodePoint)(this.charRefCode)) {
+            this._err(error_codes_js_1.ERR.noncharacterCharacterReference);
+        }
+        else if ((0, unicode_js_1.isControlCodePoint)(this.charRefCode) || this.charRefCode === unicode_js_1.CODE_POINTS.CARRIAGE_RETURN) {
+            this._err(error_codes_js_1.ERR.controlCharacterReference);
+            const replacement = C1_CONTROLS_REFERENCE_REPLACEMENTS.get(this.charRefCode);
+            if (replacement !== undefined) {
+                this.charRefCode = replacement;
+            }
+        }
+        this._flushCodePointConsumedAsCharacterReference(this.charRefCode);
+        this._reconsumeInState(this.returnState, cp);
+    }
+}
+exports.Tokenizer = Tokenizer;
 
-    return this._writableState.destroyed;
-  },
-  set: function set(value) {
-    // we ignore the value if the stream
-    // has not been initialized yet
-    if (!this._writableState) {
-      return;
-    } // backward compatibility, the user is explicitly
-    // managing destroyed
+},{"../common/error-codes.js":180,"../common/html.js":182,"../common/token.js":183,"../common/unicode.js":184,"./preprocessor.js":191,"entities/lib/decode.js":193}],191:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Preprocessor = void 0;
+const unicode_js_1 = require("../common/unicode.js");
+const error_codes_js_1 = require("../common/error-codes.js");
+//Const
+const DEFAULT_BUFFER_WATERLINE = 1 << 16;
+//Preprocessor
+//NOTE: HTML input preprocessing
+//(see: http://www.whatwg.org/specs/web-apps/current-work/multipage/parsing.html#preprocessing-the-input-stream)
+class Preprocessor {
+    constructor(handler) {
+        this.handler = handler;
+        this.html = '';
+        this.pos = -1;
+        // NOTE: Initial `lastGapPos` is -2, to ensure `col` on initialisation is 0
+        this.lastGapPos = -2;
+        this.gapStack = [];
+        this.skipNextNewLine = false;
+        this.lastChunkWritten = false;
+        this.endOfChunkHit = false;
+        this.bufferWaterline = DEFAULT_BUFFER_WATERLINE;
+        this.isEol = false;
+        this.lineStartPos = 0;
+        this.droppedBufferSize = 0;
+        this.line = 1;
+        //NOTE: avoid reporting errors twice on advance/retreat
+        this.lastErrOffset = -1;
+    }
+    /** The column on the current line. If we just saw a gap (eg. a surrogate pair), return the index before. */
+    get col() {
+        return this.pos - this.lineStartPos + Number(this.lastGapPos !== this.pos);
+    }
+    get offset() {
+        return this.droppedBufferSize + this.pos;
+    }
+    getError(code) {
+        const { line, col, offset } = this;
+        return {
+            code,
+            startLine: line,
+            endLine: line,
+            startCol: col,
+            endCol: col,
+            startOffset: offset,
+            endOffset: offset,
+        };
+    }
+    _err(code) {
+        if (this.handler.onParseError && this.lastErrOffset !== this.offset) {
+            this.lastErrOffset = this.offset;
+            this.handler.onParseError(this.getError(code));
+        }
+    }
+    _addGap() {
+        this.gapStack.push(this.lastGapPos);
+        this.lastGapPos = this.pos;
+    }
+    _processSurrogate(cp) {
+        //NOTE: try to peek a surrogate pair
+        if (this.pos !== this.html.length - 1) {
+            const nextCp = this.html.charCodeAt(this.pos + 1);
+            if ((0, unicode_js_1.isSurrogatePair)(nextCp)) {
+                //NOTE: we have a surrogate pair. Peek pair character and recalculate code point.
+                this.pos++;
+                //NOTE: add a gap that should be avoided during retreat
+                this._addGap();
+                return (0, unicode_js_1.getSurrogatePairCodePoint)(cp, nextCp);
+            }
+        }
+        //NOTE: we are at the end of a chunk, therefore we can't infer the surrogate pair yet.
+        else if (!this.lastChunkWritten) {
+            this.endOfChunkHit = true;
+            return unicode_js_1.CODE_POINTS.EOF;
+        }
+        //NOTE: isolated surrogate
+        this._err(error_codes_js_1.ERR.surrogateInInputStream);
+        return cp;
+    }
+    willDropParsedChunk() {
+        return this.pos > this.bufferWaterline;
+    }
+    dropParsedChunk() {
+        if (this.willDropParsedChunk()) {
+            this.html = this.html.substring(this.pos);
+            this.lineStartPos -= this.pos;
+            this.droppedBufferSize += this.pos;
+            this.pos = 0;
+            this.lastGapPos = -2;
+            this.gapStack.length = 0;
+        }
+    }
+    write(chunk, isLastChunk) {
+        if (this.html.length > 0) {
+            this.html += chunk;
+        }
+        else {
+            this.html = chunk;
+        }
+        this.endOfChunkHit = false;
+        this.lastChunkWritten = isLastChunk;
+    }
+    insertHtmlAtCurrentPos(chunk) {
+        this.html = this.html.substring(0, this.pos + 1) + chunk + this.html.substring(this.pos + 1);
+        this.endOfChunkHit = false;
+    }
+    startsWith(pattern, caseSensitive) {
+        // Check if our buffer has enough characters
+        if (this.pos + pattern.length > this.html.length) {
+            this.endOfChunkHit = !this.lastChunkWritten;
+            return false;
+        }
+        if (caseSensitive) {
+            return this.html.startsWith(pattern, this.pos);
+        }
+        for (let i = 0; i < pattern.length; i++) {
+            const cp = this.html.charCodeAt(this.pos + i) | 0x20;
+            if (cp !== pattern.charCodeAt(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    peek(offset) {
+        const pos = this.pos + offset;
+        if (pos >= this.html.length) {
+            this.endOfChunkHit = !this.lastChunkWritten;
+            return unicode_js_1.CODE_POINTS.EOF;
+        }
+        const code = this.html.charCodeAt(pos);
+        return code === unicode_js_1.CODE_POINTS.CARRIAGE_RETURN ? unicode_js_1.CODE_POINTS.LINE_FEED : code;
+    }
+    advance() {
+        this.pos++;
+        //NOTE: LF should be in the last column of the line
+        if (this.isEol) {
+            this.isEol = false;
+            this.line++;
+            this.lineStartPos = this.pos;
+        }
+        if (this.pos >= this.html.length) {
+            this.endOfChunkHit = !this.lastChunkWritten;
+            return unicode_js_1.CODE_POINTS.EOF;
+        }
+        let cp = this.html.charCodeAt(this.pos);
+        //NOTE: all U+000D CARRIAGE RETURN (CR) characters must be converted to U+000A LINE FEED (LF) characters
+        if (cp === unicode_js_1.CODE_POINTS.CARRIAGE_RETURN) {
+            this.isEol = true;
+            this.skipNextNewLine = true;
+            return unicode_js_1.CODE_POINTS.LINE_FEED;
+        }
+        //NOTE: any U+000A LINE FEED (LF) characters that immediately follow a U+000D CARRIAGE RETURN (CR) character
+        //must be ignored.
+        if (cp === unicode_js_1.CODE_POINTS.LINE_FEED) {
+            this.isEol = true;
+            if (this.skipNextNewLine) {
+                // `line` will be bumped again in the recursive call.
+                this.line--;
+                this.skipNextNewLine = false;
+                this._addGap();
+                return this.advance();
+            }
+        }
+        this.skipNextNewLine = false;
+        if ((0, unicode_js_1.isSurrogate)(cp)) {
+            cp = this._processSurrogate(cp);
+        }
+        //OPTIMIZATION: first check if code point is in the common allowed
+        //range (ASCII alphanumeric, whitespaces, big chunk of BMP)
+        //before going into detailed performance cost validation.
+        const isCommonValidRange = this.handler.onParseError === null ||
+            (cp > 0x1f && cp < 0x7f) ||
+            cp === unicode_js_1.CODE_POINTS.LINE_FEED ||
+            cp === unicode_js_1.CODE_POINTS.CARRIAGE_RETURN ||
+            (cp > 0x9f && cp < 64976);
+        if (!isCommonValidRange) {
+            this._checkForProblematicCharacters(cp);
+        }
+        return cp;
+    }
+    _checkForProblematicCharacters(cp) {
+        if ((0, unicode_js_1.isControlCodePoint)(cp)) {
+            this._err(error_codes_js_1.ERR.controlCharacterInInputStream);
+        }
+        else if ((0, unicode_js_1.isUndefinedCodePoint)(cp)) {
+            this._err(error_codes_js_1.ERR.noncharacterInInputStream);
+        }
+    }
+    retreat(count) {
+        this.pos -= count;
+        while (this.pos < this.lastGapPos) {
+            this.lastGapPos = this.gapStack.pop();
+            this.pos--;
+        }
+        this.isEol = false;
+    }
+}
+exports.Preprocessor = Preprocessor;
 
-
-    this._writableState.destroyed = value;
-  }
-});
-Writable.prototype.destroy = destroyImpl.destroy;
-Writable.prototype._undestroy = destroyImpl.undestroy;
-
-Writable.prototype._destroy = function (err, cb) {
-  cb(err);
+},{"../common/error-codes.js":180,"../common/unicode.js":184}],192:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.defaultTreeAdapter = void 0;
+const html_js_1 = require("../common/html.js");
+function createTextNode(value) {
+    return {
+        nodeName: '#text',
+        value,
+        parentNode: null,
+    };
+}
+exports.defaultTreeAdapter = {
+    //Node construction
+    createDocument() {
+        return {
+            nodeName: '#document',
+            mode: html_js_1.DOCUMENT_MODE.NO_QUIRKS,
+            childNodes: [],
+        };
+    },
+    createDocumentFragment() {
+        return {
+            nodeName: '#document-fragment',
+            childNodes: [],
+        };
+    },
+    createElement(tagName, namespaceURI, attrs) {
+        return {
+            nodeName: tagName,
+            tagName,
+            attrs,
+            namespaceURI,
+            childNodes: [],
+            parentNode: null,
+        };
+    },
+    createCommentNode(data) {
+        return {
+            nodeName: '#comment',
+            data,
+            parentNode: null,
+        };
+    },
+    //Tree mutation
+    appendChild(parentNode, newNode) {
+        parentNode.childNodes.push(newNode);
+        newNode.parentNode = parentNode;
+    },
+    insertBefore(parentNode, newNode, referenceNode) {
+        const insertionIdx = parentNode.childNodes.indexOf(referenceNode);
+        parentNode.childNodes.splice(insertionIdx, 0, newNode);
+        newNode.parentNode = parentNode;
+    },
+    setTemplateContent(templateElement, contentElement) {
+        templateElement.content = contentElement;
+    },
+    getTemplateContent(templateElement) {
+        return templateElement.content;
+    },
+    setDocumentType(document, name, publicId, systemId) {
+        const doctypeNode = document.childNodes.find((node) => node.nodeName === '#documentType');
+        if (doctypeNode) {
+            doctypeNode.name = name;
+            doctypeNode.publicId = publicId;
+            doctypeNode.systemId = systemId;
+        }
+        else {
+            const node = {
+                nodeName: '#documentType',
+                name,
+                publicId,
+                systemId,
+                parentNode: null,
+            };
+            exports.defaultTreeAdapter.appendChild(document, node);
+        }
+    },
+    setDocumentMode(document, mode) {
+        document.mode = mode;
+    },
+    getDocumentMode(document) {
+        return document.mode;
+    },
+    detachNode(node) {
+        if (node.parentNode) {
+            const idx = node.parentNode.childNodes.indexOf(node);
+            node.parentNode.childNodes.splice(idx, 1);
+            node.parentNode = null;
+        }
+    },
+    insertText(parentNode, text) {
+        if (parentNode.childNodes.length > 0) {
+            const prevNode = parentNode.childNodes[parentNode.childNodes.length - 1];
+            if (exports.defaultTreeAdapter.isTextNode(prevNode)) {
+                prevNode.value += text;
+                return;
+            }
+        }
+        exports.defaultTreeAdapter.appendChild(parentNode, createTextNode(text));
+    },
+    insertTextBefore(parentNode, text, referenceNode) {
+        const prevNode = parentNode.childNodes[parentNode.childNodes.indexOf(referenceNode) - 1];
+        if (prevNode && exports.defaultTreeAdapter.isTextNode(prevNode)) {
+            prevNode.value += text;
+        }
+        else {
+            exports.defaultTreeAdapter.insertBefore(parentNode, createTextNode(text), referenceNode);
+        }
+    },
+    adoptAttributes(recipient, attrs) {
+        const recipientAttrsMap = new Set(recipient.attrs.map((attr) => attr.name));
+        for (let j = 0; j < attrs.length; j++) {
+            if (!recipientAttrsMap.has(attrs[j].name)) {
+                recipient.attrs.push(attrs[j]);
+            }
+        }
+    },
+    //Tree traversing
+    getFirstChild(node) {
+        return node.childNodes[0];
+    },
+    getChildNodes(node) {
+        return node.childNodes;
+    },
+    getParentNode(node) {
+        return node.parentNode;
+    },
+    getAttrList(element) {
+        return element.attrs;
+    },
+    //Node data
+    getTagName(element) {
+        return element.tagName;
+    },
+    getNamespaceURI(element) {
+        return element.namespaceURI;
+    },
+    getTextNodeContent(textNode) {
+        return textNode.value;
+    },
+    getCommentNodeContent(commentNode) {
+        return commentNode.data;
+    },
+    getDocumentTypeNodeName(doctypeNode) {
+        return doctypeNode.name;
+    },
+    getDocumentTypeNodePublicId(doctypeNode) {
+        return doctypeNode.publicId;
+    },
+    getDocumentTypeNodeSystemId(doctypeNode) {
+        return doctypeNode.systemId;
+    },
+    //Node types
+    isTextNode(node) {
+        return node.nodeName === '#text';
+    },
+    isCommentNode(node) {
+        return node.nodeName === '#comment';
+    },
+    isDocumentTypeNode(node) {
+        return node.nodeName === '#documentType';
+    },
+    isElementNode(node) {
+        return Object.prototype.hasOwnProperty.call(node, 'tagName');
+    },
+    // Source code location
+    setNodeSourceCodeLocation(node, location) {
+        node.sourceCodeLocation = location;
+    },
+    getNodeSourceCodeLocation(node) {
+        return node.sourceCodeLocation;
+    },
+    updateNodeSourceCodeLocation(node, endLocation) {
+        node.sourceCodeLocation = Object.assign(Object.assign({}, node.sourceCodeLocation), endLocation);
+    },
 };
 }).call(this)}).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"../errors":458,"./_stream_duplex":459,"./internal/streams/destroy":466,"./internal/streams/state":470,"./internal/streams/stream":471,"_process":454,"buffer":19,"inherits":123,"util-deprecate":474}],464:[function(require,module,exports){
@@ -48798,181 +50172,75 @@ function createIterResult(value, done) {
   };
 }
 
-function readAndResolve(iter) {
-  var resolve = iter[kLastResolve];
+},{"../common/html.js":182}],193:[function(require,module,exports){
+arguments[4][49][0].apply(exports,arguments)
+},{"./decode_codepoint.js":194,"./generated/decode-data-html.js":196,"./generated/decode-data-xml.js":197,"dup":49}],194:[function(require,module,exports){
+arguments[4][50][0].apply(exports,arguments)
+},{"dup":50}],195:[function(require,module,exports){
+arguments[4][52][0].apply(exports,arguments)
+},{"dup":52}],196:[function(require,module,exports){
+arguments[4][53][0].apply(exports,arguments)
+},{"dup":53}],197:[function(require,module,exports){
+arguments[4][54][0].apply(exports,arguments)
+},{"dup":54}],198:[function(require,module,exports){
+// shim for using process in browser
+var process = module.exports = {};
 
-  if (resolve !== null) {
-    var data = iter[kStream].read(); // we defer if data is null
-    // we can be expecting either 'end' or
-    // 'error'
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
 
-    if (data !== null) {
-      iter[kLastPromise] = null;
-      iter[kLastResolve] = null;
-      iter[kLastReject] = null;
-      resolve(createIterResult(data, false));
-    }
-  }
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
 }
-
-function onReadable(iter) {
-  // we wait for the next tick, because it might
-  // emit an error with process.nextTick
-  process.nextTick(readAndResolve, iter);
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
 }
-
-function wrapForNext(lastPromise, iter) {
-  return function (resolve, reject) {
-    lastPromise.then(function () {
-      if (iter[kEnded]) {
-        resolve(createIterResult(undefined, true));
-        return;
-      }
-
-      iter[kHandlePromise](resolve, reject);
-    }, reject);
-  };
-}
-
-var AsyncIteratorPrototype = Object.getPrototypeOf(function () {});
-var ReadableStreamAsyncIteratorPrototype = Object.setPrototypeOf((_Object$setPrototypeO = {
-  get stream() {
-    return this[kStream];
-  },
-
-  next: function next() {
-    var _this = this;
-
-    // if we have detected an error in the meanwhile
-    // reject straight away
-    var error = this[kError];
-
-    if (error !== null) {
-      return Promise.reject(error);
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
     }
-
-    if (this[kEnded]) {
-      return Promise.resolve(createIterResult(undefined, true));
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
     }
-
-    if (this[kStream].destroyed) {
-      // We need to defer via nextTick because if .destroy(err) is
-      // called, the error will be emitted via nextTick, and
-      // we cannot guarantee that there is no error lingering around
-      // waiting to be emitted.
-      return new Promise(function (resolve, reject) {
-        process.nextTick(function () {
-          if (_this[kError]) {
-            reject(_this[kError]);
-          } else {
-            resolve(createIterResult(undefined, true));
-          }
-        });
-      });
-    } // if we have multiple next() calls
-    // we will wait for the previous Promise to finish
-    // this logic is optimized to support for await loops,
-    // where next() is only called once at a time
-
-
-    var lastPromise = this[kLastPromise];
-    var promise;
-
-    if (lastPromise) {
-      promise = new Promise(wrapForNext(lastPromise, this));
-    } else {
-      // fast path needed to support multiple this.push()
-      // without triggering the next() queue
-      var data = this[kStream].read();
-
-      if (data !== null) {
-        return Promise.resolve(createIterResult(data, false));
-      }
-
-      promise = new Promise(this[kHandlePromise]);
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
     }
-
-    this[kLastPromise] = promise;
-    return promise;
-  }
-}, _defineProperty(_Object$setPrototypeO, Symbol.asyncIterator, function () {
-  return this;
-}), _defineProperty(_Object$setPrototypeO, "return", function _return() {
-  var _this2 = this;
-
-  // destroy(err, cb) is a private API
-  // we can guarantee we have that here, because we control the
-  // Readable class this is attached to
-  return new Promise(function (resolve, reject) {
-    _this2[kStream].destroy(null, function (err) {
-      if (err) {
-        reject(err);
-        return;
-      }
-
-      resolve(createIterResult(undefined, true));
-    });
-  });
-}), _Object$setPrototypeO), AsyncIteratorPrototype);
-
-var createReadableStreamAsyncIterator = function createReadableStreamAsyncIterator(stream) {
-  var _Object$create;
-
-  var iterator = Object.create(ReadableStreamAsyncIteratorPrototype, (_Object$create = {}, _defineProperty(_Object$create, kStream, {
-    value: stream,
-    writable: true
-  }), _defineProperty(_Object$create, kLastResolve, {
-    value: null,
-    writable: true
-  }), _defineProperty(_Object$create, kLastReject, {
-    value: null,
-    writable: true
-  }), _defineProperty(_Object$create, kError, {
-    value: null,
-    writable: true
-  }), _defineProperty(_Object$create, kEnded, {
-    value: stream._readableState.endEmitted,
-    writable: true
-  }), _defineProperty(_Object$create, kHandlePromise, {
-    value: function value(resolve, reject) {
-      var data = iterator[kStream].read();
-
-      if (data) {
-        iterator[kLastPromise] = null;
-        iterator[kLastResolve] = null;
-        iterator[kLastReject] = null;
-        resolve(createIterResult(data, false));
-      } else {
-        iterator[kLastResolve] = resolve;
-        iterator[kLastReject] = reject;
-      }
-    },
-    writable: true
-  }), _Object$create));
-  iterator[kLastPromise] = null;
-  finished(stream, function (err) {
-    if (err && err.code !== 'ERR_STREAM_PREMATURE_CLOSE') {
-      var reject = iterator[kLastReject]; // reject if we are waiting for data in the Promise
-      // returned by next() and store the error
-
-      if (reject !== null) {
-        iterator[kLastPromise] = null;
-        iterator[kLastResolve] = null;
-        iterator[kLastReject] = null;
-        reject(err);
-      }
-
-      iterator[kError] = err;
-      return;
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
     }
-
-    var resolve = iterator[kLastResolve];
-
-    if (resolve !== null) {
-      iterator[kLastPromise] = null;
-      iterator[kLastResolve] = null;
-      iterator[kLastReject] = null;
-      resolve(createIterResult(undefined, true));
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
     }
 
     iterator[kEnded] = true;
@@ -49001,176 +50269,28 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var _require = require('buffer'),
     Buffer = _require.Buffer;
 
-var _require2 = require('util'),
-    inspect = _require2.inspect;
-
-var custom = inspect && inspect.custom || 'inspect';
-
-function copyBuffer(src, target, offset) {
-  Buffer.prototype.copy.call(src, target, offset);
 }
-
-module.exports =
-/*#__PURE__*/
-function () {
-  function BufferList() {
-    _classCallCheck(this, BufferList);
-
-    this.head = null;
-    this.tail = null;
-    this.length = 0;
-  }
-
-  _createClass(BufferList, [{
-    key: "push",
-    value: function push(v) {
-      var entry = {
-        data: v,
-        next: null
-      };
-      if (this.length > 0) this.tail.next = entry;else this.head = entry;
-      this.tail = entry;
-      ++this.length;
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
     }
-  }, {
-    key: "unshift",
-    value: function unshift(v) {
-      var entry = {
-        data: v,
-        next: this.head
-      };
-      if (this.length === 0) this.tail = entry;
-      this.head = entry;
-      ++this.length;
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
     }
-  }, {
-    key: "shift",
-    value: function shift() {
-      if (this.length === 0) return;
-      var ret = this.head.data;
-      if (this.length === 1) this.head = this.tail = null;else this.head = this.head.next;
-      --this.length;
-      return ret;
-    }
-  }, {
-    key: "clear",
-    value: function clear() {
-      this.head = this.tail = null;
-      this.length = 0;
-    }
-  }, {
-    key: "join",
-    value: function join(s) {
-      if (this.length === 0) return '';
-      var p = this.head;
-      var ret = '' + p.data;
-
-      while (p = p.next) {
-        ret += s + p.data;
-      }
-
-      return ret;
-    }
-  }, {
-    key: "concat",
-    value: function concat(n) {
-      if (this.length === 0) return Buffer.alloc(0);
-      var ret = Buffer.allocUnsafe(n >>> 0);
-      var p = this.head;
-      var i = 0;
-
-      while (p) {
-        copyBuffer(p.data, ret, i);
-        i += p.data.length;
-        p = p.next;
-      }
-
-      return ret;
-    } // Consumes a specified amount of bytes or characters from the buffered data.
-
-  }, {
-    key: "consume",
-    value: function consume(n, hasStrings) {
-      var ret;
-
-      if (n < this.head.data.length) {
-        // `slice` is the same for buffers and strings.
-        ret = this.head.data.slice(0, n);
-        this.head.data = this.head.data.slice(n);
-      } else if (n === this.head.data.length) {
-        // First chunk is a perfect match.
-        ret = this.shift();
-      } else {
-        // Result spans more than one buffer.
-        ret = hasStrings ? this._getString(n) : this._getBuffer(n);
-      }
-
-      return ret;
-    }
-  }, {
-    key: "first",
-    value: function first() {
-      return this.head.data;
-    } // Consumes a specified amount of characters from the buffered data.
-
-  }, {
-    key: "_getString",
-    value: function _getString(n) {
-      var p = this.head;
-      var c = 1;
-      var ret = p.data;
-      n -= ret.length;
-
-      while (p = p.next) {
-        var str = p.data;
-        var nb = n > str.length ? str.length : n;
-        if (nb === str.length) ret += str;else ret += str.slice(0, n);
-        n -= nb;
-
-        if (n === 0) {
-          if (nb === str.length) {
-            ++c;
-            if (p.next) this.head = p.next;else this.head = this.tail = null;
-          } else {
-            this.head = p;
-            p.data = str.slice(nb);
-          }
-
-          break;
-        }
-
-        ++c;
-      }
-
-      this.length -= c;
-      return ret;
-    } // Consumes a specified amount of bytes from the buffered data.
-
-  }, {
-    key: "_getBuffer",
-    value: function _getBuffer(n) {
-      var ret = Buffer.allocUnsafe(n);
-      var p = this.head;
-      var c = 1;
-      p.data.copy(ret);
-      n -= p.data.length;
-
-      while (p = p.next) {
-        var buf = p.data;
-        var nb = n > buf.length ? buf.length : n;
-        buf.copy(ret, ret.length - n, 0, nb);
-        n -= nb;
-
-        if (n === 0) {
-          if (nb === buf.length) {
-            ++c;
-            if (p.next) this.head = p.next;else this.head = this.tail = null;
-          } else {
-            this.head = p;
-            p.data = buf.slice(nb);
-          }
-
-          break;
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
         }
 
         ++c;
@@ -49216,35 +50336,23 @@ function destroy(err, cb) {
       }
     }
 
-    return this;
-  } // we set destroyed to true before firing error callbacks in order
-  // to make it re-entrance safe in case destroy() is called within callbacks
 
 
-  if (this._readableState) {
-    this._readableState.destroyed = true;
-  } // if this is a duplex stream mark the writable part as destroyed as well
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
 
-
-  if (this._writableState) {
-    this._writableState.destroyed = true;
-  }
-
-  this._destroy(err || null, function (err) {
-    if (!cb && err) {
-      if (!_this._writableState) {
-        process.nextTick(emitErrorAndCloseNT, _this, err);
-      } else if (!_this._writableState.errorEmitted) {
-        _this._writableState.errorEmitted = true;
-        process.nextTick(emitErrorAndCloseNT, _this, err);
-      } else {
-        process.nextTick(emitCloseNT, _this);
-      }
-    } else if (cb) {
-      process.nextTick(emitCloseNT, _this);
-      cb(err);
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
     } else {
-      process.nextTick(emitCloseNT, _this);
+        queueIndex = -1;
     }
   });
 
@@ -49318,92 +50426,30 @@ function once(callback) {
     for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
       args[_key] = arguments[_key];
     }
-
-    callback.apply(this, args);
-  };
 }
 
-function noop() {}
-
-function isRequest(stream) {
-  return stream.setHeader && typeof stream.abort === 'function';
-}
-
-function eos(stream, opts, callback) {
-  if (typeof opts === 'function') return eos(stream, null, opts);
-  if (!opts) opts = {};
-  callback = once(callback || noop);
-  var readable = opts.readable || opts.readable !== false && stream.readable;
-  var writable = opts.writable || opts.writable !== false && stream.writable;
-
-  var onlegacyfinish = function onlegacyfinish() {
-    if (!stream.writable) onfinish();
-  };
-
-  var writableEnded = stream._writableState && stream._writableState.finished;
-
-  var onfinish = function onfinish() {
-    writable = false;
-    writableEnded = true;
-    if (!readable) callback.call(stream);
-  };
-
-  var readableEnded = stream._readableState && stream._readableState.endEmitted;
-
-  var onend = function onend() {
-    readable = false;
-    readableEnded = true;
-    if (!writable) callback.call(stream);
-  };
-
-  var onerror = function onerror(err) {
-    callback.call(stream, err);
-  };
-
-  var onclose = function onclose() {
-    var err;
-
-    if (readable && !readableEnded) {
-      if (!stream._readableState || !stream._readableState.ended) err = new ERR_STREAM_PREMATURE_CLOSE();
-      return callback.call(stream, err);
+function drainQueue() {
+    if (draining) {
+        return;
     }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
 
-    if (writable && !writableEnded) {
-      if (!stream._writableState || !stream._writableState.ended) err = new ERR_STREAM_PREMATURE_CLOSE();
-      return callback.call(stream, err);
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
     }
-  };
-
-  var onrequest = function onrequest() {
-    stream.req.on('finish', onfinish);
-  };
-
-  if (isRequest(stream)) {
-    stream.on('complete', onfinish);
-    stream.on('abort', onclose);
-    if (stream.req) onrequest();else stream.on('request', onrequest);
-  } else if (writable && !stream._writableState) {
-    // legacy streams
-    stream.on('end', onlegacyfinish);
-    stream.on('close', onlegacyfinish);
-  }
-
-  stream.on('end', onend);
-  stream.on('finish', onfinish);
-  if (opts.error !== false) stream.on('error', onerror);
-  stream.on('close', onclose);
-  return function () {
-    stream.removeListener('complete', onfinish);
-    stream.removeListener('abort', onclose);
-    stream.removeListener('request', onrequest);
-    if (stream.req) stream.req.removeListener('finish', onfinish);
-    stream.removeListener('end', onlegacyfinish);
-    stream.removeListener('close', onlegacyfinish);
-    stream.removeListener('finish', onfinish);
-    stream.removeListener('end', onend);
-    stream.removeListener('error', onerror);
-    stream.removeListener('close', onclose);
-  };
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
 }
 
 module.exports = eos;
@@ -49518,25 +50564,37 @@ var ERR_INVALID_OPT_VALUE = require('../../../errors').codes.ERR_INVALID_OPT_VAL
 function highWaterMarkFrom(options, isDuplex, duplexKey) {
   return options.highWaterMark != null ? options.highWaterMark : isDuplex ? options[duplexKey] : null;
 }
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
 
-function getHighWaterMark(state, options, duplexKey, isDuplex) {
-  var hwm = highWaterMarkFrom(options, isDuplex, duplexKey);
+function noop() {}
 
-  if (hwm != null) {
-    if (!(isFinite(hwm) && Math.floor(hwm) === hwm) || hwm < 0) {
-      var name = isDuplex ? duplexKey : 'highWaterMark';
-      throw new ERR_INVALID_OPT_VALUE(name, hwm);
-    }
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
 
-    return Math.floor(hwm);
-  } // Default value
+process.listeners = function (name) { return [] }
 
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
 
-  return state.objectMode ? 16 : 16 * 1024;
-}
-
-module.exports = {
-  getHighWaterMark: getHighWaterMark
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
 };
 },{"../../../errors":458}],471:[function(require,module,exports){
 module.exports = require('events').EventEmitter;

@@ -19,6 +19,7 @@ class Rtf {
   convertHtmlToRtf(html) {
     let htmlWithoutStrangerTags, $, treeOfTags;
 
+    html = html.replace(/&nbsp;/gi, '<html-space>');
     htmlWithoutStrangerTags = this.swapHtmlStrangerTags(html, 'p');
     $ = cheerio.load(juice(htmlWithoutStrangerTags));
     treeOfTags = $('html').children();
@@ -104,7 +105,6 @@ class Rtf {
   addOpeningTagInRtfCode(tag) {
     let value = AllowedHtmlTags.getRtfReferenceTag(tag);
     let space = '';
-
     if (value) {
       if (value === ' ') {
         space = '';
