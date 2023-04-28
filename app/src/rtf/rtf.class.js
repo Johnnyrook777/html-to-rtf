@@ -52,32 +52,34 @@ class Rtf {
 
   // Don't has a test
   readAllChildsInTag(fatherTag) {
-    if (fatherTag.children != undefined) {
-      this.addOpeningTagInRtfCode(fatherTag.name);
-      this.ifExistsAttributesAddAllReferencesInRtfCode(fatherTag.attribs);
+    if (fatherTag && fatherTag.name) {
+      if (fatherTag.children != undefined) {
+        this.addOpeningTagInRtfCode(fatherTag.name);
+        this.ifExistsAttributesAddAllReferencesInRtfCode(fatherTag.attribs);
 
-      if(fatherTag.name.toLowerCase() == 'table')
-        this.Table.setAmountOfColumns(this.getAmountOfColumnThroughOfFirstChildOfTbodyTag(fatherTag.children));
+        if(fatherTag.name.toLowerCase() == 'table')
+          this.Table.setAmountOfColumns(this.getAmountOfColumnThroughOfFirstChildOfTbodyTag(fatherTag.children));
 
-      if(fatherTag.name.toLowerCase() == 'tr')
-        this.addReferenceTagInRtfCode(this.Table.buildCellsLengthOfEachColumn());
+        if(fatherTag.name.toLowerCase() == 'tr')
+          this.addReferenceTagInRtfCode(this.Table.buildCellsLengthOfEachColumn());
 
-      if(fatherTag.name.toLowerCase() == 'mark')
-        this.setHighlightInRtf();
+        if(fatherTag.name.toLowerCase() == 'mark')
+          this.setHighlightInRtf();
 
-      (fatherTag.children).forEach((child, index) => {
-        if (child.type != 'text')
-          this.readAllChildsInTag(child);
-        else
-          this.addContentOfTagInRtfCode(child.data);
-      });
+        (fatherTag.children).forEach((child, index) => {
+          if (child.type != 'text')
+            this.readAllChildsInTag(child);
+          else
+            this.addContentOfTagInRtfCode(child.data);
+        });
+      }
+
+      if (fatherTag.name.toLowerCase() == 'img') {
+        this.embedImage(fatherTag);
+      }
+
+      this.addClosingFatherTagInRtfCode(fatherTag.name);
     }
-
-    if (fatherTag.name.toLowerCase() == 'img') {
-      this.embedImage(fatherTag);
-    }
-
-    this.addClosingFatherTagInRtfCode(fatherTag.name);
   }
 
   getAmountOfColumnThroughOfFirstChildOfTbodyTag(tableChildren) {
