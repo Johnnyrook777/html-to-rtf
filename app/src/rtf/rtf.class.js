@@ -52,34 +52,35 @@ class Rtf {
 
   // Don't has a test
   readAllChildsInTag(fatherTag) {
-    if (fatherTag && fatherTag.name) {
-      if (fatherTag.children != undefined) {
-        this.addOpeningTagInRtfCode(fatherTag.name);
-        this.ifExistsAttributesAddAllReferencesInRtfCode(fatherTag.attribs);
+    let tagName = fatherTag.name || '';
 
-        if(fatherTag.name.toLowerCase() == 'table')
-          this.Table.setAmountOfColumns(this.getAmountOfColumnThroughOfFirstChildOfTbodyTag(fatherTag.children));
+    if (fatherTag.children != undefined) {
+      this.addOpeningTagInRtfCode(tagName);
+      this.ifExistsAttributesAddAllReferencesInRtfCode(fatherTag.attribs);
 
-        if(fatherTag.name.toLowerCase() == 'tr')
-          this.addReferenceTagInRtfCode(this.Table.buildCellsLengthOfEachColumn());
+      if(tagName.toLowerCase() == 'table')
+        this.Table.setAmountOfColumns(this.getAmountOfColumnThroughOfFirstChildOfTbodyTag(fatherTag.children));
 
-        if(fatherTag.name.toLowerCase() == 'mark')
-          this.setHighlightInRtf();
+      if(tagName.toLowerCase() == 'tr')
+        this.addReferenceTagInRtfCode(this.Table.buildCellsLengthOfEachColumn());
 
-        (fatherTag.children).forEach((child, index) => {
-          if (child.type != 'text')
-            this.readAllChildsInTag(child);
-          else
-            this.addContentOfTagInRtfCode(child.data);
-        });
-      }
+      if(tagName.toLowerCase() == 'mark')
+        this.setHighlightInRtf();
 
-      if (fatherTag.name.toLowerCase() == 'img') {
-        this.embedImage(fatherTag);
-      }
-
-      this.addClosingFatherTagInRtfCode(fatherTag.name);
+      (fatherTag.children).forEach((child, index) => {
+        if (child.type != 'text')
+          this.readAllChildsInTag(child);
+        else
+          this.addContentOfTagInRtfCode(child.data);
+      });
     }
+
+    if (tagName.toLowerCase() == 'img') {
+      this.embedImage(fatherTag);
+    }
+
+    this.addClosingFatherTagInRtfCode(tagName);
+  
   }
 
   getAmountOfColumnThroughOfFirstChildOfTbodyTag(tableChildren) {
