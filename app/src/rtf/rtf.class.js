@@ -43,7 +43,7 @@ class Rtf {
     this.clearCacheContent();
 
     // Remove these, no need to add an empty line at the end of a par
-    content = content.replace(/\\line \\par}/gi, '\par}');
+    content = content.replace(/\\line \\par}/gi, '\\par}');
 
     return content;
   }
