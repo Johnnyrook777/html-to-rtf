@@ -41,6 +41,10 @@ class Rtf {
     this.rtfHeaderContent += Style.getRtfColorTable();
     let content = (this.rtfHeaderOpening + this.rtfHeaderContent + this.getRtfContentReferences() + this.rtfClosing);
     this.clearCacheContent();
+
+    // Remove these, no need to add an empty line at the end of a par
+    content = content.replace(/\\line \\par}/gi, '\par}');
+
     return content;
   }
 
