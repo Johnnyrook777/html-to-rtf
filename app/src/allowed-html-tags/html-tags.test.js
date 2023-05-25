@@ -35,7 +35,7 @@ describe('HtmlTagsTest', () => {
       it(`<div></div>`, () => {
         should(element.closing).be.equal('/div');
         should(element.openingRtf).be.equal('{\\pard');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.closingRtf).be.equal('\\par}');
       });
     }
 
@@ -115,7 +115,7 @@ describe('HtmlTagsTest', () => {
       it(`<p></p>`, () => {
         should(element.closing).be.equal('/p');
         should(element.openingRtf).be.equal('{\\pard');
-        should(element.closingRtf).be.equal('\\sb70\\par}');
+        should(element.closingRtf).be.equal('\\par}');
       });
     }
 

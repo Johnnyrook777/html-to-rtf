@@ -60,14 +60,14 @@ describe('RtfTest', () => {
     let html = `<mytag style="color:#333; margin:5px;" class="test" align="center">texto de p<b>negrito <i>italico com  negrito</i>texto final b</b><i>italico</i>texto final de p</mytag>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc texto de p{\\b negrito {\\i italico com  negrito}texto final b}{\\i italico}texto final de p\\sb70\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc texto de p{\\b negrito {\\i italico com  negrito}texto final b}{\\i italico}texto final de p\\par}}');
   });
 
   it('convertHtmlToRtf() With stranger tag: <my-tag></my-tag>', () => {
     let html = `<my-tag style="color:#333; margin:5px;" class="test" align="center">My text in <b>bold<i> and italic with bold</i> text in bold</b><i> italic</i> final text</my-tag>`;
     let rtf = new Rtf();
     Color.cleanColorTable();
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc My text in {\\b bold{\\i  and italic with bold} text in bold}{\\i  italic} final text\\sb70\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;\\red51\\green51\\blue51;}{\\pard \\cf1 \\qc My text in {\\b bold{\\i  and italic with bold} text in bold}{\\i  italic} final text\\par}}');
   });
 
   const h1TagName = `h1`;
@@ -197,7 +197,7 @@ describe('RtfTest', () => {
     let rtf = new Rtf();
     
     rtf.addClosingFatherTagInRtfCode('p');
-    should(rtf.rtfContentReferences[0].content).be.equal('\\sb70\\par}');
+    should(rtf.rtfContentReferences[0].content).be.equal('\\par}');
     should(rtf.rtfContentReferences[0].tag).be.true();
   });
 
@@ -227,7 +227,7 @@ describe('RtfTest', () => {
     const html = `<p>comparação</p>`;
     const rtf = new Rtf();
 
-    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;}{\\pard compara\\\'e7\\\'e3o\\sb70\\par}}');
+    should(rtf.convertHtmlToRtf(html)).be.equal('{\\rtf1\\ansi\\deff0{\\fonttbl {\\f0\\fnil\\fcharset0 Calibri;}{\\f1\\fnil\\fcharset2 Symbol;}}\\formshade\\paperh16838\\paperw11906\\margl1134\\margr1134\\margt1134\\margb1134{\\colortbl ;}{\\pard compara\\\'e7\\\'e3o\\par}}');
   });
 
   it('Should set correct space', () => {

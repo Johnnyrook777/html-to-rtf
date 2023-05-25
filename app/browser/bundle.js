@@ -20,7 +20,7 @@ module.exports = Alignment;
 },{}],2:[function(require,module,exports){
 const HtmlTags = require('./html-tags.module');
 
-const DEAFAULT_TAG = {openingRtf: '{\\pard', closingRtf: '\\sb70\\par}'};
+const DEAFAULT_TAG = {openingRtf: '{\\pard', closingRtf: '\\par}'};
 
 class AllowedHtmlTags {
   static getRtfReferenceTag(tagName) {
@@ -71,7 +71,7 @@ module.exports = [
       opening: 'div',
       openingRtf: '{\\pard',
       closing: '/div',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'em',
@@ -143,7 +143,7 @@ module.exports = [
       opening: 'p',
       openingRtf: '{\\pard',
       closing: '/p',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'ol',

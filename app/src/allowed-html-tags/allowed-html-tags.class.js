@@ -1,6 +1,6 @@
 const HtmlTags = require('./html-tags.module');
 
-const DEAFAULT_TAG = {openingRtf: '{\\pard', closingRtf: '\\sb70\\par}'};
+const DEAFAULT_TAG = {openingRtf: '{\\pard', closingRtf: '\\par}'};
 
 class AllowedHtmlTags {
   static getRtfReferenceTag(tagName) {

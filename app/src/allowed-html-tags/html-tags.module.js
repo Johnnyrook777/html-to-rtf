@@ -21,7 +21,7 @@ module.exports = [
       opening: 'div',
       openingRtf: '{\\pard',
       closing: '/div',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'em',
@@ -93,7 +93,7 @@ module.exports = [
       opening: 'p',
       openingRtf: '{\\pard',
       closing: '/p',
-      closingRtf: '\\sb70\\par}'
+      closingRtf: '\\par}'
    },
    {
       opening: 'ol',
